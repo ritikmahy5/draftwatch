@@ -14,7 +14,8 @@ new checkpoint ──▶ trigger rules ──▶ measurement job ──▶ resul
 
 ## Status
 
-Pre-implementation. See `docs/ROADMAP.md`.
+M0 (scaffold) complete: `./gradlew build` and `./gradlew run --args="--help"` work.
+Next: M1. See `docs/ROADMAP.md`.
 
 ## Layout
 
