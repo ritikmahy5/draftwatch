@@ -20,7 +20,8 @@ import java.util.Objects;
  * (DECISIONS.md D26).
  *
  * <ul>
- *   <li>The file is UTF-8. Lines are separated by LF; a trailing CR belongs to the line.
+ *   <li>The file is UTF-8 without a byte-order mark. Lines are separated by LF; a trailing CR
+ *       belongs to the line.
  *   <li>A line is empty if it consists only of space, tab, and CR (JSON whitespace other than
  *       LF). Empty lines are skipped and do not count.
  *   <li>Every non-empty line is exactly one JSON object. The k-th non-empty line (0-based) is
@@ -52,6 +53,9 @@ public final class PromptSetReader {
       throw new PromptSetException(file, "cannot read prompt file: " + e.getMessage(), e);
     }
     String text = decodeUtf8(file, bytes);
+    if (text.startsWith("﻿")) {
+      throw new PromptSetException(file, "starts with a UTF-8 byte-order mark; remove it");
+    }
     String[] lines = text.split("\n", -1);
     int prompts = 0;
     for (int i = 0; i < lines.length; i++) {

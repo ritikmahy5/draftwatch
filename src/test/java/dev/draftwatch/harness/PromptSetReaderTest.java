@@ -99,6 +99,11 @@ public class PromptSetReaderTest {
   }
 
   @Test
+  public void rejectsByteOrderMark() throws IOException {
+    assertRejected("\ufeff{}\n", "byte-order mark");
+  }
+
+  @Test
   public void rejectsMissingFile() {
     Path missing = tmp.getRoot().toPath().resolve("absent.jsonl");
     try {
