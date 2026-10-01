@@ -21,6 +21,19 @@ The engine runs the configured `harness.command` followed by these arguments:
 
 The harness must write exactly one JSON file at `--out` and exit.
 
+### Prompt file
+
+Both sides must read `--prompts` identically, or `num_prompts` and `prompt_index` disagree
+(DECISIONS.md D26):
+- The file is UTF-8 without a byte-order mark. Lines are separated by LF (`\n`).
+- A line is **empty** if it contains only space, tab, and CR characters (in Python:
+  `line.strip(" \t\r") == ""`). Empty lines are skipped and are not prompts.
+- Every non-empty line is exactly one JSON object; anything else is an error. The fields of
+  the object are the harness's to define.
+- The k-th non-empty line, counting from 0, is the prompt with `prompt_index` k.
+- `num_prompts` is the number of non-empty lines and must be at least 1.
+- `prompt_set_sha256` is the SHA-256 of the file's exact bytes, as lowercase hex.
+
 | Exit code | Meaning | Retry? |
 |---|---|---|
 | 0 | Success, report written | — (report is then validated; invalid ⇒ FAILED, no retry) |
