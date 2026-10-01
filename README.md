@@ -14,8 +14,8 @@ new checkpoint ──▶ trigger rules ──▶ measurement job ──▶ resul
 
 ## Status
 
-M0 (scaffold) complete: `./gradlew build` and `./gradlew run --args="--help"` work.
-Next: M1. See `docs/ROADMAP.md`.
+M1 (domain, config, hashing) complete: `draftwatch init` and `draftwatch validate` work.
+Next: M2. See `docs/ROADMAP.md`.
 
 ## Layout
 
@@ -23,4 +23,5 @@ Next: M1. See `docs/ROADMAP.md`.
 docs/SPEC.md                  what draftwatch does (features, CLI, config)
 docs/ARCHITECTURE.md          Java design: modules, interfaces, patterns
 docs/MEASUREMENT_CONTRACT.md  Java ⇄ Python harness boundary and metric definitions
+docs/uml/class-diagram.md     Mermaid class diagram of the current code
 ```
