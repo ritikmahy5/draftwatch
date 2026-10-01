@@ -81,6 +81,14 @@ it as such in reports. `alpha_by_position[1]` is the closest empirical analogue 
   `alpha = Σ_p accepted_p / Σ_p proposed_p`, `tau = (Σ_p accepted_p + Σ_p steps_p) / Σ_p steps_p`.
 - `simple_mean`: compute the metric per prompt, then take the unweighted mean over prompts.
   Prompts with `proposed_p = 0` are excluded from `alpha` and counted in `excluded_prompts`.
+  Prompts with `steps_p = 0` are excluded from `tau` (a prompt with no steps proposed nothing,
+  so it is already among the excluded prompts).
+- `excluded_prompts` is the number of prompts with `proposed_p = 0` under `simple_mean`, and
+  `0` under `token_weighted`, which excludes no prompt (DECISIONS.md D29).
+- A metric with nothing to average is **undefined**: `token_weighted` alpha when no draft token
+  was proposed, `token_weighted` tau when there were no steps, `simple_mean` alpha or tau when
+  every prompt is excluded. A report whose recomputed `alpha` or `tau` is undefined is
+  invalid (rules `alpha` and `tau`): such a measurement says nothing about acceptance.
 
 `alpha_by_position` is always pooled across prompts, regardless of estimator.
 
@@ -169,30 +177,59 @@ All numeric values above are placeholders showing types, not example results. `N
 
 ### Validation rules enforced by `ReportParser`
 
-Identity and comparability:
-- `schema_version` equals the parser's supported version; `draft_structure == "chain"`.
-- `estimator`, `draft_id`, and `decoding` equal what the engine passed.
-- `prompt_set_sha256` equals the SHA-256 the engine computed over the prompt file bytes.
-- `num_prompts` equals the number of non-empty lines in the prompt file.
+Every rule has a stable id. The parser checks the rules in the order below and stops at the
+first violation, so a job's failure names exactly one rule. The fake harness's
+`DRAFTWATCH_FAKE_CORRUPT=<id>` breaks exactly that rule and none checked before it. `k` is
+`num_speculative_tokens`. Comparisons "within 1e-9" are absolute differences.
 
-Per seed:
-- `len(per_prompt) == num_prompts`, prompt indices are exactly 0 … num_prompts−1.
-- `total_steps`, `total_proposed`, `total_accepted` equal the sums over `per_prompt`.
-- For every prompt: `0 ≤ accepted ≤ proposed ≤ steps · num_speculative_tokens`.
-- `len(alpha_by_position) == len(position_counts) == num_speculative_tokens`, and each
-  `alpha_by_position[k]` equals `accepted / eligible` for that position (null iff eligible = 0).
-- Positional counts are monotone: eligible at position k+1 ≤ accepted at position k.
-- `position_counts_exact` is `true` iff `proposed == steps · num_speculative_tokens` for every
-  prompt.
-- `alpha` and `tau` equal the values the engine recomputes from `per_prompt` under the
-  declared estimator, within 1e-9.
-- `alpha ∈ [0, 1]`; `tau ∈ [1, num_speculative_tokens + 1]`.
+| Order | Rule id | The report is valid only if |
+|---|---|---|
+| 1 | `report_missing` | the harness exited 0 and a file exists at `--out` |
+| 2 | `json` | the file is one valid JSON value: no `NaN`/`Infinity`, no repeated keys, nothing after it |
+| 3 | `shape` | every key above is present with the type shown, no other key exists, `hardware.count` and `wall_clock_seconds` are ≥ 0 |
+| 4 | `schema_version` | `schema_version` equals the parser's supported version |
+| 5 | `draft_structure` | `draft_structure == "chain"` |
+| 6 | `estimator` | `estimator` equals what the engine passed |
+| 7 | `draft_id` | `draft_id` equals what the engine passed |
+| 8 | `decoding` | `decoding` equals the object the engine passed (compared as canonical JSON) |
+| 9 | `prompt_set_sha256` | it equals the SHA-256 the engine computed over the prompt file bytes |
+| 10 | `num_prompts` | it equals the number of non-empty lines in the prompt file |
+| 11 | `seeds` | `seeds[i].seed` are the `--seeds` values, in order, one entry each |
+| 12 | `adapter_handling` | it is `"merged"` if `--base-model` was passed, else `"none"` |
 
-Aggregate:
-- `alpha_mean`/`tau_mean` equal the seed means within 1e-9; `*_std` is `null` iff one seed.
+Then, for each seed in order:
 
-A report failing any rule makes the job FAILED with the rule named in the error. The engine
-never repairs a report.
+| Order | Rule id | The report is valid only if |
+|---|---|---|
+| 13 | `per_prompt_length` | `len(per_prompt) == num_prompts` |
+| 14 | `prompt_indices` | the prompt indices are exactly 0 … num_prompts−1, in order |
+| 15 | `prompt_counts` | for every prompt, `0 ≤ accepted ≤ proposed ≤ steps · k` |
+| 16 | `totals` | `total_steps`, `total_proposed`, `total_accepted` equal the sums over `per_prompt` |
+| 17 | `position_lengths` | `len(alpha_by_position) == len(position_counts) == k` |
+| 18 | `position_counts` | `position_counts[i].position == i + 1`; at every position `0 ≤ accepted ≤ eligible`; eligible at position 1 ≤ `total_steps` |
+| 19 | `position_monotone` | eligible at position j+1 ≤ accepted at position j |
+| 20 | `position_totals` | the accepted counts over all positions sum to `total_accepted` |
+| 21 | `alpha_by_position` | each entry equals `accepted / eligible` for its position within 1e-9, and is `null` iff eligible = 0 |
+| 22 | `position_counts_exact` | it is `true` iff `proposed == steps · k` for every prompt |
+| 23 | `excluded_prompts` | it equals the count defined under "Estimator" |
+| 24 | `alpha_range` | `alpha ∈ [0, 1]` |
+| 25 | `tau_range` | `tau ∈ [1, k + 1]` |
+| 26 | `alpha` | the engine's recomputation from `per_prompt` under the declared estimator is defined and equals `alpha` within 1e-9 |
+| 27 | `tau` | the same for `tau` |
+
+Then the aggregate:
+
+| Order | Rule id | The report is valid only if |
+|---|---|---|
+| 28 | `aggregate_mean` | `alpha_mean` and `tau_mean` equal the means of the seeds' values within 1e-9 |
+| 29 | `aggregate_std` | `alpha_std` and `tau_std` are `null` iff there is one seed, and otherwise equal the sample standard deviation (n − 1 denominator) of the seeds' values within 1e-9 |
+
+Rule 20 holds for the reference backend by construction: vLLM's `SpecDecodingStats.observe_draft`
+adds a draft's accepted count to `num_accepted_tokens` and increments
+`num_accepted_tokens_per_pos` at positions 1 … accepted (DECISIONS.md D29).
+
+A report failing any rule makes the job FAILED with `INVALID_REPORT` and the rule id named in
+the error. The engine never repairs a report.
 
 ## Comparability
 
@@ -205,12 +242,20 @@ never used by detectors.
 
 `scripts/fake_harness.py` implements this contract using the standard library only, so the
 full pipeline can be tested without a GPU:
-- It echoes `--estimator`, `--draft-id`, and `--decoding-json` into the report, and computes
+- It accepts exactly the arguments under "Invocation" (bad arguments exit 2), exits 3 if
+  `--target-checkpoint` or `--base-model` is not a directory, echoes `--estimator`,
+  `--draft-id`, `--decoding-json`, and the seeds into the report, and computes
   `prompt_set_sha256` and `num_prompts` from the `--prompts` file itself.
 - It reads synthetic `per_prompt` and `position_counts` from the fixture named by
   `DRAFTWATCH_FAKE_FIXTURE` and derives every total, ratio, and aggregate from them, so its
-  output is internally consistent by construction.
+  output is internally consistent by construction. A fixture is
+  `{"source": "<where the numbers came from>", "per_seed": [{"per_prompt": [{"steps": .., "proposed": .., "accepted": ..}, ...], "position_counts": [{"eligible": .., "accepted": ..}, ...]}, ...]}`;
+  entry i is used for the i-th seed. A fixture whose entry count, prompt count, or position
+  count does not match the invocation makes it exit 2.
+- It reports `harness_version: "fake-<version>"`, `backend: "fake"`, and
+  `hardware: {"gpu": "none", "count": 0}`.
 - `DRAFTWATCH_FAKE_EXIT=<code>` makes it exit with that code without writing a report.
-- `DRAFTWATCH_FAKE_CORRUPT=<rule>` deliberately breaks one validation rule, for negative tests.
+- `DRAFTWATCH_FAKE_CORRUPT=<rule id>` breaks that one validation rule (see the table above) in
+  the first seed, for negative tests.
 
 Its outputs are synthetic and must never appear in a report shown to a user as real data.
