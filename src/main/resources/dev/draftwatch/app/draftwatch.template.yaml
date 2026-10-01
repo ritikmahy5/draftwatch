@@ -1,0 +1,47 @@
+# draftwatch configuration (docs/SPEC.md, "Configuration").
+#
+# Every path and value below is a placeholder: replace them, then run `draftwatch validate`.
+# Relative paths are relative to the directory of this file. Unknown keys are errors.
+
+state_dir: .draftwatch
+
+executor:
+  type: local                # local | slurm
+  max_retries: 2             # retries for transient failures only
+  # slurm:                   # required when type is slurm
+  #   partition: gpu         # optional; omitted means the site default
+  #   gres: gpu:1            # optional
+  #   time: "00:45:00"       # optional; any sbatch --time format, quoted
+  #   requeue_on_preempt: true
+  #   extra_sbatch_args: []
+
+harness:
+  command: ["python", "python/measure_acceptance.py"]
+
+# fingerprint: sampled       # sampled (default) | full
+
+probes:
+  - id: chat-default
+    draft: { id: my-draft, path: /path/to/draft, structure: chain }
+    prompts: { path: probes/chat.jsonl }   # one JSON object per non-empty line
+    decoding: { temperature: 0, max_new_tokens: 256, num_speculative_tokens: 5, dtype: bfloat16 }
+    estimator: token_weighted              # token_weighted (default) | simple_mean
+    seeds: [0]                             # exactly one seed when temperature is 0
+
+targets:
+  - name: my-run
+    checkpoint_dirs: [/path/to/run/checkpoints]
+    checkpoint_type: full                  # full | adapter
+    # base_model: /path/to/base            # required when checkpoint_type is adapter
+    completion: { settle_seconds: 120 }    # or { marker: <file your training script writes last> }
+    probes: [chat-default]
+    # Omitted triggers mean: not_already_measured, max_pending: 4, always_final, every_n_steps: 1
+    # triggers:
+    #   - not_already_measured: {}
+    #   - max_pending: 4
+    #   - always_final: {}
+    #   - every_n_steps: 500
+    # Omitted detectors mean: paired_bootstrap on alpha with its defaults
+    # detectors:
+    #   - paired_bootstrap: { metric: alpha, confidence: 0.95, min_effect: 0.0 }
+    on_regression: [notify]
