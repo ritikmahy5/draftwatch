@@ -1,0 +1,54 @@
+# A config that uses every key. Thresholds and paths are arbitrary test values, not measurements.
+state_dir: state
+fingerprint: sampled
+
+executor:
+  type: slurm
+  max_retries: 2
+  slurm:
+    partition: gpu
+    gres: gpu:1
+    time: "00:45:00"
+    requeue_on_preempt: true
+    extra_sbatch_args: ["--mem=32G"]
+
+harness:
+  command: ["python", "python/measure_acceptance.py"]
+
+probes:
+  - id: chat-default
+    draft: { id: my-draft, path: drafts/my-draft, structure: chain }
+    prompts: { path: probes/chat.jsonl }
+    decoding: { temperature: 0, max_new_tokens: 256, num_speculative_tokens: 5, dtype: bfloat16 }
+    estimator: token_weighted
+    seeds: [0]
+  - id: chat-sampled
+    draft: { id: my-draft, path: drafts/my-draft, structure: chain }
+    prompts: { path: probes/chat.jsonl }
+    decoding: { temperature: 0.7, max_new_tokens: 256, num_speculative_tokens: 5, dtype: bfloat16 }
+    seeds: [0, 1, 2]
+
+targets:
+  - name: my-sft-run
+    checkpoint_dirs: [runs/sft/checkpoints]
+    checkpoint_type: full
+    completion: { marker: DONE }
+    step_regex: "step_(\\d+)$"
+    final_marker: LAST
+    probes: [chat-default, chat-sampled]
+    triggers:
+      - not_already_measured: {}
+      - max_pending: 4
+      - always_final: {}
+      - every_n_steps: 500
+    detectors:
+      - paired_bootstrap: { metric: alpha, confidence: 0.9, min_effect: 0.01, resamples: 500, bootstrap_seed: 7 }
+      - absolute_drop: { metric: alpha, max_drop: 0.05 }
+      - noise_floor: { metric: tau, k: 2, sigma: 0.01 }
+      - trend: { metric: tau, window: 4, max_slope: -0.02 }
+    on_regression: [notify]
+  - name: my-lora-run
+    checkpoint_dirs: [/abs/lora/checkpoints]
+    checkpoint_type: adapter
+    base_model: models/base
+    probes: [chat-default]
