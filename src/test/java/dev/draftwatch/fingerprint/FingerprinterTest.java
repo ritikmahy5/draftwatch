@@ -10,6 +10,7 @@ import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.List;
@@ -136,6 +137,24 @@ public class FingerprinterTest {
     String digest = Sha256.hex(bytes(10, 3));
     String entry = "sub/pytorch_model.bin\0" + "10\0" + digest + "\n";
     assertEquals("full-" + Sha256.hex(entry.getBytes(StandardCharsets.UTF_8)), f.fingerprint(dir));
+  }
+
+  @Test
+  public void symlinkedWeightsFingerprintLikeTheFilesTheyPointTo() throws IOException {
+    // Hugging Face hub cache layout: snapshots/<rev>/<name> -> ../../blobs/<hash>.
+    Path repo = tmp.newFolder("models--org--draft").toPath();
+    Path blobs = Files.createDirectories(repo.resolve("blobs"));
+    Path snapshot = Files.createDirectories(repo.resolve("snapshots").resolve("abc123"));
+    Files.write(blobs.resolve("deadbeef"), bytes(4096, 9));
+    Files.createSymbolicLink(
+        snapshot.resolve("model.safetensors"), Paths.get("../../blobs/deadbeef"));
+
+    Path plain = tmp.newFolder("plain").toPath();
+    Files.write(plain.resolve("model.safetensors"), bytes(4096, 9));
+
+    for (Fingerprinter f : BOTH) {
+      assertEquals(f.getClass().getSimpleName(), f.fingerprint(plain), f.fingerprint(snapshot));
+    }
   }
 
   @Test
