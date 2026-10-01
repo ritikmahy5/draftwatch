@@ -81,8 +81,9 @@ interface RegressionAction { void execute(RegressionDetected event); }
 | Chain of Responsibility | `TriggerChain` over `TriggerRule`s | Ordered rules; first non-abstaining rule decides, with a reason. |
 | Observer | `EventBus` + subscribers | Decouples stages; notifiers and actions plug in without touching producers. |
 | State | `JobState` + transition table | Lifecycle has legal and illegal transitions; illegal ones throw. |
-| Command | `RegressionAction` | Actions are configured data, executed later, and logged. |
-| Builder | `JobSpec`, `HarnessInvocation` | Many optional fields; invalid combinations rejected at `build()`. |
+| Command | `RegressionAction`; `CliCommand` | Actions are configured data, executed later, and logged; CLI subcommands are looked up by name, so adding one never changes the dispatcher. |
+| Builder | `JobSpec`, `HarnessInvocation`; domain `Target`, `Checkpoint`, `Provenance`, `AcceptanceReport`, `SeedReport` | Many fields; invalid combinations rejected at `build()`. |
+| Template Method | `WeightFileFingerprinter` (base of both fingerprinters) | The file walk, ordering, and encoding are shared; only the per-file digest differs, so the two methods cannot drift apart (DECISIONS.md D23). |
 | Repository | `ResultRepository`, `JobRepository`, `BaselineRepository` | Storage swappable (files now) and testable with in-memory fakes. |
 | Adapter | `SlurmExecutor` over `sbatch`/`squeue`/`sacct` text output | Isolates cluster CLI parsing behind `Executor`. |
 | Factory | `Bootstrap` | The single place where config type names become objects. |
