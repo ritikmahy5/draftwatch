@@ -134,7 +134,7 @@ silently skipped and nothing crashes the loop.
 ```
 draftwatch init                              create draftwatch.yaml template + state directory
 draftwatch validate                          validate config, print resolved probes and trigger chains
-draftwatch watch [--once]                    discover → trigger → submit → poll → detect
+draftwatch watch [--once] [--interval 60s]   discover → trigger → submit → poll → detect
 draftwatch submit <target> <ckpt>            queue measurements for one checkpoint
 draftwatch schedule [--interval 15m]         Slurm only: self-resubmitting watch --once job
 draftwatch unschedule                        cancel the scheduled watch job

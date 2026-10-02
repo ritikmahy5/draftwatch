@@ -96,7 +96,7 @@ public class CliTest {
         Arrays.asList(
             "init",
             "validate",
-            "watch [--once]",
+            "watch [--once] [--interval 60s]",
             "submit <target> <ckpt>",
             "schedule [--interval 15m]",
             "unschedule",

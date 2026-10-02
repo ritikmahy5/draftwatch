@@ -94,7 +94,9 @@ public final class Bootstrap {
           CommandUsage.of(
               "validate", "", "validate config, print resolved probes and trigger chains"),
           CommandUsage.of(
-              "watch", "[--once]", "discover -> trigger -> submit -> poll -> detect"),
+              "watch",
+              "[--once] [--interval 60s]",
+              "discover -> trigger -> submit -> poll -> detect"),
           CommandUsage.of(
               "submit", "<target> <ckpt>", "queue measurements for one checkpoint"),
           CommandUsage.of(
