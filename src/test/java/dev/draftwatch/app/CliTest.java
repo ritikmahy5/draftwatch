@@ -151,9 +151,9 @@ public class CliTest {
 
   @Test
   public void listedButUnimplementedCommandSaysSo() {
-    assertEquals(Cli.EXIT_USAGE, run("watch", "--once"));
+    assertEquals(Cli.EXIT_USAGE, run("diff", "a", "b"));
     assertEquals("", out());
-    assertTrue(err().contains("command 'watch' is not implemented yet"));
+    assertTrue(err().contains("command 'diff' is not implemented yet"));
   }
 
   @Test(expected = IllegalArgumentException.class)

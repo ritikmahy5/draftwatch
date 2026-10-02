@@ -19,6 +19,7 @@ final class Project {
   private final Path dir;
   private String fixture = "synthetic_three_prompts.json";
   private String detectors = "";
+  private String triggers = "";
   private final Map<String, String> fakeEnv = new HashMap<>();
   private String checkpointType = "full";
   private String executorType = "local";
@@ -43,6 +44,23 @@ final class Project {
   Project detectors(String yamlList) {
     detectors = yamlList;
     return this;
+  }
+
+  /** A YAML flow list for the target's {@code triggers}; the default chain if not set. */
+  Project triggers(String yamlList) {
+    triggers = yamlList;
+    return this;
+  }
+
+  /** A checkpoint directory with a weight file, not yet marked complete. */
+  Path halfWritten(int step, byte weight) {
+    try {
+      Path ckpt = Files.createDirectories(dir.resolve("runs/checkpoint-" + step));
+      Files.write(ckpt.resolve("model.safetensors"), new byte[] {weight, 1, 2, 3});
+      return ckpt;
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   Project adapter() {
@@ -116,6 +134,7 @@ final class Project {
               "    completion: { marker: DONE }",
               "    probes: [chat]",
               detectors.isEmpty() ? "" : "    detectors: " + detectors,
+              triggers.isEmpty() ? "" : "    triggers: " + triggers,
               "");
       Files.writeString(config(), String.join("\n", lines));
       return this;

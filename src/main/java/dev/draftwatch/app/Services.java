@@ -32,6 +32,7 @@ public final class Services {
   private final EventBus bus;
   private final StateLock stateLock;
   private final Supplier<MeasurementRunner> runner;
+  private final Supplier<WatchService> watch;
   private final Sleeper sleeper;
   private final Clock clock;
 
@@ -47,6 +48,7 @@ public final class Services {
       EventBus bus,
       StateLock stateLock,
       Supplier<MeasurementRunner> runner,
+      Supplier<WatchService> watch,
       Sleeper sleeper,
       Clock clock) {
     this.config = Objects.requireNonNull(config, "config");
@@ -60,6 +62,7 @@ public final class Services {
     this.bus = Objects.requireNonNull(bus, "bus");
     this.stateLock = Objects.requireNonNull(stateLock, "stateLock");
     this.runner = Objects.requireNonNull(runner, "runner");
+    this.watch = Objects.requireNonNull(watch, "watch");
     this.sleeper = Objects.requireNonNull(sleeper, "sleeper");
     this.clock = Objects.requireNonNull(clock, "clock");
   }
@@ -112,6 +115,15 @@ public final class Services {
    */
   public MeasurementRunner runner() {
     return runner.get();
+  }
+
+  /**
+   * A watch pass runner for the configured executor.
+   *
+   * @throws UnsupportedOperationException if the configured executor is not available yet
+   */
+  public WatchService watch() {
+    return watch.get();
   }
 
   public Sleeper sleeper() {

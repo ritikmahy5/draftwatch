@@ -3,17 +3,34 @@ package dev.draftwatch.app;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.util.Arrays;
 
 /** Runs the real wired CLI and captures what it prints. */
 final class CommandTestSupport {
   private final ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
   private final ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
-  private final Cli cli =
-      new Bootstrap(
-              new PrintStream(outBytes, true, StandardCharsets.UTF_8),
-              new PrintStream(errBytes, true, StandardCharsets.UTF_8))
-          .cli();
+  private final Cli cli;
+
+  CommandTestSupport() {
+    cli =
+        new Bootstrap(
+                new PrintStream(outBytes, true, StandardCharsets.UTF_8),
+                new PrintStream(errBytes, true, StandardCharsets.UTF_8))
+            .cli();
+  }
+
+  /** With {@code sleeper} between watch passes, and the real environment and clock. */
+  CommandTestSupport(Sleeper sleeper) {
+    cli =
+        new Bootstrap(
+                new PrintStream(outBytes, true, StandardCharsets.UTF_8),
+                new PrintStream(errBytes, true, StandardCharsets.UTF_8),
+                System.getenv(),
+                Clock.systemUTC(),
+                sleeper)
+            .cli();
+  }
 
   int run(String... args) {
     outBytes.reset();

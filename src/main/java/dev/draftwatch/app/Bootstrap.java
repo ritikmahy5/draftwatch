@@ -15,6 +15,7 @@ import dev.draftwatch.config.NoiseFloorSpec;
 import dev.draftwatch.config.PairedBootstrapSpec;
 import dev.draftwatch.config.TargetConfig;
 import dev.draftwatch.config.TrendSpec;
+import dev.draftwatch.config.TriggerSpec;
 import dev.draftwatch.detect.AbsoluteDropDetector;
 import dev.draftwatch.detect.DetectorSuite;
 import dev.draftwatch.detect.NoiseFloorDetector;
@@ -23,6 +24,7 @@ import dev.draftwatch.detect.RegressionDetector;
 import dev.draftwatch.detect.TrendDetector;
 import dev.draftwatch.discovery.CheckpointInspector;
 import dev.draftwatch.discovery.CompletionPolicy;
+import dev.draftwatch.discovery.DirectoryCheckpointSource;
 import dev.draftwatch.discovery.MarkerCompletionPolicy;
 import dev.draftwatch.discovery.SettleCompletionPolicy;
 import dev.draftwatch.events.BaselinePinned;
@@ -62,6 +64,13 @@ import dev.draftwatch.store.ResultRepository;
 import dev.draftwatch.store.StateLock;
 import dev.draftwatch.store.SystemHostIdentity;
 import dev.draftwatch.store.SystemProcessTable;
+import dev.draftwatch.trigger.AlwaysFinalRule;
+import dev.draftwatch.trigger.EveryNStepsRule;
+import dev.draftwatch.trigger.MaxPendingRule;
+import dev.draftwatch.trigger.NotAlreadyMeasuredRule;
+import dev.draftwatch.trigger.RepositoryHistory;
+import dev.draftwatch.trigger.TriggerChain;
+import dev.draftwatch.trigger.TriggerRule;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.security.SecureRandom;
@@ -133,7 +142,8 @@ public final class Bootstrap {
             "submit", new SubmitCommand(loader, this::services),
             "status", new StatusCommand(loader, this::services),
             "history", new HistoryCommand(loader, this::services),
-            "baseline", new BaselineCommand(loader, this::services));
+            "baseline", new BaselineCommand(loader, this::services),
+            "watch", new WatchCommand(loader, this::services));
     return new Cli(COMMANDS, commands, out, err);
   }
 
@@ -153,10 +163,12 @@ public final class Bootstrap {
     DetectionLog detections = new FileDetectionLog(stateDir, json);
     EventBus bus = new EventBus(err::println, clock);
     subscribe(bus, config, results, baselines, detections);
+    ProbeResolver resolver = new ProbeResolver(fingerprinter, new PromptSetReader(json));
+    CheckpointInspector inspector = new CheckpointInspector(fingerprinter, json, clock);
     return new Services(
         config,
-        new ProbeResolver(fingerprinter, new PromptSetReader(json)),
-        new CheckpointInspector(fingerprinter, json, clock),
+        resolver,
+        inspector,
         Bootstrap::completionPolicy,
         jobs,
         results,
@@ -165,8 +177,47 @@ public final class Bootstrap {
         bus,
         new StateLock(new SystemHostIdentity(environment), new SystemProcessTable(), clock),
         () -> runner(config, jobs, results, bus),
+        () ->
+            new WatchService(
+                config,
+                t ->
+                    new DirectoryCheckpointSource(
+                        t.target(), inspector, completionPolicy(t.completion())),
+                Bootstrap::triggerChain,
+                resolver,
+                runner(config, jobs, results, bus),
+                new RepositoryHistory(jobs, results),
+                baselines,
+                inspector,
+                Bootstrap::completionPolicy,
+                jobs,
+                clock),
         sleeper,
         clock);
+  }
+
+  /** The trigger chain of a target, in configured order. */
+  static TriggerChain triggerChain(TargetConfig target) {
+    List<TriggerRule> rules = new ArrayList<>();
+    for (TriggerSpec spec : target.triggers()) {
+      switch (spec.kind()) {
+        case NOT_ALREADY_MEASURED:
+          rules.add(new NotAlreadyMeasuredRule());
+          break;
+        case MAX_PENDING:
+          rules.add(new MaxPendingRule(spec.argument().getAsInt()));
+          break;
+        case ALWAYS_FINAL:
+          rules.add(new AlwaysFinalRule());
+          break;
+        case EVERY_N_STEPS:
+          rules.add(new EveryNStepsRule(spec.argument().getAsInt()));
+          break;
+        default:
+          throw new IllegalArgumentException("unknown trigger rule " + spec.kind());
+      }
+    }
+    return new TriggerChain(rules);
   }
 
   /**
