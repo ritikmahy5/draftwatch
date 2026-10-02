@@ -38,6 +38,9 @@ import dev.draftwatch.exec.JobPoller;
 import dev.draftwatch.exec.LocalExecutor;
 import dev.draftwatch.exec.RetryPolicy;
 import dev.draftwatch.exec.TimestampJobIds;
+import dev.draftwatch.exec.slurm.CommandRunner;
+import dev.draftwatch.exec.slurm.ProcessCommandRunner;
+import dev.draftwatch.exec.slurm.SlurmCli;
 import dev.draftwatch.fingerprint.CachingFingerprinter;
 import dev.draftwatch.fingerprint.FingerprintMethod;
 import dev.draftwatch.fingerprint.Fingerprinter;
@@ -61,6 +64,7 @@ import dev.draftwatch.store.FileResultRepository;
 import dev.draftwatch.store.JobRepository;
 import dev.draftwatch.store.JsonCodec;
 import dev.draftwatch.store.ResultRepository;
+import dev.draftwatch.store.SqueueJobTable;
 import dev.draftwatch.store.StateLock;
 import dev.draftwatch.store.SystemHostIdentity;
 import dev.draftwatch.store.SystemProcessTable;
@@ -117,6 +121,7 @@ public final class Bootstrap {
   private final Map<String, String> environment;
   private final Clock clock;
   private final Sleeper sleeper;
+  private final CommandRunner slurmCommands;
 
   public Bootstrap(PrintStream out, PrintStream err) {
     this(out, err, System.getenv(), Clock.systemUTC(), Sleeper.system());
@@ -128,11 +133,29 @@ public final class Bootstrap {
       Map<String, String> environment,
       Clock clock,
       Sleeper sleeper) {
+    this(
+        out,
+        err,
+        environment,
+        clock,
+        sleeper,
+        new ProcessCommandRunner(ProcessCommandRunner.DEFAULT_TIMEOUT));
+  }
+
+  /** @param slurmCommands runs sbatch, squeue, sacct, and scancel (a simulated cluster in tests) */
+  Bootstrap(
+      PrintStream out,
+      PrintStream err,
+      Map<String, String> environment,
+      Clock clock,
+      Sleeper sleeper,
+      CommandRunner slurmCommands) {
     this.out = Objects.requireNonNull(out, "out");
     this.err = Objects.requireNonNull(err, "err");
     this.environment = Map.copyOf(environment);
     this.clock = Objects.requireNonNull(clock, "clock");
     this.sleeper = Objects.requireNonNull(sleeper, "sleeper");
+    this.slurmCommands = Objects.requireNonNull(slurmCommands, "slurmCommands");
   }
 
   public Cli cli() {
@@ -177,7 +200,11 @@ public final class Bootstrap {
         baselines,
         detections,
         bus,
-        new StateLock(new SystemHostIdentity(environment), new SystemProcessTable(), clock),
+        new StateLock(
+            new SystemHostIdentity(environment),
+            new SystemProcessTable(),
+            new SqueueJobTable(new SlurmCli(slurmCommands)),
+            clock),
         () -> runner(config, jobs, results, bus),
         () ->
             new WatchService(

@@ -18,9 +18,16 @@ import java.util.Optional;
  *
  * <p>The lock is acquired by creating the file exclusively; exclusive create is used instead of
  * {@code flock}, which is unreliable on network filesystems. A lock may be taken over only when
- * its holder is provably gone: same host, and its PID is not alive (or is now a different process,
- * by start time). A holder on another host is never taken over, and neither is a holder that ran
- * inside a Slurm job until M5 adds the {@code squeue} check.
+ * its holder is provably gone:
+ *
+ * <ul>
+ *   <li>it ran inside a Slurm job that squeue no longer lists alive, on any host (D62);
+ *   <li>it ran outside Slurm on this host, and its PID is not alive (or is now a different
+ *       process, by start time).
+ * </ul>
+ *
+ * A holder outside Slurm on another host is never taken over, and neither is a Slurm holder when
+ * squeue cannot be asked.
  *
  * <p>Takeover renames the stale lock aside, then checks that the renamed file is the one it
  * inspected; if another process replaced it in between, the fresh lock is put back and
@@ -32,12 +39,15 @@ public final class StateLock {
 
   private final HostIdentity self;
   private final ProcessTable processes;
+  private final SlurmJobTable slurmJobs;
   private final Clock clock;
   private final ObjectMapper json = new ObjectMapper();
 
-  public StateLock(HostIdentity self, ProcessTable processes, Clock clock) {
+  public StateLock(
+      HostIdentity self, ProcessTable processes, SlurmJobTable slurmJobs, Clock clock) {
     this.self = Objects.requireNonNull(self, "self");
     this.processes = Objects.requireNonNull(processes, "processes");
+    this.slurmJobs = Objects.requireNonNull(slurmJobs, "slurmJobs");
     this.clock = Objects.requireNonNull(clock, "clock");
   }
 
@@ -74,7 +84,8 @@ public final class StateLock {
    * Acquires the lock of {@code stateDir} for {@code command}, creating the directory if needed.
    *
    * @throws StateLockException naming the holder if the lock is held by a process that is
-   *     alive, on another host, inside a Slurm job, or cannot be identified
+   *     alive, on another host outside Slurm, in a Slurm job squeue lists alive or cannot be
+   *     asked about, or that cannot be identified
    */
   public Held acquire(Path stateDir, String command) {
     Path lock = stateDir.resolve(LOCK_FILE);
@@ -131,10 +142,22 @@ public final class StateLock {
 
   private void requireGone(Path lock, LockHolder holder) {
     if (holder.slurmJobId().isPresent()) {
-      throw new StateLockException(
-          lock + " is held by " + holder + "; a lock held from inside a Slurm job is not taken"
-              + " over automatically before M5 (it needs squeue); remove the file if that job"
-              + " has ended");
+      String job = holder.slurmJobId().get();
+      boolean alive;
+      try {
+        alive = slurmJobs.isAlive(job);
+      } catch (RuntimeException e) {
+        throw new StateLockException(
+            lock + " is held by " + holder + "; cannot tell whether Slurm job " + job
+                + " has ended, so it is not taken over: " + e.getMessage(),
+            e);
+      }
+      if (alive) {
+        throw new StateLockException(
+            lock + " is held by " + holder + ", which is still running (squeue lists Slurm job "
+                + job + ")");
+      }
+      return; // squeue no longer lists the job alive: its process is gone, whatever the host
     }
     if (!holder.host().equals(self.hostname())) {
       throw new StateLockException(

@@ -12,7 +12,9 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -70,7 +72,24 @@ public class StateLockTest {
     }
   }
 
+  /** Slurm job liveness chosen by the test: the listed jobs are alive; squeue may fail. */
+  private static final class SlurmJobs implements SlurmJobTable {
+    final Set<String> alive = new HashSet<>();
+    final List<String> asked = new ArrayList<>();
+    RuntimeException failure;
+
+    @Override
+    public boolean isAlive(String slurmJobId) {
+      asked.add(slurmJobId);
+      if (failure != null) {
+        throw failure;
+      }
+      return alive.contains(slurmJobId);
+    }
+  }
+
   private final Processes processes = new Processes();
+  private final SlurmJobs slurmJobs = new SlurmJobs();
   private Path state;
 
   @Before
@@ -79,7 +98,12 @@ public class StateLockTest {
   }
 
   private StateLock lockFor(String host, long pid) {
-    return new StateLock(new Identity(host, pid, Optional.empty()), processes, CLOCK);
+    return new StateLock(new Identity(host, pid, Optional.empty()), processes, slurmJobs, CLOCK);
+  }
+
+  private StateLock lockInSlurmJob(String host, long pid, String slurmJobId) {
+    return new StateLock(
+        new Identity(host, pid, Optional.of(slurmJobId)), processes, slurmJobs, CLOCK);
   }
 
   private static void assertRefused(StateLock lock, Path state, String fragment) {
@@ -134,11 +158,35 @@ public class StateLockTest {
 
   // --- other holders ---------------------------------------------------------------------------
 
+  // --- ROADMAP M5 "done when": a holder whose Slurm job is gone from squeue ------------------
+
   @Test
-  public void lockHeldFromASlurmJobIsNotTakenOverBeforeM5() {
-    new StateLock(new Identity("node1", 100, Optional.of("4242")), processes, CLOCK)
-        .acquire(state, "watch");
-    assertRefused(lockFor("node1", 200), state, "Slurm job 4242");
+  public void lockWhoseSlurmJobIsGoneFromSqueueIsTakenOverFromAnyHost() {
+    processes.alive.add(100L); // the PID does not matter for a Slurm holder
+    lockInSlurmJob("compute-17", 100, "4242").acquire(state, "watch");
+    StateLock.Held held = lockInSlurmJob("compute-03", 200, "4250").acquire(state, "watch");
+    assertEquals(List.of("4242"), slurmJobs.asked);
+    assertEquals(
+        Optional.of("4250"), lockFor("node1", 1).holder(state).orElseThrow().slurmJobId());
+    held.close();
+  }
+
+  @Test
+  public void lockWhoseSlurmJobIsAliveIsNotTakenOver() {
+    slurmJobs.alive.add("4242");
+    lockInSlurmJob("compute-17", 100, "4242").acquire(state, "watch");
+    assertRefused(
+        lockFor("login-1", 200), state, "which is still running (squeue lists Slurm job 4242)");
+  }
+
+  @Test
+  public void lockIsNotTakenOverWhenSqueueCannotBeAsked() {
+    lockInSlurmJob("compute-17", 100, "4242").acquire(state, "watch");
+    slurmJobs.failure = new IllegalStateException("squeue: Unable to contact slurm controller");
+    assertRefused(
+        lockFor("login-1", 200),
+        state,
+        "cannot tell whether Slurm job 4242 has ended, so it is not taken over: squeue: Unable");
   }
 
   @Test
@@ -168,7 +216,8 @@ public class StateLockTest {
           // Between our read of the dead holder and our rename, PID 300 takes over first.
           try {
             Files.delete(lockFile);
-            new StateLock(new Identity("node1", 300, Optional.empty()), processes, CLOCK)
+            new StateLock(
+                    new Identity("node1", 300, Optional.empty()), processes, slurmJobs, CLOCK)
                 .acquire(state, "watch");
             winner[0] = Files.readString(lockFile);
           } catch (IOException e) {
@@ -177,7 +226,8 @@ public class StateLockTest {
           return false;
         };
     StateLock loser =
-        new StateLock(new Identity("node1", 200, Optional.empty()), raceDuringCheck, CLOCK);
+        new StateLock(
+            new Identity("node1", 200, Optional.empty()), raceDuringCheck, slurmJobs, CLOCK);
     try {
       loser.acquire(state, "submit");
       fail("expected StateLockException");
