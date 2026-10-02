@@ -1,9 +1,10 @@
-package dev.draftwatch.config;
+package dev.draftwatch.harness;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.draftwatch.config.ProbeHasher;
 import dev.draftwatch.domain.Decoding;
 import dev.draftwatch.domain.Draft;
 import dev.draftwatch.domain.DraftStructure;
@@ -14,8 +15,6 @@ import dev.draftwatch.fingerprint.FingerprintException;
 import dev.draftwatch.fingerprint.FullFileFingerprinter;
 import dev.draftwatch.fingerprint.SampledBlockFingerprinter;
 import dev.draftwatch.fingerprint.Sha256;
-import dev.draftwatch.harness.PromptSetException;
-import dev.draftwatch.harness.PromptSetReader;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;

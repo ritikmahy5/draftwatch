@@ -1,10 +1,10 @@
-package dev.draftwatch.config;
+package dev.draftwatch.harness;
 
+import dev.draftwatch.config.ProbeHasher;
 import dev.draftwatch.domain.Probe;
 import dev.draftwatch.domain.PromptSet;
 import dev.draftwatch.domain.ResolvedProbe;
 import dev.draftwatch.fingerprint.Fingerprinter;
-import dev.draftwatch.harness.PromptSetReader;
 import java.util.Objects;
 
 /**
@@ -24,7 +24,7 @@ public final class ProbeResolver {
    * Resolves {@code probe} against the files as they are now.
    *
    * @throws dev.draftwatch.fingerprint.FingerprintException if the draft cannot be fingerprinted
-   * @throws dev.draftwatch.harness.PromptSetException if the prompt file is unreadable or invalid
+   * @throws PromptSetException if the prompt file is unreadable or invalid
    */
   public ResolvedProbe resolve(Probe probe) {
     String draftFingerprint = fingerprinter.fingerprint(probe.draft().path());
