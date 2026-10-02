@@ -3,6 +3,7 @@ package dev.draftwatch.stats;
 import dev.draftwatch.domain.Estimator;
 import dev.draftwatch.domain.PositionCount;
 import dev.draftwatch.domain.PromptCounts;
+import dev.draftwatch.domain.SeedReport;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -60,6 +61,39 @@ public final class MetricCalculator {
               : OptionalDouble.of((double) p.accepted() / (double) p.eligible()));
     }
     return out;
+  }
+
+  /**
+   * Per-prompt counts summed over seeds (ARCHITECTURE.md, "Statistics": with several seeds the
+   * bootstrap resamples prompts of the pooled counts).
+   *
+   * @throws IllegalArgumentException if the seeds have different prompt counts
+   */
+  public List<PromptCounts> pooledPerPrompt(List<SeedReport> seeds) {
+    if (seeds.isEmpty()) {
+      throw new IllegalArgumentException("no seeds to pool");
+    }
+    int n = seeds.get(0).perPrompt().size();
+    long[] steps = new long[n];
+    long[] proposed = new long[n];
+    long[] accepted = new long[n];
+    for (SeedReport seed : seeds) {
+      if (seed.perPrompt().size() != n) {
+        throw new IllegalArgumentException(
+            "seed " + seed.seed() + " has " + seed.perPrompt().size() + " prompts, expected " + n);
+      }
+      for (int i = 0; i < n; i++) {
+        PromptCounts p = seed.perPrompt().get(i);
+        steps[i] += p.steps();
+        proposed[i] += p.proposed();
+        accepted[i] += p.accepted();
+      }
+    }
+    List<PromptCounts> pooled = new ArrayList<>(n);
+    for (int i = 0; i < n; i++) {
+      pooled.add(PromptCounts.of(i, steps[i], proposed[i], accepted[i]));
+    }
+    return pooled;
   }
 
   /** Arithmetic mean, summing in list order. */

@@ -1,0 +1,6 @@
+{
+  "source": "synthetic: invented per-prompt counts (steps, proposed, accepted) for 12 prompts with num_speculative_tokens = 4; the current side accepts slightly fewer tokens than the baseline; not a measurement",
+  "num_speculative_tokens": 4,
+  "baseline": [[10,40,28],[8,32,20],[12,48,36],[9,36,22],[11,44,30],[7,28,15],[10,40,25],[13,52,39],[6,24,14],[10,40,27],[9,36,24],[12,48,31]],
+  "current":  [[10,40,24],[8,32,19],[12,48,30],[9,36,21],[11,44,26],[7,28,15],[10,40,22],[13,52,35],[6,24,12],[10,40,25],[9,36,20],[12,48,29]]
+}
