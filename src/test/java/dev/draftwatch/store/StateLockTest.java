@@ -189,6 +189,55 @@ public class StateLockTest {
         "cannot tell whether Slurm job 4242 has ended, so it is not taken over: squeue: Unable");
   }
 
+  // --- D74: the lock appears with its contents ------------------------------------------------
+
+  @Test
+  public void racingAcquirersSeeOneHolderAndNeverAPartialLock() throws Exception {
+    for (int round = 0; round < 50; round++) {
+      Path dir = tmp.getRoot().toPath().resolve("race-" + round);
+      int threads = 8;
+      for (int i = 0; i < threads; i++) {
+        processes.alive.add(1000L + i); // every racer is alive, so no one may take over
+      }
+      java.util.concurrent.CyclicBarrier start = new java.util.concurrent.CyclicBarrier(threads);
+      List<String> outcomes = java.util.Collections.synchronizedList(new ArrayList<>());
+      List<Thread> racers = new ArrayList<>();
+      for (int i = 0; i < threads; i++) {
+        long pid = 1000L + i;
+        Thread t =
+            new Thread(
+                () -> {
+                  try {
+                    start.await();
+                    lockFor("node1", pid).acquire(dir, "watch");
+                    outcomes.add("won");
+                  } catch (StateLockException e) {
+                    outcomes.add(e.getMessage());
+                  } catch (Exception e) {
+                    outcomes.add(e.toString());
+                  }
+                });
+        racers.add(t);
+        t.start();
+      }
+      for (Thread t : racers) {
+        t.join(10_000);
+      }
+      assertEquals(outcomes.toString(), 1, outcomes.stream().filter("won"::equals).count());
+      for (String o : outcomes) {
+        assertTrue(o, o.equals("won") || o.contains("which is still running"));
+      }
+      try (Stream<Path> files = Files.list(dir)) {
+        assertEquals(
+            "only the lock remains",
+            List.of(StateLock.LOCK_FILE),
+            files
+                .map(f -> f.getFileName().toString())
+                .collect(java.util.stream.Collectors.toList()));
+      }
+    }
+  }
+
   @Test
   public void unreadableLockIsNotTakenOver() throws IOException {
     Files.createDirectories(state);

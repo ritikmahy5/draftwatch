@@ -16,9 +16,11 @@ import java.util.Optional;
 /**
  * The single-writer lock {@code <state>/lock} (ARCHITECTURE.md, "StateLock"; DECISIONS.md D34).
  *
- * <p>The lock is acquired by creating the file exclusively; exclusive create is used instead of
- * {@code flock}, which is unreliable on network filesystems. A lock may be taken over only when
- * its holder is provably gone:
+ * <p>The lock is acquired the way open(2) recommends for lock files on NFS: the holder's record is
+ * written in full to a unique file, which is then hard-linked to {@code lock}. link(2) never
+ * replaces an existing name, so exactly one process wins, and no reader ever sees a partly
+ * written lock (DECISIONS.md D74). {@code flock} is not used: it is unreliable on network
+ * filesystems. A lock may be taken over only when its holder is provably gone:
  *
  * <ul>
  *   <li>it ran inside a Slurm job that squeue no longer lists alive, on any host (D62);
@@ -103,13 +105,46 @@ public final class StateLock {
     } catch (IOException e) {
       throw new StateLockException("cannot create " + stateDir + ": " + e.getMessage(), e);
     }
+    Path unique =
+        stateDir.resolve(
+            LOCK_FILE + ".new-" + self.hostname() + "-" + self.pid() + "-" + System.nanoTime());
+    try {
+      Files.write(unique, content, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+    } catch (IOException e) {
+      throw new StateLockException("cannot write " + unique + ": " + e.getMessage(), e);
+    }
+    try {
+      return acquire(stateDir, lock, unique, content);
+    } finally {
+      try {
+        Files.deleteIfExists(unique);
+      } catch (IOException e) {
+        // The lock itself is unaffected; a leftover lock.new-* file is only clutter.
+      }
+    }
+  }
+
+  private Held acquire(Path stateDir, Path lock, Path unique, byte[] content) {
     for (int round = 0; round < MAX_ROUNDS; round++) {
       try {
-        Files.write(lock, content, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+        Files.createLink(lock, unique);
         return new Held(lock, content);
       } catch (FileAlreadyExistsException e) {
-        // Held by someone; decide below whether they are provably gone.
+        // On NFS a link can succeed although the call reports a failure; open(2) says to trust
+        // the unique file's link count then.
+        if (linkCount(unique) == 2) {
+          return new Held(lock, content);
+        }
+        // Otherwise someone holds it; decide below whether they are provably gone.
+      } catch (UnsupportedOperationException e) {
+        throw new StateLockException(
+            "cannot lock " + lock + ": this filesystem does not support hard links, which the"
+                + " state lock needs (DECISIONS.md D74)",
+            e);
       } catch (IOException e) {
+        if (linkCount(unique) == 2) {
+          return new Held(lock, content);
+        }
         throw new StateLockException("cannot create " + lock + ": " + e.getMessage(), e);
       }
       byte[] seen;
@@ -126,6 +161,15 @@ public final class StateLock {
     }
     throw new StateLockException(
         lock + " changed hands " + MAX_ROUNDS + " times while acquiring it; try again");
+  }
+
+  /** The number of names of {@code file}, or 0 if the platform cannot tell. */
+  private static int linkCount(Path file) {
+    try {
+      return ((Number) Files.getAttribute(file, "unix:nlink")).intValue();
+    } catch (IOException | UnsupportedOperationException | IllegalArgumentException e) {
+      return 0;
+    }
   }
 
   /** The current holder of {@code stateDir}'s lock, if any (for {@code draftwatch status}). */
