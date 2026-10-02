@@ -173,6 +173,7 @@ public final class Bootstrap {
             "history", new HistoryCommand(loader, this::services),
             "baseline", new BaselineCommand(loader, this::services),
             "watch", new WatchCommand(loader, this::services),
+            "report", new ReportCommand(loader, this::services),
             "schedule",
                 new ScheduleCommand(
                     loader, this::services, slurm, launcher(), new SecureRandom()),

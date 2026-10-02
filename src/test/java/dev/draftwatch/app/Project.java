@@ -24,6 +24,8 @@ final class Project {
   private String checkpointType = "full";
   private String executorType = "local";
   private int maxRetries = 0;
+  private String temperature = "0";
+  private String seeds = "[0]";
 
   Project(Path dir) {
     this.dir = dir;
@@ -70,6 +72,13 @@ final class Project {
 
   Project executor(String type) {
     executorType = type;
+    return this;
+  }
+
+  /** The probe's sampling: more than one seed needs a temperature above 0 (SPEC.md F5). */
+  Project sampling(String temperature, String seedsYaml) {
+    this.temperature = temperature;
+    this.seeds = seedsYaml;
     return this;
   }
 
@@ -123,9 +132,9 @@ final class Project {
               "  - id: chat",
               "    draft: { id: my-draft, path: draft, structure: chain }",
               "    prompts: { path: prompts.jsonl }",
-              "    decoding: { temperature: 0, max_new_tokens: 16, num_speculative_tokens: 3,"
-                  + " dtype: bfloat16 }",
-              "    seeds: [0]",
+              "    decoding: { temperature: " + temperature + ", max_new_tokens: 16,"
+                  + " num_speculative_tokens: 3, dtype: bfloat16 }",
+              "    seeds: " + seeds,
               "targets:",
               "  - name: run",
               "    checkpoint_dirs: [runs]",
