@@ -74,12 +74,17 @@ public final class FakeHarness {
 
   /** Runs {@code command} to completion in {@code workDir}; returns the exit code. */
   public static int run(List<String> command, Path workDir) {
+    return run(command, workDir, workDir.resolve("harness-output.log"));
+  }
+
+  /** Like {@link #run(List, Path)}, writing stdout and stderr to {@code log}. */
+  public static int run(List<String> command, Path workDir, Path log) {
     try {
       Process process =
           new ProcessBuilder(command)
               .directory(workDir.toFile())
               .redirectErrorStream(true)
-              .redirectOutput(workDir.resolve("harness-output.log").toFile())
+              .redirectOutput(log.toFile())
               .start();
       return process.waitFor();
     } catch (IOException e) {
