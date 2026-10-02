@@ -1,0 +1,91 @@
+{
+  "source": "synthetic: written by hand from the output formats in DECISIONS.md D58 (slurm.schedmd.com squeue/sacct pages and SchedMD/slurm master source); not recorded on a cluster. Replace with real_<job-id>_*.json from scripts/record_slurm_fixtures.py.",
+  "note": "PREEMPTED and then gone from squeue: the site did not requeue it (D59)",
+  "job_id": "4242015",
+  "observations": [
+    {
+      "at": "2026-10-01T16:01:00Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=4242015"
+        ],
+        "exit_code": 0,
+        "stdout": "4242015|RUNNING|2026-10-01T12:00:05-0400\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=4242015"
+        ],
+        "exit_code": 0,
+        "stdout": "4242015|RUNNING|0:0|2026-10-01T12:00:05-0400|Unknown\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-01T16:10:00Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=4242015"
+        ],
+        "exit_code": 0,
+        "stdout": "4242015|PREEMPTED|2026-10-01T12:00:05-0400\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=4242015"
+        ],
+        "exit_code": 0,
+        "stdout": "4242015|PREEMPTED|0:15|2026-10-01T12:00:05-0400|2026-10-01T12:09:50-0400\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-01T16:16:40Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=4242015"
+        ],
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "slurm_load_jobs error: Invalid job id specified\n"
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=4242015"
+        ],
+        "exit_code": 0,
+        "stdout": "4242015|PREEMPTED|0:15|2026-10-01T12:00:05-0400|2026-10-01T12:09:50-0400\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

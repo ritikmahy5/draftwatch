@@ -1,0 +1,23 @@
+{
+  "source": "synthetic: written by hand from the output formats in DECISIONS.md D58 (slurm.schedmd.com squeue/sacct pages and SchedMD/slurm master source); not recorded on a cluster. Replace with real_<job-id>_*.json from scripts/record_slurm_fixtures.py.",
+  "note": "squeue fails for a reason other than an unknown job: an error, and the job is unchanged",
+  "job_id": "4242021",
+  "observations": [
+    {
+      "at": "2026-10-01T16:01:00Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=4242021"
+        ],
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "slurm_load_jobs error: Unable to contact slurm controller (connect failure)\n"
+      },
+      "sacct": null
+    }
+  ]
+}

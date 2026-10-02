@@ -1,0 +1,35 @@
+{
+  "source": "synthetic: written by hand from the output formats in DECISIONS.md D58 (slurm.schedmd.com squeue/sacct pages and SchedMD/slurm master source); not recorded on a cluster. Replace with real_<job-id>_*.json from scripts/record_slurm_fixtures.py.",
+  "note": "CONFIGURING maps to SUBMITTED",
+  "job_id": "4242002",
+  "observations": [
+    {
+      "at": "2026-10-01T16:00:00Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=4242002"
+        ],
+        "exit_code": 0,
+        "stdout": "4242002|CONFIGURING|2026-10-01T12:00:05-0400\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=4242002"
+        ],
+        "exit_code": 0,
+        "stdout": "4242002|RUNNING|0:0|2026-10-01T12:00:05-0400|Unknown\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

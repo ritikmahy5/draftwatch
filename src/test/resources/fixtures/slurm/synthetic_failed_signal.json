@@ -1,0 +1,63 @@
+{
+  "source": "synthetic: written by hand from the output formats in DECISIONS.md D58 (slurm.schedmd.com squeue/sacct pages and SchedMD/slurm master source); not recorded on a cluster. Replace with real_<job-id>_*.json from scripts/record_slurm_fixtures.py.",
+  "note": "FAILED by signal 9: unexpected_exit",
+  "job_id": "4242007",
+  "observations": [
+    {
+      "at": "2026-10-01T16:01:00Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=4242007"
+        ],
+        "exit_code": 0,
+        "stdout": "4242007|RUNNING|2026-10-01T12:00:05-0400\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=4242007"
+        ],
+        "exit_code": 0,
+        "stdout": "4242007|RUNNING|0:0|2026-10-01T12:00:05-0400|Unknown\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-01T16:06:40Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=4242007"
+        ],
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "slurm_load_jobs error: Invalid job id specified\n"
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=4242007"
+        ],
+        "exit_code": 0,
+        "stdout": "4242007|FAILED|0:9|2026-10-01T12:00:05-0400|2026-10-01T12:05:00-0400\n",
+        "stderr": ""
+      }
+    }
+  ]
+}
