@@ -26,6 +26,9 @@ public interface ResultRepository {
 
   Optional<Measurement> latest(String fingerprint, String probeHash);
 
+  /** Every result, by target name, then in {@link #history} order (DECISIONS.md D72). */
+  List<Measurement> all();
+
   /** Where {@code m} is stored, so every reported number can be traced to its file. */
   Path locate(Measurement m);
 }

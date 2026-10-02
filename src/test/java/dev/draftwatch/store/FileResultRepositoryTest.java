@@ -89,6 +89,16 @@ public class FileResultRepositoryTest {
   }
 
   @Test
+  public void allIsEveryResultInStepOrder() {
+    repo.append(m("j-c", 300, T0));
+    repo.append(m("j-a", 100, T0.plusSeconds(50)));
+    repo.append(m("j-b", 100, T0.plusSeconds(10)));
+    assertEquals(List.of("j-b", "j-a", "j-c"), jobIds(repo.all()));
+    assertEquals(List.of(), new FileResultRepository(
+        tmp.getRoot().toPath().resolve("empty"), new JsonCodec(), new ObjectMapper()).all());
+  }
+
+  @Test
   public void historyIsInStepOrderThenEndTime() {
     repo.append(m("j-c", 300, T0));
     repo.append(m("j-a", 100, T0.plusSeconds(50)));

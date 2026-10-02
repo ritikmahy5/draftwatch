@@ -56,7 +56,14 @@ public final class InMemoryResultRepository implements ResultRepository {
     return Paths.get("memory", m.jobId() + ".json");
   }
 
+  @Override
   public List<Measurement> all() {
-    return new ArrayList<>(byJob.values());
+    return byJob.values().stream()
+        .sorted(
+            Comparator.comparing((Measurement m) -> m.provenance().targetName())
+                .thenComparingLong(m -> m.provenance().checkpoint().step())
+                .thenComparing(m -> m.provenance().endTime())
+                .thenComparing(Measurement::jobId))
+        .collect(Collectors.toList());
   }
 }

@@ -102,6 +102,20 @@ public final class FileResultRepository implements ResultRepository {
   }
 
   @Override
+  public List<Measurement> all() {
+    List<Measurement> out = new ArrayList<>();
+    for (Path targetDir : directories()) {
+      List<Measurement> target = new ArrayList<>();
+      for (Path file : files(targetDir)) {
+        target.add(read(file));
+      }
+      target.sort(BY_STEP);
+      out.addAll(target);
+    }
+    return out;
+  }
+
+  @Override
   public Optional<Measurement> latest(String fingerprint, String probeHash) {
     List<Measurement> all = find(fingerprint, probeHash);
     return all.isEmpty() ? Optional.empty() : Optional.of(all.get(all.size() - 1));
