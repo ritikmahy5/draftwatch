@@ -141,6 +141,53 @@ public class JobPollerTest {
   }
 
   @Test
+  public void executorReportedFailureRecordsTheRunAndNeverValidatesAReport()
+      throws IOException {
+    writeValidReport(); // a valid report must not turn a scheduler failure into a success
+    executor.then(
+        ExecutorStatus.failed(
+            FailureReason.TIMEOUT, Optional.of(T5), Optional.of(T9), "Slurm job 7 TIMEOUT"));
+    JobPoller.Result result = poller.poll(submittedJob());
+    Job job = result.job();
+    assertEquals(Optional.of(FailureReason.TIMEOUT), job.failureReason());
+    assertEquals("Slurm job 7 TIMEOUT", job.lastChange().cause());
+    assertEquals(T9, job.lastChange().at());
+    assertEquals(Optional.of(T5), job.runningSince());
+    assertEquals(Optional.empty(), result.report());
+  }
+
+  @Test
+  public void failureBeforeStartingGoesStraightFromSubmitted() {
+    executor.then(
+        ExecutorStatus.failed(
+            FailureReason.NODE_FAILURE, Optional.empty(), Optional.empty(), "BOOT_FAIL"));
+    Job job = poller.poll(submittedJob()).job();
+    assertEquals(JobState.FAILED, job.state());
+    assertEquals(Optional.of(JobState.SUBMITTED), job.lastChange().from());
+    assertEquals(NOW, job.lastChange().at());
+  }
+
+  @Test
+  public void cancelledOutsideDraftwatchIsCancelled() {
+    executor
+        .then(ExecutorStatus.running(Optional.of(T5)))
+        .then(ExecutorStatus.cancelled(Optional.of(T5), Optional.of(T9), "CANCELLED by 1001"));
+    Job job = poller.poll(poller.poll(submittedJob()).job()).job();
+    assertEquals(JobState.CANCELLED, job.state());
+    assertEquals("CANCELLED by 1001", job.lastChange().cause());
+    assertEquals(T9, job.lastChange().at());
+  }
+
+  @Test
+  public void unresolvedChangesNothing() {
+    executor
+        .then(ExecutorStatus.running(Optional.of(T5)))
+        .then(ExecutorStatus.unresolved("in neither squeue nor sacct"));
+    Job running = poller.poll(submittedJob()).job();
+    assertEquals(running, poller.poll(running).job());
+  }
+
+  @Test
   public void jobsThatAreNotSubmittedOrRunningAreReturnedUnchanged() {
     Job created = Job.created("j1", spec, T0);
     assertEquals(created, poller.poll(created).job());

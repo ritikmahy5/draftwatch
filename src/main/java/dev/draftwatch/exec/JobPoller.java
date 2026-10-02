@@ -12,7 +12,9 @@ import java.util.Optional;
 /**
  * Advances one submitted job by one poll: asks the executor for the attempt's status, maps it
  * onto the engine state machine, and on exit 0 validates the report. SUCCEEDED therefore always
- * means "exit 0 and the report passed every contract rule".
+ * means "exit 0 and the report passed every contract rule". A failure or cancellation the
+ * executor reports for a job that never looked RUNNING is preceded by RUNNING when the executor
+ * knows a start time, so the history shows that the attempt ran.
  */
 public final class JobPoller {
   private final Executor executor;
@@ -49,6 +51,7 @@ public final class JobPoller {
    * Polls {@code job} once. Jobs that are not SUBMITTED or RUNNING are returned unchanged.
    *
    * @throws IllegalStateException if a SUBMITTED or RUNNING job has no handle
+   * @throws ExecutorException if the executor cannot be asked; the job is unchanged
    */
   public Result poll(Job job) {
     if (job.state() != JobState.SUBMITTED && job.state() != JobState.RUNNING) {
@@ -75,6 +78,18 @@ public final class JobPoller {
         return exited(job, status, now);
       case LOST:
         return withoutReport(job.failed(FailureReason.UNEXPECTED_EXIT, status.detail(), now));
+      case FAILED:
+        return withoutReport(
+            startedIfKnown(job, status)
+                .failed(
+                    status.failureReason().orElseThrow(),
+                    status.detail(),
+                    status.endedAt().orElse(now)));
+      case CANCELLED:
+        return withoutReport(
+            startedIfKnown(job, status).cancelled(status.endedAt().orElse(now), status.detail()));
+      case UNRESOLVED:
+        return withoutReport(job);
       default:
         throw new IllegalStateException("unhandled executor status " + status.kind());
     }
@@ -102,6 +117,14 @@ public final class JobPoller {
     } catch (ReportViolationException e) {
       return withoutReport(running.failed(FailureReason.INVALID_REPORT, e.getMessage(), ended));
     }
+  }
+
+  /** {@code job}, moved to RUNNING first if it is SUBMITTED and {@code status} has a start. */
+  private static Job startedIfKnown(Job job, ExecutorStatus status) {
+    if (job.state() == JobState.SUBMITTED && status.startedAt().isPresent()) {
+      return job.running(status.startedAt().get(), "started");
+    }
+    return job;
   }
 
   private static Result withoutReport(Job job) {
