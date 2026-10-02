@@ -29,7 +29,7 @@ public final class AbsoluteDropDetector extends BaselineDetector {
         describe(),
         metric(),
         aggregate(current, metric()) - aggregate(baseline, metric()),
-        -spec.maxDrop(),
+        Thresholds.below(spec.maxDrop()),
         baseline.jobId(),
         "max_drop " + spec.maxDrop());
   }

@@ -6,6 +6,11 @@ import dev.draftwatch.domain.Metric;
 final class Thresholds {
   private Thresholds() {}
 
+  /** {@code -magnitude}, but {@code 0.0} rather than {@code -0.0}, which reads like a bug. */
+  static double below(double magnitude) {
+    return magnitude == 0 ? 0.0 : -magnitude;
+  }
+
   static DetectorVerdict verdict(
       String detector,
       Metric metric,

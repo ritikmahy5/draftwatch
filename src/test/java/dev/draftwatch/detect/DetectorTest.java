@@ -163,7 +163,8 @@ public class DetectorTest {
     DetectorVerdict v = d.evaluate(at("c", 200, 24), Optional.of(base), List.of());
     assertEquals(DetectorVerdict.Kind.REGRESSION, v.kind());
     assertEquals(-0.1, v.intervalUpper().getAsDouble(), 1e-12); // every prompt drops by 0.1
-    assertEquals(-0.0, v.threshold().getAsDouble(), 0.0);
+    assertEquals("positive zero, not -0.0", 0, Double.compare(0.0, v.threshold().getAsDouble()));
+    assertTrue(v.explanation(), v.explanation().endsWith("entirely below 0.0"));
     assertTrue(v.explanation(), v.explanation().startsWith("95% interval of (current - baseline)"));
   }
 

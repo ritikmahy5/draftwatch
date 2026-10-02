@@ -38,7 +38,7 @@ public final class NoiseFloorDetector extends BaselineDetector {
         describe(),
         metric(),
         aggregate(current, metric()) - aggregate(baseline, metric()),
-        -floor(),
+        Thresholds.below(floor()),
         baseline.jobId(),
         "k * sqrt(2) * sigma = " + floor());
   }

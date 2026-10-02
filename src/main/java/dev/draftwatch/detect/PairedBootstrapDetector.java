@@ -69,7 +69,7 @@ public final class PairedBootstrapDetector extends BaselineDetector {
           .explanation(e.getMessage())
           .build();
     }
-    double threshold = -spec.minEffect();
+    double threshold = Thresholds.below(spec.minEffect());
     boolean regression = interval.upper() < threshold;
     String text =
         percent(spec.confidence()) + "% interval of (current - baseline) "
