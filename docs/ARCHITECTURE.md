@@ -45,9 +45,11 @@ CheckpointSource ─discovers─▶ CheckpointDiscovered
   each target's on_regression actions to its RegressionDetected
 ```
 
-As of M3, `MeasurementStored` onward runs on the bus: `MeasurementRunner` publishes it and
-`DetectionService` subscribes (DECISIONS.md D44, D50). The discovery and job-state events arrive
-with `watch` in M4.
+`MeasurementStored` onward runs on the bus: `MeasurementRunner` publishes it and
+`DetectionService` subscribes (DECISIONS.md D44, D50). Discovery, triggering, and submission are
+direct calls from `WatchService` through injected interfaces (`CheckpointSource`,
+`TriggerChain`, `MeasurementRunner`); their events are not published until something consumes
+them (D56).
 
 Each arrow is an event on the `EventBus`. Components subscribe; none call each other
 directly across package boundaries except through interfaces injected by `Bootstrap`.
@@ -57,11 +59,13 @@ An exception thrown by a subscriber is caught by the bus, logged, and published 
 ## Key interfaces
 
 ```java
-interface CheckpointSource { List<Checkpoint> poll(); }
+interface CheckpointSource { Discovery poll(); }   // complete checkpoints + skipped paths (D54)
 interface Fingerprinter { String fingerprint(Path checkpointDir); }
 
 final class TriggerDecision { enum Kind { ACCEPT, REJECT, ABSTAIN } Kind kind(); Optional<String> reason(); }
-interface TriggerRule { TriggerDecision evaluate(Checkpoint ckpt, Probe probe, History history); }
+interface TriggerRule { TriggerDecision evaluate(Checkpoint ckpt, ResolvedProbe probe, History history); }
+interface History { boolean hasResult(String fp, String probeHash); List<Job> jobs(String fp, String probeHash);
+                    int activeJobs(String target); }                              // D57
 
 interface Executor {
   String name();                              // recorded in provenance, e.g. "local"
@@ -98,7 +102,7 @@ interface RegressionAction { void execute(RegressionDetected event) throws Excep
 
 | Pattern | Where | Justification |
 |---|---|---|
-| Strategy | `Executor`, `Fingerprinter`, `EstimatorStrategy`, `CompletionPolicy`, `RegressionDetector`, renderers | Behavior varies by environment or policy and is selected by config. |
+| Strategy | `Executor`, `Fingerprinter`, `EstimatorStrategy`, `CompletionPolicy`, `CheckpointSource`, `RegressionDetector`, `Notifier`, renderers | Behavior varies by environment or policy and is selected by config. |
 | Chain of Responsibility | `TriggerChain` over `TriggerRule`s | Ordered rules; first non-abstaining rule decides, with a reason. |
 | Observer | `EventBus` + subscribers | Decouples stages; notifiers and actions plug in without touching producers. |
 | State | `JobState` + transition table | Lifecycle has legal and illegal transitions; illegal ones throw. |
@@ -107,6 +111,7 @@ interface RegressionAction { void execute(RegressionDetected event) throws Excep
 | Template Method | `WeightFileFingerprinter` (base of both fingerprinters); `BaselineDetector` (base of the baseline-relative detectors) | The file walk, ordering, and encoding are shared, so the fingerprint methods cannot drift apart (DECISIONS.md D23); the Comparability guard runs before every baseline comparison, so no detector can skip it (D47). |
 | Repository | `ResultRepository`, `JobRepository`, `BaselineRepository` | Storage swappable (files now) and testable with in-memory fakes. |
 | Adapter | `SlurmExecutor` over `sbatch`/`squeue`/`sacct` text output | Isolates cluster CLI parsing behind `Executor`. |
+| Decorator | `CachingFingerprinter` over any `Fingerprinter` | Adds caching by file signature without changing the fingerprinters (D53). |
 | Factory | `Bootstrap` | The single place where config type names become objects. |
 
 `EventBus` is created once in `Bootstrap` and injected; it is never accessed statically.
@@ -176,6 +181,7 @@ missing from both is re-polled before being declared failed.
                                            set_at, source manual|auto)
   detections.log                           every detection outcome, one JSON object per line
   alerts.log                               one human-readable line per alert
+  fingerprints.json                        fingerprint cache: directory → signature, fingerprint
 ```
 
 Writes are atomic: write a temp file in the same directory, then rename. Results are
