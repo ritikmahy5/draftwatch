@@ -292,7 +292,7 @@ public final class ReportJson {
   }
 
   /** The four decoding keys; anything else is rejected. */
-  static Decoding toDecoding(JsonNode decoding) {
+  public static Decoding toDecoding(JsonNode decoding) {
     if (!decoding.isObject() || decoding.size() != 4) {
       throw new IllegalArgumentException("decoding must have exactly 4 keys");
     }
