@@ -5,7 +5,7 @@ Updated at the end of every milestone (DECISIONS.md D1). Shows the classes that 
 Accessors that only return a field are omitted; every domain and config class is immutable
 (private final fields, static factory or builder, no setters).
 
-**As of:** M3: detection and alerts.
+**As of:** M4: discovery and triggers.
 
 ## app: entry point, CLI commands, orchestration
 
@@ -49,6 +49,23 @@ classDiagram
   }
   class InitCommand { <<final>> }
   class BaselineCommand { <<final>> }
+  class WatchCommand {
+    <<final>>
+    ~DEFAULT_INTERVAL$ Duration
+  }
+  class WatchService {
+    <<final>>
+    +pass() PassReport
+  }
+  class PassReport {
+    <<final>>
+    +submitted() List~Submitted~
+    +baselineSubmitted() List~Job~
+    +skipped() List~Skipped~
+    +notMeasuredByRule() Map~String, Integer~
+    +finished() List~Job~
+    +stillActive() int
+  }
   class DetectionService {
     <<final>>
     +onMeasurementStored(MeasurementStored) void
@@ -101,6 +118,13 @@ classDiagram
   CliCommand <|.. StatusCommand
   CliCommand <|.. HistoryCommand
   CliCommand <|.. BaselineCommand
+  CliCommand <|.. WatchCommand
+  WatchCommand ..> WatchService : one pass per lock
+  WatchService ..> PassReport : returns
+  WatchService --> CheckpointSource
+  WatchService --> TriggerChain
+  WatchService --> History
+  WatchService --> MeasurementRunner
   Bootstrap ..> DetectionService : subscribes
   Bootstrap ..> ConsoleDetectionPrinter : subscribes
   DetectionService --> DetectorSuite
@@ -524,6 +548,28 @@ classDiagram
     <<final>>
     +combine(String adapter, String base)$ String
   }
+  class CachingFingerprinter {
+    <<final, Decorator>>
+    -delegate Fingerprinter
+    -method FingerprintMethod
+    -cache FingerprintCache
+    ~signature(Path dir)$ String
+  }
+  class FingerprintCache {
+    <<interface>>
+    +get(String key) Optional~Entry~
+    +put(String key, Entry entry) void
+  }
+  class WeightFiles {
+    <<final, package-private>>
+    ~under(Path dir)$ TreeMap~String, Path~
+  }
+
+  Fingerprinter <|.. CachingFingerprinter
+  CachingFingerprinter --> Fingerprinter : delegate
+  CachingFingerprinter --> FingerprintCache
+  CachingFingerprinter ..> WeightFiles : signature
+  WeightFileFingerprinter ..> WeightFiles : lists
 
   AdapterFingerprint ..> Sha256 : uses
   Fingerprinter <|.. WeightFileFingerprinter
@@ -563,7 +609,28 @@ classDiagram
     -stepRegex Pattern
     +extract(Path checkpointDir) long
   }
-  class CheckpointRejectedException { <<final>> }
+  class CheckpointRejectedException {
+    <<final>>
+    +incomplete(Path, String)$ CheckpointRejectedException
+    +isIncomplete() boolean
+  }
+  class CheckpointSource {
+    <<interface, Strategy>>
+    +poll() Discovery
+  }
+  class DirectoryCheckpointSource {
+    <<final>>
+    -target Target
+  }
+  class Discovery {
+    <<final>>
+    +checkpoints() List~Checkpoint~
+    +skipped() List~Skipped~
+  }
+
+  CheckpointSource <|.. DirectoryCheckpointSource
+  DirectoryCheckpointSource --> CheckpointInspector
+  DirectoryCheckpointSource ..> Discovery : returns
   class StepExtractionException { <<final>> }
 
   CompletionPolicy <|.. MarkerCompletionPolicy
@@ -854,6 +921,10 @@ classDiagram
     +all() List~DetectionRecord~
   }
   class FileDetectionLog { <<final>> }
+  class FileFingerprintCache {
+    <<final>>
+    +FILE$ String
+  }
   class DetectionRecord {
     <<final>>
     -kind String
@@ -915,6 +986,7 @@ classDiagram
   JobRepository <|.. FileJobRepository
   BaselineRepository <|.. FileBaselineRepository
   DetectionLog <|.. FileDetectionLog
+  FingerprintCache <|.. FileFingerprintCache
   DetectionLog ..> DetectionRecord
   ResultRepository <|.. FileResultRepository
   FileJobRepository --> JsonCodec
@@ -934,7 +1006,60 @@ classDiagram
 Test doubles (in `src/test`) give each interface its second implementation: `FakeExecutor`,
 `ScriptedExecutor`, `InMemoryJobRepository`, `InMemoryResultRepository`,
 `InMemoryBaselineRepository`, `InMemoryDetectionLog`, and test-local `HostIdentity`,
-`ProcessTable`, `Notifier`, and `RegressionDetector` fakes.
+`ProcessTable`, `Notifier`, `RegressionDetector`, `History`, and counting `Fingerprinter` fakes.
+
+## trigger: which checkpoints get measured
+
+```mermaid
+classDiagram
+  direction LR
+
+  class TriggerRule {
+    <<interface>>
+    +describe() String
+    +evaluate(Checkpoint, ResolvedProbe, History) TriggerDecision
+  }
+  class TriggerChain {
+    <<final, Chain of Responsibility>>
+    -rules List~TriggerRule~
+    +decide(Checkpoint, ResolvedProbe, History) Outcome
+  }
+  class Outcome {
+    <<final>>
+    +accepted() boolean
+    +rule() Optional~String~
+    +reason() String
+  }
+  class TriggerDecision {
+    <<final>>
+    +accept(String)$ TriggerDecision
+    +reject(String)$ TriggerDecision
+    +abstain()$ TriggerDecision
+  }
+  class History {
+    <<interface>>
+    +hasResult(String fingerprint, String probeHash) boolean
+    +jobs(String fingerprint, String probeHash) List~Job~
+    +activeJobs(String target) int
+  }
+  class RepositoryHistory { <<final>> }
+  class NotAlreadyMeasuredRule { <<final>> }
+  class MaxPendingRule { <<final>> }
+  class AlwaysFinalRule { <<final>> }
+  class EveryNStepsRule { <<final>> }
+
+  TriggerChain o-- "*" TriggerRule
+  TriggerChain ..> Outcome : returns
+  TriggerRule ..> TriggerDecision : returns
+  TriggerRule ..> History : reads
+  TriggerRule <|.. NotAlreadyMeasuredRule
+  TriggerRule <|.. MaxPendingRule
+  TriggerRule <|.. AlwaysFinalRule
+  TriggerRule <|.. EveryNStepsRule
+  History <|.. RepositoryHistory
+  RepositoryHistory --> JobRepository
+  RepositoryHistory --> ResultRepository
+```
 
 ## detect: regression detection
 
@@ -1116,7 +1241,7 @@ classDiagram
 | Package | Populated in |
 |---|---|
 | `app`, `config`, `domain`, `fingerprint` | M0–M2 |
-| `discovery` | M1 (step extraction), M2 (completion policies, inspector); M4 (checkpoint sources) |
+| `discovery` | M1 (step extraction), M2 (completion policies, inspector), M4 (checkpoint sources) |
 | `harness`, `exec`, `store`, `stats` | M1–M2 |
 | `detect`, `events`, `notify`, `action` | M3 |
 | `trigger` | M4 |
