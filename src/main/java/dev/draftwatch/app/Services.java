@@ -4,7 +4,10 @@ import dev.draftwatch.config.CompletionSpec;
 import dev.draftwatch.config.DraftwatchConfig;
 import dev.draftwatch.discovery.CheckpointInspector;
 import dev.draftwatch.discovery.CompletionPolicy;
+import dev.draftwatch.events.EventBus;
 import dev.draftwatch.harness.ProbeResolver;
+import dev.draftwatch.store.BaselineRepository;
+import dev.draftwatch.store.DetectionLog;
 import dev.draftwatch.store.JobRepository;
 import dev.draftwatch.store.ResultRepository;
 import dev.draftwatch.store.StateLock;
@@ -24,6 +27,9 @@ public final class Services {
   private final Function<CompletionSpec, CompletionPolicy> completionPolicies;
   private final JobRepository jobs;
   private final ResultRepository results;
+  private final BaselineRepository baselines;
+  private final DetectionLog detections;
+  private final EventBus bus;
   private final StateLock stateLock;
   private final Supplier<MeasurementRunner> runner;
   private final Sleeper sleeper;
@@ -36,6 +42,9 @@ public final class Services {
       Function<CompletionSpec, CompletionPolicy> completionPolicies,
       JobRepository jobs,
       ResultRepository results,
+      BaselineRepository baselines,
+      DetectionLog detections,
+      EventBus bus,
       StateLock stateLock,
       Supplier<MeasurementRunner> runner,
       Sleeper sleeper,
@@ -46,6 +55,9 @@ public final class Services {
     this.completionPolicies = Objects.requireNonNull(completionPolicies, "completionPolicies");
     this.jobs = Objects.requireNonNull(jobs, "jobs");
     this.results = Objects.requireNonNull(results, "results");
+    this.baselines = Objects.requireNonNull(baselines, "baselines");
+    this.detections = Objects.requireNonNull(detections, "detections");
+    this.bus = Objects.requireNonNull(bus, "bus");
     this.stateLock = Objects.requireNonNull(stateLock, "stateLock");
     this.runner = Objects.requireNonNull(runner, "runner");
     this.sleeper = Objects.requireNonNull(sleeper, "sleeper");
@@ -74,6 +86,19 @@ public final class Services {
 
   public ResultRepository results() {
     return results;
+  }
+
+  public BaselineRepository baselines() {
+    return baselines;
+  }
+
+  public DetectionLog detections() {
+    return detections;
+  }
+
+  /** The process's event bus, with every subscriber already registered by Bootstrap. */
+  public EventBus bus() {
+    return bus;
   }
 
   public StateLock stateLock() {

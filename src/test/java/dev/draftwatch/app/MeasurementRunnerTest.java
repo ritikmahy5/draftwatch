@@ -5,6 +5,8 @@ import static org.junit.Assert.assertTrue;
 
 import dev.draftwatch.domain.Measurement;
 import dev.draftwatch.domain.Provenance;
+import dev.draftwatch.events.EventBus;
+import dev.draftwatch.events.MeasurementStored;
 import dev.draftwatch.exec.Executor;
 import dev.draftwatch.exec.FailureReason;
 import dev.draftwatch.exec.Job;
@@ -22,6 +24,7 @@ import dev.draftwatch.testing.ScriptedExecutor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,11 +41,14 @@ public class MeasurementRunnerTest {
 
   private final InMemoryJobRepository jobs = new InMemoryJobRepository();
   private final InMemoryResultRepository results = new InMemoryResultRepository();
+  private final List<MeasurementStored> stored = new ArrayList<>();
+  private final EventBus bus = new EventBus(message -> {}, Clock.systemUTC());
   private Path state;
   private ReportScenario scenario;
 
   @Before
   public void setUp() {
+    bus.subscribe(MeasurementStored.class, "recorder", stored::add);
     Path dir = tmp.getRoot().toPath();
     state = dir.resolve("state");
     scenario = ReportScenario.sampledAdapter(dir);
@@ -57,6 +63,7 @@ public class MeasurementRunnerTest {
         new RetryPolicy(maxRetries),
         jobs,
         results,
+        bus,
         ids,
         Clock.systemUTC(),
         state,
@@ -96,6 +103,9 @@ public class MeasurementRunnerTest {
     assertEquals(job.lastChange().at(), p.endTime());
     assertEquals(state.resolve("raw/job-1/attempt-1/report.json"), p.rawReportPath());
     assertTrue(Files.isRegularFile(p.rawReportPath()));
+    assertEquals(1, stored.size());
+    assertEquals(m, stored.get(0).measurement());
+    assertEquals(results.locate(m), stored.get(0).resultFile());
   }
 
   @Test
@@ -161,6 +171,7 @@ public class MeasurementRunnerTest {
     Job again = runner.advance(submitted);
     assertEquals(succeeded, again);
     assertEquals(1, results.all().size());
+    assertEquals("published again; detection skips what is already recorded", 2, stored.size());
   }
 
   @Test

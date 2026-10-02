@@ -17,7 +17,8 @@ import java.util.Map;
  */
 final class Project {
   private final Path dir;
-  private final String fixture = "synthetic_three_prompts.json";
+  private String fixture = "synthetic_three_prompts.json";
+  private String detectors = "";
   private final Map<String, String> fakeEnv = new HashMap<>();
   private String checkpointType = "full";
   private String executorType = "local";
@@ -29,6 +30,18 @@ final class Project {
 
   Project fakeEnv(String name, String value) {
     fakeEnv.put(name, value);
+    return this;
+  }
+
+  /** The fake harness's fixture for the next submissions (rewrite the config with write()). */
+  Project fixture(String fileName) {
+    fixture = fileName;
+    return this;
+  }
+
+  /** A YAML flow list for the target's {@code detectors}; the default detector if not set. */
+  Project detectors(String yamlList) {
+    detectors = yamlList;
     return this;
   }
 
@@ -102,6 +115,7 @@ final class Project {
               checkpointType.equals("adapter") ? "    base_model: base" : "",
               "    completion: { marker: DONE }",
               "    probes: [chat]",
+              detectors.isEmpty() ? "" : "    detectors: " + detectors,
               "");
       Files.writeString(config(), String.join("\n", lines));
       return this;

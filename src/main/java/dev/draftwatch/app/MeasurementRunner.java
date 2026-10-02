@@ -7,6 +7,8 @@ import dev.draftwatch.domain.Checkpoint;
 import dev.draftwatch.domain.Measurement;
 import dev.draftwatch.domain.Provenance;
 import dev.draftwatch.domain.ResolvedProbe;
+import dev.draftwatch.events.EventBus;
+import dev.draftwatch.events.MeasurementStored;
 import dev.draftwatch.exec.Executor;
 import dev.draftwatch.exec.ExecutorException;
 import dev.draftwatch.exec.FailureReason;
@@ -34,9 +36,9 @@ import java.util.Optional;
 
 /**
  * Runs measurement jobs through their lifecycle: create, submit, poll, store the result, retry.
- * Every state change is saved before the next step, and a result is stored before its job is
- * marked SUCCEEDED, so a crash at any point loses nothing and duplicates nothing
- * (DECISIONS.md D37).
+ * Every state change is saved before the next step, and a result is stored, and
+ * {@link MeasurementStored} published, before its job is marked SUCCEEDED, so a crash at any point
+ * loses nothing and duplicates nothing (DECISIONS.md D37).
  */
 public final class MeasurementRunner {
   public static final String INVOCATION_FILE = "invocation.json";
@@ -48,6 +50,7 @@ public final class MeasurementRunner {
   private final RetryPolicy retryPolicy;
   private final JobRepository jobs;
   private final ResultRepository results;
+  private final EventBus bus;
   private final JobIds ids;
   private final Clock clock;
   private final Path stateDir;
@@ -68,6 +71,7 @@ public final class MeasurementRunner {
       RetryPolicy retryPolicy,
       JobRepository jobs,
       ResultRepository results,
+      EventBus bus,
       JobIds ids,
       Clock clock,
       Path stateDir,
@@ -78,6 +82,7 @@ public final class MeasurementRunner {
     this.retryPolicy = Objects.requireNonNull(retryPolicy, "retryPolicy");
     this.jobs = Objects.requireNonNull(jobs, "jobs");
     this.results = Objects.requireNonNull(results, "results");
+    this.bus = Objects.requireNonNull(bus, "bus");
     this.ids = Objects.requireNonNull(ids, "ids");
     this.clock = Objects.requireNonNull(clock, "clock");
     this.stateDir = Objects.requireNonNull(stateDir, "stateDir");
@@ -146,7 +151,9 @@ public final class MeasurementRunner {
       JobPoller.Result polled = poller.poll(next);
       next = polled.job();
       if (polled.report().isPresent()) {
-        results.append(measurement(next, polled.report().get()));
+        Measurement m = measurement(next, polled.report().get());
+        results.append(m);
+        bus.publish(new MeasurementStored(clock.instant(), m, results.locate(m)));
       }
       if (!next.equals(job)) {
         jobs.save(next);
