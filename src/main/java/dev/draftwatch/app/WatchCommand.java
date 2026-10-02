@@ -107,6 +107,7 @@ public final class WatchCommand implements CliCommand {
       return Cli.EXIT_OK;
     }
     try {
+      context.out().println("watch pass at " + s.clock().instant());
       print(context.out(), watch.pass(), s);
       return Cli.EXIT_OK;
     } catch (StoreException e) {
@@ -116,11 +117,8 @@ public final class WatchCommand implements CliCommand {
     }
   }
 
+  /** The pass's details, then a closing {@code done:} line with its counts. */
   static void print(PrintStream out, PassReport r, Services s) {
-    out.println(
-        "watch pass at " + r.at() + ": " + (r.submitted().size() + r.baselineSubmitted().size())
-            + " submitted, " + r.finished().size() + " finished, " + r.stillActive()
-            + " still running");
     for (String error : r.errors()) {
       out.println("  error: " + error);
     }
@@ -145,6 +143,9 @@ public final class WatchCommand implements CliCommand {
     for (Job job : r.finished()) {
       out.println("  " + SubmitCommand.outcome(runner, job));
     }
+    out.println(
+        "  done: " + (r.submitted().size() + r.baselineSubmitted().size()) + " submitted, "
+            + r.finished().size() + " finished, " + r.stillActive() + " still running");
   }
 
   private static String where(Job job) {

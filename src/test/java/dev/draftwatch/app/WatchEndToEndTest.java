@@ -142,7 +142,7 @@ public class WatchEndToEndTest {
       assertEquals(job.toString(), "SUCCEEDED", job.get("state").textValue());
     }
     assertEquals(Cli.EXIT_OK, watchOnce(p));
-    assertTrue(cli.out(), cli.out().contains(": 0 submitted, 0 finished, 0 still running"));
+    assertTrue(cli.out(), cli.out().contains("done: 0 submitted, 0 finished, 0 still running"));
     cli.run("history", "run", "--probe", "chat", "--config", p.config().toString());
     assertTrue(cli.out(), cli.out().contains("3 result(s)"));
   }

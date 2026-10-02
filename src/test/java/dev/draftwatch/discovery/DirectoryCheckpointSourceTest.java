@@ -87,6 +87,7 @@ public class DirectoryCheckpointSourceTest {
     assertEquals(2, d.skipped().size());
     for (Discovery.Skipped s : d.skipped()) {
       assertEquals(Discovery.SkipKind.MISSING_DIRECTORY, s.kind());
+      assertEquals(s.path() + ": does not exist yet", s.reason());
     }
   }
 

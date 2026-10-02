@@ -39,7 +39,7 @@ public final class DirectoryCheckpointSource implements CheckpointSource {
       if (!Files.isDirectory(root)) {
         skipped.add(
             new Discovery.Skipped(
-                root, Discovery.SkipKind.MISSING_DIRECTORY, "does not exist yet"));
+                root, Discovery.SkipKind.MISSING_DIRECTORY, root + ": does not exist yet"));
         continue;
       }
       for (Path dir : subdirectories(root, skipped)) {

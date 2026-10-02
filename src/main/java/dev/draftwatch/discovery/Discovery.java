@@ -37,6 +37,7 @@ public final class Discovery {
       return kind;
     }
 
+    /** Why, starting with the path. */
     public String reason() {
       return reason;
     }
