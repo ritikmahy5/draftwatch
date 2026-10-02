@@ -17,7 +17,6 @@ import dev.draftwatch.domain.ResolvedProbe;
 import dev.draftwatch.domain.Target;
 import dev.draftwatch.domain.WireNamed;
 import dev.draftwatch.fingerprint.FingerprintException;
-import dev.draftwatch.fingerprint.FingerprintMethod;
 import dev.draftwatch.harness.ProbeResolver;
 import dev.draftwatch.harness.PromptSetException;
 import java.io.PrintStream;
@@ -37,17 +36,11 @@ import java.util.function.Function;
  */
 public final class ValidateCommand implements CliCommand {
   private final ConfigLoader loader;
-  private final Function<FingerprintMethod, ProbeResolver> resolvers;
+  private final Function<DraftwatchConfig, Services> services;
 
-  /**
-   * Creates the command.
-   *
-   * @param resolvers gives the probe resolver for the config's fingerprint method
-   */
-  public ValidateCommand(
-      ConfigLoader loader, Function<FingerprintMethod, ProbeResolver> resolvers) {
+  public ValidateCommand(ConfigLoader loader, Function<DraftwatchConfig, Services> services) {
     this.loader = Objects.requireNonNull(loader, "loader");
-    this.resolvers = Objects.requireNonNull(resolvers, "resolvers");
+    this.services = Objects.requireNonNull(services, "services");
   }
 
   @Override
@@ -63,7 +56,7 @@ public final class ValidateCommand implements CliCommand {
       context.err().println(e.getMessage());
       return Cli.EXIT_FAILURE;
     }
-    ProbeResolver resolver = resolvers.apply(config.fingerprintMethod());
+    ProbeResolver resolver = services.apply(config).probeResolver();
     List<ResolvedProbe> resolved = new ArrayList<>();
     List<String> problems = new ArrayList<>();
     for (int i = 0; i < config.probes().size(); i++) {
