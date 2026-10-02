@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """Records real Slurm output for draftwatch's fixtures, and runs D9's check (DECISIONS.md D64).
 
-Run it once on a login node of the target cluster:
+Run it once on the target cluster, as a small CPU-only job of its own: Explorer kills
+long-running processes on login nodes (a first attempt there was killed within a minute):
 
-    python3 scripts/record_slurm_fixtures.py --out slurm-fixtures [--partition short]
-        [--account lab] [--history-days 365] [--poll 10] [--max-minutes 30]
+    sbatch --time=01:00:00 --mem=1G --cpus-per-task=1 --output=recorder-%j.log \
+        --wrap "python3 -u scripts/record_slurm_fixtures.py --out slurm-fixtures"
+
+Options: [--partition short] [--account lab] [--history-days 365] [--poll 20]
+[--max-minutes 40] [--history-only] (record only the history files, submitting nothing).
 
 It submits a few tiny CPU-only jobs (1 CPU, at most 100 MB, at most a few minutes each),
 polls each one with exactly the squeue and sacct arguments draftwatch uses, and writes one
@@ -17,7 +21,8 @@ src/test/resources/fixtures/slurm/. It also:
 
 Every file holds output exactly as the commands printed it. History files contain your past
 job ids and times, and "CANCELLED by <uid>" names a numeric uid; review them before
-committing. Every job this script submitted is cancelled when it exits, even on Ctrl-C.
+committing. Every job this script submitted is cancelled when it exits, even on Ctrl-C or when Slurm
+stops it (SIGTERM).
 
     python3 scripts/record_slurm_fixtures.py --print-argv 4242
 
@@ -30,6 +35,7 @@ import argparse
 import json
 import os
 import re
+import signal
 import socket
 import subprocess
 import sys
@@ -75,7 +81,6 @@ SCENARIOS = [
     ("timeout", ["--time=1"], "sleep 600\n", None),
     ("out_of_memory", ["--mem=64M"],
      "python3 -c 'b = b\"x\" * (1024 * 1024 * 1024)'\n", None),
-    ("deadline", ["--time=10", "--deadline=now+60"], "sleep 600\n", None),
     ("requeued", ["--requeue"], "sleep 60\n", ("RUNNING", "requeue")),
 ]
 
@@ -175,14 +180,22 @@ def same(a, b):
 
 # --- main --------------------------------------------------------------------------------
 
+def stop(signum, frame):
+    """Turns SIGTERM, which Slurm sends before killing a job, into an exit that runs cleanup."""
+    raise SystemExit("stopped by signal %d" % signum)
+
+
 def main():
+    signal.signal(signal.SIGTERM, stop)
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--out", help="directory for the recorded files")
     parser.add_argument("--partition")
     parser.add_argument("--account")
     parser.add_argument("--history-days", type=int, default=365)
-    parser.add_argument("--poll", type=int, default=10, help="seconds between observations")
-    parser.add_argument("--max-minutes", type=int, default=30)
+    parser.add_argument("--poll", type=int, default=20, help="seconds between observations")
+    parser.add_argument("--max-minutes", type=int, default=40)
+    parser.add_argument("--history-only", action="store_true",
+                        help="record only the history files; submit nothing")
     parser.add_argument("--print-argv", metavar="JOB_ID",
                         help="print the query arguments for JOB_ID as JSON and exit")
     args = parser.parse_args()
@@ -216,9 +229,10 @@ def main():
             settings[key] = line.split("=", 1)[1].strip()
 
     jobs = []  # dicts: name, id, sbatch, observations, action, actions, done
+    scenarios = [] if args.history_only else SCENARIOS + [
+        ("sbatch_inside_job", [], d9_script(args), None)]
     try:
-        for name, extra, body, action in SCENARIOS + [("sbatch_inside_job", [], d9_script(args),
-                                                       None)]:
+        for name, extra, body, action in scenarios:
             script = os.path.join(out, "scripts", name + ".sh")
             with open(script, "w") as f:
                 f.write("#!/bin/sh\n" + body)
@@ -286,8 +300,10 @@ def main():
     start = (datetime.now(timezone.utc) - timedelta(days=args.history_days)).strftime(
         "%Y-%m-%d")
     user = os.environ.get("USER", "")
+    # --state selects jobs by their state during [--starttime, --endtime]. On Explorer
+    # (Slurm 23.11.6) this query found no jobs without --endtime and the expected ones with it.
     history = run(["sacct", "--noheader", "--parsable2", "--allocations", "--user=" + user,
-                   "--starttime=" + start, "--state=" + HISTORY_STATES,
+                   "--starttime=" + start, "--endtime=now", "--state=" + HISTORY_STATES,
                    "--format=" + SACCT_FORMAT], query=True)
     latest = {}
     for line in history["stdout"].splitlines():
