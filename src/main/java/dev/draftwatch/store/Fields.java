@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -45,6 +46,11 @@ final class Fields {
   Optional<Fields> optionalObject(String key) {
     JsonNode v = node.get(key);
     return v == null || v.isNull() ? Optional.empty() : Optional.of(new Fields(v, at(key)));
+  }
+
+  /** Every key of this object with its value, in document order. */
+  List<Map.Entry<String, JsonNode>> entries() {
+    return new ArrayList<>(node.properties());
   }
 
   JsonNode raw(String key) {
