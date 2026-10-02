@@ -14,14 +14,21 @@ new checkpoint ──▶ trigger rules ──▶ measurement job ──▶ resul
 
 ## Status
 
-M4 (discovery and triggers) complete: `draftwatch watch` polls each target's checkpoint
+M5 (Slurm executor) is code complete; its last step needs the cluster. With `executor.type:
+slurm`, measurements are submitted with `sbatch` and followed through `squeue` and `sacct`.
+`draftwatch schedule` runs `watch --once` on the cluster as a CPU-only job that resubmits itself
+first, and `unschedule` ends it. The Slurm tests replay hand-written (synthetic) output in
+Slurm's documented formats. The roadmap requires output recorded on Explorer, plus a check of
+whether `sbatch` works inside a job: run `scripts/record_slurm_fixtures.py` there
+(DECISIONS.md D9, D64).
+
+M4 (discovery and triggers) is complete: `draftwatch watch` polls each target's checkpoint
 directory, passes every complete checkpoint through the target's trigger rules, submits the
 accepted ones, and advances running jobs. Each pass holds the state lock (`--once` for one pass,
 or a local-only loop with `--interval`). Every stored measurement is checked by the target's
 detectors against its baseline (`draftwatch baseline`). Regressions and errors are alerted on
 the console and in `alerts.log`, and every outcome is recorded in `detections.log`. Tests use
-the fake harness (`scripts/fake_harness.py`, synthetic data only). Next: M5. See
-`docs/ROADMAP.md`.
+the fake harness (`scripts/fake_harness.py`, synthetic data only). See `docs/ROADMAP.md`.
 
 ## Layout
 
@@ -32,6 +39,7 @@ docs/MEASUREMENT_CONTRACT.md  Java ⇄ Python harness boundary and metric defini
 docs/uml/class-diagram.md     Mermaid class diagram of the current code
 scripts/fake_harness.py       stdlib-only fake harness for tests (synthetic numbers only)
 scripts/bootstrap_reference.py  independent reference for the paired bootstrap (used by tests)
+scripts/record_slurm_fixtures.py  records real Slurm output on the cluster for the tests (D64)
 ```
 
 Tests need `python3` (3.10+), `/bin/sh`, and `env` on the PATH (DECISIONS.md D41).

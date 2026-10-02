@@ -5,7 +5,7 @@ Updated at the end of every milestone (DECISIONS.md D1). Shows the classes that 
 Accessors that only return a field are omitted; every domain and config class is immutable
 (private final fields, static factory or builder, no setters).
 
-**As of:** M4: discovery and triggers.
+**As of:** M5: Slurm executor (code complete; the recordings from Explorer are pending).
 
 ## app: entry point, CLI commands, orchestration
 
@@ -105,6 +105,17 @@ classDiagram
     <<interface>>
     +sleep(Duration) void
   }
+  class ScheduleCommand { <<final>> }
+  class UnscheduleCommand { <<final>> }
+  class Schedule {
+    <<final>>
+    -dir Path
+    -jobName String
+    +options() List~String~
+    +resubmitOptions(Duration) List~String~
+    +script(String token, Duration, Instant) String
+    +watchCommand() List~String~
+  }
 
   Main ..> Bootstrap : creates
   Bootstrap ..> Cli : creates
@@ -119,6 +130,12 @@ classDiagram
   CliCommand <|.. HistoryCommand
   CliCommand <|.. BaselineCommand
   CliCommand <|.. WatchCommand
+  CliCommand <|.. ScheduleCommand
+  CliCommand <|.. UnscheduleCommand
+  ScheduleCommand ..> Schedule : writes and submits
+  UnscheduleCommand ..> Schedule : ends
+  ScheduleCommand --> SlurmCli
+  UnscheduleCommand --> SlurmCli
   WatchCommand ..> WatchService : one pass per lock
   WatchService ..> PassReport : returns
   WatchService --> CheckpointSource
@@ -207,6 +224,13 @@ classDiagram
     -time Optional~String~
     -requeueOnPreempt boolean
     -extraSbatchArgs List~String~
+    -scheduleSbatchArgs List~String~
+  }
+  class SbatchOptions {
+    <<final>>
+    +GPU_VARIABLES$ Set~String~
+    ~refuseForMeasurement(String)$ Optional~String~
+    ~refuseForSchedule(String)$ Optional~String~
   }
   class HarnessConfig {
     <<final>>
@@ -293,6 +317,7 @@ classDiagram
   DraftwatchConfig *-- "1..*" Probe
   DraftwatchConfig *-- "1..*" TargetConfig
   ExecutorConfig *-- "0..1" SlurmConfig
+  ConfigValidator ..> SbatchOptions : checks sbatch args
   ExecutorConfig --> ExecutorType
   TargetConfig *-- Target
   TargetConfig *-- CompletionSpec
@@ -858,6 +883,7 @@ classDiagram
   class ExecutorStatus {
     <<final>>
     -kind Kind
+    -failureReason Optional~FailureReason~
     -exitCode OptionalInt
     -startedAt Optional~Instant~
     -endedAt Optional~Instant~
@@ -886,6 +912,97 @@ classDiagram
   JobPoller --> ReportParser
   JobIds <|.. TimestampJobIds
 ```
+
+`ExecutorStatus.Kind` is `QUEUED`, `RUNNING`, `EXITED`, `LOST`, `FAILED` (with a reason),
+`CANCELLED`, or `UNRESOLVED` (the poll changes nothing; DECISIONS.md D60).
+
+## exec.slurm: the Slurm executor
+
+```mermaid
+classDiagram
+  direction TB
+
+  class Executor {
+    <<interface, Strategy>>
+  }
+  class SlurmExecutor {
+    <<final>>
+    +NAME$ String
+    +SCRIPT_FILE$ String
+    +UNRESOLVED_GRACE$ Duration
+    -config SlurmConfig
+    ~options(JobSpec) List~String~
+    ~script(JobSpec)$ String
+  }
+  class SlurmCli {
+    <<final, Adapter>>
+    +SQUEUE_FORMAT$ String
+    +SACCT_FORMAT$ String
+    +TIME_FORMAT$ String
+    +submit(List~String~, Path, List~String~, Set~String~) SlurmJobId
+    +queue(SlurmJobId) Optional~QueueEntry~
+    +queueByName(String, String) List~QueueEntry~
+    +accounting(SlurmJobId) Optional~AccountingRecord~
+    +cancel(SlurmJobId) void
+  }
+  class CommandRunner {
+    <<interface, Strategy>>
+    +run(List~String~, Map~String, String~, Set~String~) CommandResult
+  }
+  class ProcessCommandRunner {
+    <<final>>
+    -timeout Duration
+  }
+  class CommandResult {
+    <<final>>
+    -argv List~String~
+    -exitCode int
+    -stdout String
+    -stderr String
+  }
+  class SlurmJobId {
+    <<final>>
+    -id String
+    -cluster Optional~String~
+    +parse(String)$ SlurmJobId
+  }
+  class SlurmState {
+    <<enumeration>>
+    +group() Group
+    +parse(String)$ Optional~SlurmState~
+  }
+  class QueueEntry {
+    <<final>>
+    +state() Optional~SlurmState~
+    +start() Optional~Instant~
+    +isAlive() boolean
+  }
+  class AccountingRecord {
+    <<final>>
+    +state() Optional~SlurmState~
+    +exitCode() OptionalInt
+    +signal() OptionalInt
+  }
+  class ShellQuote {
+    <<final>>
+    +quote(String)$ String
+  }
+
+  Executor <|.. SlurmExecutor
+  SlurmExecutor --> SlurmCli
+  SlurmExecutor ..> ShellQuote : quotes the script
+  SlurmCli --> CommandRunner
+  CommandRunner <|.. ProcessCommandRunner
+  CommandRunner ..> CommandResult : returns
+  SlurmCli ..> SlurmJobId
+  SlurmCli ..> QueueEntry : parses squeue
+  SlurmCli ..> AccountingRecord : parses sacct
+  QueueEntry --> SlurmState
+  AccountingRecord --> SlurmState
+```
+
+Test doubles: `ReplayCommandRunner` answers with recorded or synthetic fixture output
+(`fixtures/slurm/`), and `FakeSlurm` simulates a cluster that runs batch scripts locally.
 
 ## store: the state directory
 
@@ -978,6 +1095,11 @@ classDiagram
     <<interface>>
     +isAlive(long pid, Optional~Instant~ start) boolean
   }
+  class SlurmJobTable {
+    <<interface>>
+    +isAlive(String slurmJobId) boolean
+  }
+  class SqueueJobTable { <<final>> }
   class SystemHostIdentity { <<final>> }
   class SystemProcessTable { <<final>> }
   class StoreException { <<final>> }
@@ -997,6 +1119,9 @@ classDiagram
   StateLock ..> LockHolder : records
   StateLock --> HostIdentity
   StateLock --> ProcessTable
+  StateLock --> SlurmJobTable
+  SlurmJobTable <|.. SqueueJobTable
+  SqueueJobTable --> SlurmCli
   HostIdentity <|.. SystemHostIdentity
   ProcessTable <|.. SystemProcessTable
   StateLock ..> StateLockException : throws
@@ -1006,7 +1131,8 @@ classDiagram
 Test doubles (in `src/test`) give each interface its second implementation: `FakeExecutor`,
 `ScriptedExecutor`, `InMemoryJobRepository`, `InMemoryResultRepository`,
 `InMemoryBaselineRepository`, `InMemoryDetectionLog`, and test-local `HostIdentity`,
-`ProcessTable`, `Notifier`, `RegressionDetector`, `History`, and counting `Fingerprinter` fakes.
+`ProcessTable`, `SlurmJobTable`, `Notifier`, `RegressionDetector`, `History`, and counting
+`Fingerprinter` fakes.
 
 ## trigger: which checkpoints get measured
 
@@ -1245,4 +1371,5 @@ classDiagram
 | `harness`, `exec`, `store`, `stats` | M1–M2 |
 | `detect`, `events`, `notify`, `action` | M3 |
 | `trigger` | M4 |
+| `exec.slurm` | M5 |
 | `report` | M6 |

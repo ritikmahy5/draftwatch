@@ -85,6 +85,8 @@ re-measures final checkpoints forever.
   resubmits itself with `--begin=now+<interval>` (default 15 minutes). A one-off
   `watch --once` from a login node is allowed because it only fingerprints sampled blocks and
   submits jobs (DECISIONS.md D9).
+- With `executor.type: slurm`, `submit` returns once sbatch has accepted its jobs, and
+  `watch --once` or the schedule collects the results (DECISIONS.md D61).
 - Lifecycle and retry policy: see ARCHITECTURE.md, "Job state machine".
 
 ### F4 — Result store with provenance

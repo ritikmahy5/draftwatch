@@ -10,8 +10,9 @@ src/main/java/dev/draftwatch/
   fingerprint/  Fingerprinter interface, SampledBlockFingerprinter, FullFileFingerprinter
   discovery/    CheckpointSource, completion policies, step extraction
   trigger/      TriggerRule interface + rules, TriggerChain
-  exec/         Executor interface, LocalExecutor, SlurmExecutor, JobState, Job, JobSpec,
+  exec/         Executor interface, LocalExecutor, JobState, Job, JobSpec,
                 MeasurementSpec, JobPoller, RetryPolicy
+  exec/slurm/   SlurmExecutor, SlurmCli (sbatch/squeue/sacct/scancel), CommandRunner
   harness/      HarnessInvocation builder, ReportParser (all MEASUREMENT_CONTRACT rules),
                 PromptSetReader, ProbeResolver
   store/        ResultRepository, JobRepository, BaselineRepository, file implementations, StateLock
@@ -73,6 +74,11 @@ interface Executor {
   ExecutorStatus status(JobHandle handle);   // executor-native status, mapped by JobPoller
   void cancel(JobHandle handle);
 }
+// ExecutorStatus.Kind: QUEUED, RUNNING, EXITED, LOST, FAILED (with a reason), CANCELLED,
+// UNRESOLVED (this poll changes nothing; D60)
+interface CommandRunner { CommandResult run(List<String> argv, Map<String, String> set,
+                                            Set<String> unset); }      // sbatch, squeue, ...
+interface SlurmJobTable { boolean isAlive(String slurmJobId); }        // StateLock takeover, D62
 
 interface ResultRepository {
   void append(Measurement m);
@@ -102,7 +108,7 @@ interface RegressionAction { void execute(RegressionDetected event) throws Excep
 
 | Pattern | Where | Justification |
 |---|---|---|
-| Strategy | `Executor`, `Fingerprinter`, `EstimatorStrategy`, `CompletionPolicy`, `CheckpointSource`, `RegressionDetector`, `Notifier`, renderers | Behavior varies by environment or policy and is selected by config. |
+| Strategy | `Executor`, `Fingerprinter`, `EstimatorStrategy`, `CompletionPolicy`, `CheckpointSource`, `RegressionDetector`, `Notifier`, `CommandRunner`, renderers | Behavior varies by environment or policy and is selected by config; `CommandRunner` lets tests replay recorded Slurm output. |
 | Chain of Responsibility | `TriggerChain` over `TriggerRule`s | Ordered rules; first non-abstaining rule decides, with a reason. |
 | Observer | `EventBus` + subscribers | Decouples stages; notifiers and actions plug in without touching producers. |
 | State | `JobState` + transition table | Lifecycle has legal and illegal transitions; illegal ones throw. |
@@ -110,7 +116,7 @@ interface RegressionAction { void execute(RegressionDetected event) throws Excep
 | Builder | `JobSpec`, `HarnessInvocation`; domain `Target`, `Checkpoint`, `Provenance`, `AcceptanceReport`, `SeedReport` | Many fields; invalid combinations rejected at `build()`. |
 | Template Method | `WeightFileFingerprinter` (base of both fingerprinters); `BaselineDetector` (base of the baseline-relative detectors) | The file walk, ordering, and encoding are shared, so the fingerprint methods cannot drift apart (DECISIONS.md D23); the Comparability guard runs before every baseline comparison, so no detector can skip it (D47). |
 | Repository | `ResultRepository`, `JobRepository`, `BaselineRepository` | Storage swappable (files now) and testable with in-memory fakes. |
-| Adapter | `SlurmExecutor` over `sbatch`/`squeue`/`sacct` text output | Isolates cluster CLI parsing behind `Executor`. |
+| Adapter | `SlurmCli` over `sbatch`/`squeue`/`sacct`/`scancel` text output, used by `SlurmExecutor` | Isolates cluster CLI arguments and parsing behind `Executor` (DECISIONS.md D58). |
 | Decorator | `CachingFingerprinter` over any `Fingerprinter` | Adds caching by file signature without changing the fingerprinters (D53). |
 | Factory | `Bootstrap` | The single place where config type names become objects. |
 
@@ -157,7 +163,10 @@ inputs would fail the same way (DECISIONS.md D30). A job is attempted at most
 
 Unknown Slurm states are logged and treated as "no change" for one poll, then FAILED
 (`UNEXPECTED_EXIT`) if still unknown. `sacct` can lag after a job leaves `squeue`; a job
-missing from both is re-polled before being declared failed.
+missing from both is re-polled before being declared failed. DECISIONS.md D59 makes the table
+precise (exit codes come only from sacct; when `PREEMPTED` means "not requeued"; the documented
+states the table omits). D60 defines "one poll" as a later poll at least 5 minutes after the first
+unresolved observation, recorded in the run directory.
 
 ## Statistics
 
@@ -177,11 +186,15 @@ missing from both is re-polled before being declared failed.
   raw/<job-id>/attempt-<n>/invocation.json the exact argv of attempt n
   raw/<job-id>/attempt-<n>/report.json     harness output exactly as written
   raw/<job-id>/attempt-<n>/stdout.log, stderr.log, exit_code
+  raw/<job-id>/attempt-<n>/job.sbatch, sbatch.json  slurm: the batch script and exact sbatch argv
+  raw/<job-id>/attempt-<n>/slurm_unresolved.json    slurm: first unresolved observation (D60)
   baselines.json                           target → baseline checkpoint (fingerprint, path, step,
                                            set_at, source manual|auto)
   detections.log                           every detection outcome, one JSON object per line
   alerts.log                               one human-readable line per alert
   fingerprints.json                        fingerprint cache: directory → signature, fingerprint
+  schedule/watch.sbatch, active, job_id,   the self-resubmitting watch job: its script, token,
+           watch.log, stopped              latest job id, log, and a failed resubmission (D63)
 ```
 
 Writes are atomic: write a temp file in the same directory, then rename. Results are
@@ -210,4 +223,5 @@ different probe hashes and silently break comparability.
 v1 is single-process per state directory (enforced by StateLock). One `watch` pass is:
 poll sources → evaluate triggers → submit → poll jobs → handle completions. The local
 executor may repeat passes in a loop; the slurm executor runs one pass per scheduled job
-(SPEC.md F3).
+(SPEC.md F3). The scheduled job's script resubmits itself before it runs `watch --once`, so a
+failed pass never ends the schedule (DECISIONS.md D63).
