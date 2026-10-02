@@ -76,8 +76,10 @@ import dev.draftwatch.trigger.NotAlreadyMeasuredRule;
 import dev.draftwatch.trigger.RepositoryHistory;
 import dev.draftwatch.trigger.TriggerChain;
 import dev.draftwatch.trigger.TriggerRule;
+import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
@@ -161,6 +163,7 @@ public final class Bootstrap {
 
   public Cli cli() {
     ConfigLoader loader = new ConfigLoader(new ConfigValidator());
+    SlurmCli slurm = new SlurmCli(slurmCommands);
     Map<String, CliCommand> commands =
         Map.of(
             "init", new InitCommand(),
@@ -169,8 +172,29 @@ public final class Bootstrap {
             "status", new StatusCommand(loader, this::services),
             "history", new HistoryCommand(loader, this::services),
             "baseline", new BaselineCommand(loader, this::services),
-            "watch", new WatchCommand(loader, this::services));
+            "watch", new WatchCommand(loader, this::services),
+            "schedule",
+                new ScheduleCommand(
+                    loader, this::services, slurm, launcher(), new SecureRandom()),
+            "unschedule",
+                new UnscheduleCommand(
+                    loader, this::services, slurm, System.getProperty("user.name")));
     return new Cli(COMMANDS, commands, out, err);
+  }
+
+  /** How a scheduled job starts draftwatch: this JVM, with this class path, made absolute. */
+  static List<String> launcher() {
+    List<String> classPath = new ArrayList<>();
+    for (String entry : System.getProperty("java.class.path").split(File.pathSeparator)) {
+      if (!entry.isEmpty()) {
+        classPath.add(Paths.get(entry).toAbsolutePath().toString());
+      }
+    }
+    return List.of(
+        Paths.get(System.getProperty("java.home"), "bin", "java").toString(),
+        "-cp",
+        String.join(File.pathSeparator, classPath),
+        Main.class.getName());
   }
 
   /** Everything that depends on a loaded config, with the event bus fully subscribed. */

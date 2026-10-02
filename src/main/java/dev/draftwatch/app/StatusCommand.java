@@ -8,6 +8,7 @@ import dev.draftwatch.exec.JobState;
 import dev.draftwatch.store.LockHolder;
 import dev.draftwatch.store.StateLockException;
 import dev.draftwatch.store.StoreException;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.time.Duration;
 import java.time.Instant;
@@ -18,9 +19,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * {@code draftwatch status}: the state lock's holder, active jobs, and jobs that failed in the
- * last seven days, as of their last recorded state (DECISIONS.md D39). It only reads state, so it
- * does not take the lock.
+ * {@code draftwatch status}: the state lock's holder, the schedule (D63), active jobs, and jobs
+ * that failed in the last seven days, as of their last recorded state (DECISIONS.md D39). It only
+ * reads state, so it does not take the lock or ask Slurm.
  */
 public final class StatusCommand implements CliCommand {
   static final Duration RECENT = Duration.ofDays(7);
@@ -55,6 +56,7 @@ public final class StatusCommand implements CliCommand {
     } catch (StateLockException e) {
       out.println("lock: " + e.getMessage());
     }
+    out.println("schedule: " + schedule(Schedule.of(config, List.of())));
     List<Job> jobs;
     try {
       jobs = s.jobs().all();
@@ -77,6 +79,23 @@ public final class StatusCommand implements CliCommand {
                 "  " + line(j) + ", " + j.failureReason().map(r -> r.wireName()).orElse("?")
                     + ": " + j.lastChange().cause()));
     return Cli.EXIT_OK;
+  }
+
+  private static String schedule(Schedule schedule) {
+    try {
+      Optional<String> stopped = schedule.stoppedAt();
+      if (stopped.isPresent()) {
+        return "STOPPED at " + stopped.get() + ": a resubmission failed; see " + schedule.log()
+            + ", then run 'draftwatch schedule' again";
+      }
+      if (schedule.token().isEmpty()) {
+        return "none";
+      }
+      return "active, latest Slurm job " + schedule.jobId().orElse("?") + " (log "
+          + schedule.log() + ")";
+    } catch (IOException e) {
+      return "unreadable: " + e.getMessage();
+    }
   }
 
   private static String line(Job job) {
