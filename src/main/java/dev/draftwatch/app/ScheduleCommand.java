@@ -142,10 +142,6 @@ public final class ScheduleCommand implements CliCommand {
             + interval.getSeconds() + " s (job name " + schedule.jobName() + ")");
     out.println("  script: " + schedule.script());
     out.println("  log:    " + schedule.log());
-    out.println(
-        "note: whether this cluster allows sbatch inside a job is not verified yet (DECISIONS.md"
-            + " D9); if the log says the resubmission failed, 'draftwatch status' reports the"
-            + " schedule as stopped");
     out.println("stop it with 'draftwatch unschedule'");
     return Cli.EXIT_OK;
   }
