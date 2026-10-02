@@ -1,6 +1,7 @@
 package dev.draftwatch.app;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
@@ -151,9 +152,26 @@ public class CliTest {
 
   @Test
   public void listedButUnimplementedCommandSaysSo() {
-    assertEquals(Cli.EXIT_USAGE, run("diff", "a", "b"));
+    Cli partial =
+        new Cli(
+            List.of(
+                CommandUsage.of("status", "", "show status"),
+                CommandUsage.of("later", "", "arrives in a later milestone")),
+            Map.of("status", new Recorder()),
+            outStream,
+            errStream);
+    assertEquals(Cli.EXIT_USAGE, partial.run(List.of("later")));
     assertEquals("", out());
-    assertTrue(err().contains("command 'diff' is not implemented yet"));
+    assertTrue(err().contains("command 'later' is not implemented yet"));
+  }
+
+  @Test
+  public void everyListedCommandIsImplemented() {
+    for (CommandUsage usage : Bootstrap.COMMANDS) {
+      errBytes.reset();
+      run(usage.name(), "--no-such-flag");
+      assertFalse(usage.name(), err().contains("is not implemented yet"));
+    }
   }
 
   @Test(expected = IllegalArgumentException.class)

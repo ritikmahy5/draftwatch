@@ -165,21 +165,24 @@ public final class Bootstrap {
     ConfigLoader loader = new ConfigLoader(new ConfigValidator());
     SlurmCli slurm = new SlurmCli(slurmCommands);
     Map<String, CliCommand> commands =
-        Map.of(
-            "init", new InitCommand(),
-            "validate", new ValidateCommand(loader, this::services),
-            "submit", new SubmitCommand(loader, this::services),
-            "status", new StatusCommand(loader, this::services),
-            "history", new HistoryCommand(loader, this::services),
-            "baseline", new BaselineCommand(loader, this::services),
-            "watch", new WatchCommand(loader, this::services),
-            "report", new ReportCommand(loader, this::services),
-            "schedule",
+        Map.ofEntries(
+            Map.entry("init", new InitCommand()),
+            Map.entry("validate", new ValidateCommand(loader, this::services)),
+            Map.entry("submit", new SubmitCommand(loader, this::services)),
+            Map.entry("status", new StatusCommand(loader, this::services)),
+            Map.entry("history", new HistoryCommand(loader, this::services)),
+            Map.entry("baseline", new BaselineCommand(loader, this::services)),
+            Map.entry("watch", new WatchCommand(loader, this::services)),
+            Map.entry("report", new ReportCommand(loader, this::services)),
+            Map.entry("diff", new DiffCommand(loader, this::services)),
+            Map.entry(
+                "schedule",
                 new ScheduleCommand(
-                    loader, this::services, slurm, launcher(), new SecureRandom()),
-            "unschedule",
+                    loader, this::services, slurm, launcher(), new SecureRandom())),
+            Map.entry(
+                "unschedule",
                 new UnscheduleCommand(
-                    loader, this::services, slurm, System.getProperty("user.name")));
+                    loader, this::services, slurm, System.getProperty("user.name"))));
     return new Cli(COMMANDS, commands, out, err);
   }
 
