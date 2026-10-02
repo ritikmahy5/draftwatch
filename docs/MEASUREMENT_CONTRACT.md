@@ -253,7 +253,8 @@ full pipeline can be tested without a GPU:
   entry i is used for the i-th seed. A fixture whose entry count, prompt count, or position
   count does not match the invocation makes it exit 2.
 - It reports `harness_version: "fake-<version>"`, `backend: "fake"`, and
-  `hardware: {"gpu": "none", "count": 0}`.
+  `hardware: {"gpu": "none", "count": 0}`. `DRAFTWATCH_FAKE_HARNESS_VERSION=<v>` reports `<v>`
+  as the harness version instead, so tests can produce incomparable results on purpose.
 - `DRAFTWATCH_FAKE_EXIT=<code>` makes it exit with that code without writing a report.
 - `DRAFTWATCH_FAKE_CORRUPT=<rule id>` breaks that one validation rule (see the table above) in
   the first seed, for negative tests.

@@ -1,0 +1,17 @@
+{
+  "source": "synthetic: invented counts for 3 prompts and num_speculative_tokens = 3 that accept fewer tokens than synthetic_three_prompts.json on every prompt (a regression), chosen to satisfy every contract rule; not a measurement",
+  "per_seed": [
+    {
+      "per_prompt": [
+        {"steps": 4, "proposed": 12, "accepted": 4},
+        {"steps": 2, "proposed": 6, "accepted": 1},
+        {"steps": 3, "proposed": 8, "accepted": 2}
+      ],
+      "position_counts": [
+        {"eligible": 9, "accepted": 4},
+        {"eligible": 4, "accepted": 2},
+        {"eligible": 2, "accepted": 1}
+      ]
+    }
+  ]
+}

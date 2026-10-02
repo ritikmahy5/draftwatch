@@ -11,6 +11,8 @@ Environment:
   DRAFTWATCH_FAKE_FIXTURE  path of the fixture JSON (required unless DRAFTWATCH_FAKE_EXIT is set)
   DRAFTWATCH_FAKE_EXIT     exit with this code without writing a report
   DRAFTWATCH_FAKE_CORRUPT  id of the one validation rule to break, in the first seed
+  DRAFTWATCH_FAKE_HARNESS_VERSION  report this harness_version instead of the default, to make
+                           results incomparable on purpose (MEASUREMENT_CONTRACT.md, Comparability)
 """
 
 import argparse
@@ -257,7 +259,7 @@ def main(argv):
     taus = [s["tau"] for s in seed_reports]
     report = {
         "schema_version": SCHEMA_VERSION,
-        "harness_version": HARNESS_VERSION,
+        "harness_version": os.environ.get("DRAFTWATCH_FAKE_HARNESS_VERSION", HARNESS_VERSION),
         "backend": "fake",
         "adapter_handling": "merged" if args.base_model else "none",
         "draft_structure": "chain",
