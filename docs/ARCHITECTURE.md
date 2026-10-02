@@ -4,14 +4,16 @@
 
 ```
 src/main/java/dev/draftwatch/
-  app/          Bootstrap (all wiring), Main, CLI command classes
-  config/       YAML → validated immutable config objects; ConfigValidator; CanonicalJson
+  app/          Bootstrap (all wiring), Main, CLI command classes, MeasurementRunner, Services
+  config/       YAML → validated immutable config objects; ConfigValidator; CanonicalJson; ProbeHasher
   domain/       immutable classes: Target, Checkpoint, Probe, Measurement, AcceptanceReport, Provenance
   fingerprint/  Fingerprinter interface, SampledBlockFingerprinter, FullFileFingerprinter
   discovery/    CheckpointSource, completion policies, step extraction
   trigger/      TriggerRule interface + rules, TriggerChain
-  exec/         Executor interface, LocalExecutor, SlurmExecutor, JobState, JobPoller, RetryPolicy
-  harness/      HarnessInvocation builder, ReportParser (all MEASUREMENT_CONTRACT rules)
+  exec/         Executor interface, LocalExecutor, SlurmExecutor, JobState, Job, JobSpec,
+                MeasurementSpec, JobPoller, RetryPolicy
+  harness/      HarnessInvocation builder, ReportParser (all MEASUREMENT_CONTRACT rules),
+                PromptSetReader, ProbeResolver
   store/        ResultRepository, JobRepository, BaselineRepository, file implementations, StateLock
   stats/        MetricCalculator (both estimators), PairedBootstrap, LeastSquaresSlope
   detect/       RegressionDetector interface + detectors, Comparability guard, DetectorSuite
@@ -24,6 +26,10 @@ src/main/java/dev/draftwatch/
 `MetricCalculator` is shared by `ReportParser` (to verify the harness's numbers) and by the
 detectors (to recompute metrics on bootstrap resamples), so there is one implementation of
 each estimator.
+
+Dependencies run one way (DECISIONS.md D40): `domain` ← `fingerprint` ← `config` ← `stats`,
+`harness` ← `exec` ← `store` ← `discovery`, `app`. Executors see only a `JobSpec` (command,
+working directory, run directory); what is being measured lives in `MeasurementSpec`.
 
 ## Pipeline
 
@@ -52,7 +58,8 @@ final class TriggerDecision { enum Kind { ACCEPT, REJECT, ABSTAIN } Kind kind();
 interface TriggerRule { TriggerDecision evaluate(Checkpoint ckpt, Probe probe, History history); }
 
 interface Executor {
-  JobHandle submit(JobSpec spec);
+  String name();                              // recorded in provenance, e.g. "local"
+  JobHandle submit(JobSpec spec);             // one attempt: command, working dir, run dir
   ExecutorStatus status(JobHandle handle);   // executor-native status, mapped by JobPoller
   void cancel(JobHandle handle);
 }
@@ -62,6 +69,7 @@ interface ResultRepository {
   List<Measurement> history(String target, String probeHash);          // step order
   List<Measurement> find(String fingerprint, String probeHash);        // all attempts, oldest first
   Optional<Measurement> latest(String fingerprint, String probeHash);
+  Path locate(Measurement m);                                          // the result file
 }
 
 final class DetectorVerdict { enum Kind { OK, REGRESSION, ERROR } Kind kind(); String metric(); /* observed, threshold, explanation */ }
@@ -77,7 +85,7 @@ interface RegressionAction { void execute(RegressionDetected event); }
 
 | Pattern | Where | Justification |
 |---|---|---|
-| Strategy | `Executor`, `Fingerprinter`, `RegressionDetector`, completion policies, renderers | Behavior varies by environment or policy and is selected by config. |
+| Strategy | `Executor`, `Fingerprinter`, `EstimatorStrategy`, `CompletionPolicy`, `RegressionDetector`, renderers | Behavior varies by environment or policy and is selected by config. |
 | Chain of Responsibility | `TriggerChain` over `TriggerRule`s | Ordered rules; first non-abstaining rule decides, with a reason. |
 | Observer | `EventBus` + subscribers | Decouples stages; notifiers and actions plug in without touching producers. |
 | State | `JobState` + transition table | Lifecycle has legal and illegal transitions; illegal ones throw. |
@@ -106,12 +114,14 @@ Engine states (named to avoid confusion with Slurm's own `PENDING`):
 | RUNNING | SUCCEEDED | exit 0 **and** report passed validation |
 | RUNNING | FAILED | nonzero exit, invalid report, timeout, OOM, node failure |
 | RUNNING | CANCELLED | cancelled while running |
-| FAILED | CREATED | retry: `RetryPolicy` allows it and attempts < `max_retries` |
+| FAILED | CREATED | retry: `RetryPolicy` allows it and retries so far (attempt − 1) < `max_retries` |
 
 Every other transition throws `IllegalJobTransitionException`. Each FAILED state carries a
 `FailureReason`; `RetryPolicy` retries only `NODE_FAILURE`, `PREEMPTED_NO_REQUEUE`, and
 `UNEXPECTED_EXIT`. It never retries `BAD_ARGUMENTS`, `MODEL_LOAD`, `OUT_OF_MEMORY`,
-`TIMEOUT`, or `INVALID_REPORT`, since the same inputs would fail the same way.
+`BACKEND_COUNTERS` (exit 5), `TIMEOUT`, `INVALID_REPORT`, or `SUBMISSION_FAILED`, since the same
+inputs would fail the same way (DECISIONS.md D30). A job is attempted at most
+`1 + max_retries` times (D31); every attempt keeps its own run directory (D32).
 
 ### Slurm state mapping
 
@@ -146,8 +156,9 @@ missing from both is re-polled before being declared failed.
   lock                                     single-writer lock (see below)
   jobs/<job-id>.json                       job spec + full state history
   results/<target>/<fingerprint>__<probe-hash>__<job-id>.json
-  raw/<job-id>/report.json                 harness output exactly as written
-  raw/<job-id>/stdout.log, stderr.log
+  raw/<job-id>/attempt-<n>/invocation.json the exact argv of attempt n
+  raw/<job-id>/attempt-<n>/report.json     harness output exactly as written
+  raw/<job-id>/attempt-<n>/stdout.log, stderr.log, exit_code
   baselines.json                           target → baseline checkpoint fingerprint
   detections.log                           every detector outcome, including Ok and Error
   alerts.log

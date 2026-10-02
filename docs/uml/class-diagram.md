@@ -5,9 +5,9 @@ Updated at the end of every milestone (DECISIONS.md D1). Shows the classes that 
 Accessors that only return a field are omitted; every domain and config class is immutable
 (private final fields, static factory or builder, no setters).
 
-**As of:** M1: domain, config, hashing.
+**As of:** M2: contract, store, local execution, end to end.
 
-## app: entry point and CLI commands
+## app: entry point, CLI commands, orchestration
 
 ```mermaid
 classDiagram
@@ -20,17 +20,16 @@ classDiagram
   class Bootstrap {
     <<final, Factory>>
     ~COMMANDS$ List~CommandUsage~
-    +Bootstrap(PrintStream out, PrintStream err)
     +cli() Cli
+    ~services(DraftwatchConfig) Services
     ~fingerprinter(FingerprintMethod)$ Fingerprinter
+    ~completionPolicy(CompletionSpec)$ CompletionPolicy
   }
   class Cli {
     <<final>>
-    +EXIT_OK$ = 0
-    +EXIT_FAILURE$ = 1
-    +EXIT_USAGE$ = 2
-    -usages List~CommandUsage~
-    -commands Map~String, CliCommand~
+    +EXIT_OK$ int
+    +EXIT_FAILURE$ int
+    +EXIT_USAGE$ int
     +run(List~String~ args) int
     +usage() String
   }
@@ -41,41 +40,65 @@ classDiagram
   class CommandContext {
     <<final>>
     -configFile Path
-    -out PrintStream
-    -err PrintStream
     +fail(String message) int
-    +requireNoArguments(String command, List~String~ args) int
+    +requireNoArguments(String, List~String~) int
   }
   class CommandUsage {
     <<final>>
-    -name String
-    -arguments String
-    -summary String
-    +of(String, String, String)$ CommandUsage
     +synopsis() String
   }
-  class InitCommand {
+  class InitCommand { <<final>> }
+  class ValidateCommand { <<final>> }
+  class SubmitCommand { <<final>> }
+  class StatusCommand { <<final>> }
+  class HistoryCommand { <<final>> }
+  class Services {
     <<final>>
-    +run(CommandContext, List~String~) int
+    +probeResolver() ProbeResolver
+    +inspector() CheckpointInspector
+    +completionPolicy(CompletionSpec) CompletionPolicy
+    +jobs() JobRepository
+    +results() ResultRepository
+    +stateLock() StateLock
+    +runner() MeasurementRunner
   }
-  class ValidateCommand {
+  class MeasurementRunner {
     <<final>>
-    -loader ConfigLoader
-    -resolvers Function~FingerprintMethod, ProbeResolver~
-    +run(CommandContext, List~String~) int
+    +create(Checkpoint, ResolvedProbe) Job
+    +submit(Job) Job
+    +advance(Job) Job
+    +isDone(Job) boolean
+    +runToCompletion(List~Job~, Sleeper) List~Job~
+    +result(Job) Optional~Measurement~
+  }
+  class Sleeper {
+    <<interface>>
+    +sleep(Duration) void
   }
 
   Main ..> Bootstrap : creates
   Bootstrap ..> Cli : creates
-  Bootstrap ..> InitCommand : creates
-  Bootstrap ..> ValidateCommand : creates
+  Bootstrap ..> Services : creates per config
   Cli o-- "*" CommandUsage
   Cli o-- "*" CliCommand
   Cli ..> CommandContext : creates
   CliCommand <|.. InitCommand
   CliCommand <|.. ValidateCommand
-  ValidateCommand --> ConfigLoader
-  ValidateCommand ..> ProbeResolver : uses
+  CliCommand <|.. SubmitCommand
+  CliCommand <|.. StatusCommand
+  CliCommand <|.. HistoryCommand
+  ValidateCommand ..> Services
+  SubmitCommand ..> Services
+  StatusCommand ..> Services
+  HistoryCommand ..> Services
+  Services o-- MeasurementRunner
+  MeasurementRunner --> Executor
+  MeasurementRunner --> JobPoller
+  MeasurementRunner --> RetryPolicy
+  MeasurementRunner --> JobRepository
+  MeasurementRunner --> ResultRepository
+  MeasurementRunner --> JobIds
+  SubmitCommand ..> Sleeper
 ```
 
 ## config: YAML to validated config, canonical hashing
@@ -213,12 +236,6 @@ classDiagram
     +canonicalInput(Probe, String, String)$ String
     +decodingJson(Decoding)$ ObjectNode
   }
-  class ProbeResolver {
-    <<final>>
-    -fingerprinter Fingerprinter
-    -promptSetReader PromptSetReader
-    +resolve(Probe) ResolvedProbe
-  }
 
   ConfigLoader --> ConfigValidator
   ConfigValidator ..> ConfigNode : walks with
@@ -242,10 +259,6 @@ classDiagram
   DetectorSpec <|.. NoiseFloorSpec
   DetectorSpec <|.. TrendSpec
   ProbeHasher ..> CanonicalJson : uses
-  ProbeResolver --> Fingerprinter
-  ProbeResolver --> PromptSetReader
-  ProbeResolver ..> ProbeHasher : uses
-  ProbeResolver ..> ResolvedProbe : creates
 ```
 
 ## domain: immutable domain classes
@@ -441,7 +454,7 @@ classDiagram
   WireNamed <|.. Metric
 ```
 
-## fingerprint, discovery, harness: reading checkpoint and prompt files
+## fingerprint: content fingerprints
 
 ```mermaid
 classDiagram
@@ -460,47 +473,21 @@ classDiagram
   }
   class SampledBlockFingerprinter {
     <<final>>
-    +BLOCK_BYTES$ = 1 MiB
-    +BLOCK_COUNT$ = 8
-    #contentDigest(Path, long) byte[]
+    +BLOCK_BYTES$ int
+    +BLOCK_COUNT$ int
     ~blockOffset(int i, long size) long
   }
-  class FullFileFingerprinter {
-    <<final>>
-    #contentDigest(Path, long) byte[]
-  }
+  class FullFileFingerprinter { <<final>> }
   class FingerprintMethod {
     <<enumeration>>
     SAMPLED
     FULL
   }
-  class FingerprintException {
-    <<final>>
-    -path Path
-  }
+  class FingerprintException { <<final>> }
   class Sha256 {
     <<final>>
     +newDigest()$ MessageDigest
     +hex(byte[])$ String
-    +toHex(byte[])$ String
-  }
-  class StepExtractor {
-    <<final>>
-    +TRAINER_STATE_FILE$ String
-    -stepRegex Pattern
-    +extract(Path checkpointDir) long
-  }
-  class StepExtractionException {
-    <<final>>
-    -checkpointDir Path
-  }
-  class PromptSetReader {
-    <<final>>
-    +read(Path file) PromptSet
-  }
-  class PromptSetException {
-    <<final>>
-    -file Path
   }
 
   Fingerprinter <|.. WeightFileFingerprinter
@@ -509,20 +496,369 @@ classDiagram
   WeightFileFingerprinter --> FingerprintMethod
   WeightFileFingerprinter ..> Sha256 : uses
   WeightFileFingerprinter ..> FingerprintException : throws
-  StepExtractor ..> StepExtractionException : throws
-  PromptSetReader ..> Sha256 : uses
-  PromptSetReader ..> PromptSetException : throws
-  PromptSetReader ..> PromptSet : creates
 ```
+
+## discovery: checkpoint directories
+
+```mermaid
+classDiagram
+  direction LR
+
+  class CheckpointInspector {
+    <<final>>
+    -fingerprinter Fingerprinter
+    +inspect(Target, Path dir, CompletionPolicy) Checkpoint
+  }
+  class CompletionPolicy {
+    <<interface, Strategy>>
+    +incompleteReason(Path dir, Instant now) Optional~String~
+  }
+  class MarkerCompletionPolicy {
+    <<final>>
+    -marker String
+  }
+  class SettleCompletionPolicy {
+    <<final>>
+    -settle Duration
+  }
+  class StepExtractor {
+    <<final>>
+    +TRAINER_STATE_FILE$ String
+    -stepRegex Pattern
+    +extract(Path checkpointDir) long
+  }
+  class CheckpointRejectedException { <<final>> }
+  class StepExtractionException { <<final>> }
+
+  CompletionPolicy <|.. MarkerCompletionPolicy
+  CompletionPolicy <|.. SettleCompletionPolicy
+  CheckpointInspector ..> CompletionPolicy : uses
+  CheckpointInspector ..> StepExtractor : uses
+  CheckpointInspector --> Fingerprinter
+  CheckpointInspector ..> CheckpointRejectedException : throws
+  StepExtractor ..> StepExtractionException : throws
+```
+
+## harness: the measurement contract
+
+```mermaid
+classDiagram
+  direction LR
+
+  class HarnessInvocation {
+    <<final, Builder>>
+    +command() List~String~
+    +arguments() List~String~
+    +out() Path
+  }
+  class ReportParser {
+    <<final>>
+    +TOLERANCE$ double
+    -calculator MetricCalculator
+    +parse(Path file, ExpectedReport expected) AcceptanceReport
+  }
+  class ReportJson {
+    <<final>>
+    +checkShape(JsonNode)$ void
+    +toReport(JsonNode)$ AcceptanceReport
+    +toJson(AcceptanceReport)$ ObjectNode
+    +toDecoding(JsonNode)$ Decoding
+  }
+  class ReportRule {
+    <<enumeration>>
+    REPORT_MISSING
+    JSON
+    SHAPE
+    SCHEMA_VERSION
+    ...29 rules in check order
+  }
+  class ReportViolationException {
+    <<final>>
+    -rule ReportRule
+  }
+  class ExpectedReport {
+    <<final>>
+    +SCHEMA_VERSION$ int
+    +of(ResolvedProbe, CheckpointType)$ ExpectedReport
+  }
+  class PromptSetReader {
+    <<final>>
+    +read(Path file) PromptSet
+  }
+  class ProbeResolver {
+    <<final>>
+    +resolve(Probe) ResolvedProbe
+  }
+  class PromptSetException { <<final>> }
+
+  ReportParser ..> ReportJson : uses
+  ReportParser ..> ExpectedReport : checks against
+  ReportParser ..> ReportViolationException : throws
+  ReportParser --> MetricCalculator
+  ReportViolationException --> ReportRule
+  ProbeResolver --> Fingerprinter
+  ProbeResolver --> PromptSetReader
+  ProbeResolver ..> ProbeHasher : uses
+  PromptSetReader ..> PromptSetException : throws
+```
+
+## stats: metrics
+
+```mermaid
+classDiagram
+  direction LR
+
+  class MetricCalculator {
+    <<final>>
+    +strategy(Estimator) EstimatorStrategy
+    +alpha(Estimator, List~PromptCounts~) OptionalDouble
+    +tau(Estimator, List~PromptCounts~) OptionalDouble
+    +excludedPrompts(Estimator, List~PromptCounts~) int
+    +alphaByPosition(List~PositionCount~) List~OptionalDouble~
+    +mean(List~Double~) double
+    +sampleStd(List~Double~) OptionalDouble
+  }
+  class EstimatorStrategy {
+    <<interface, Strategy>>
+    +estimator() Estimator
+    +alpha(List~PromptCounts~) OptionalDouble
+    +tau(List~PromptCounts~) OptionalDouble
+    +excludedPrompts(List~PromptCounts~) int
+  }
+  class TokenWeightedEstimator { <<final>> }
+  class SimpleMeanEstimator { <<final>> }
+
+  MetricCalculator o-- "2" EstimatorStrategy
+  EstimatorStrategy <|.. TokenWeightedEstimator
+  EstimatorStrategy <|.. SimpleMeanEstimator
+```
+
+## exec: jobs and executors
+
+```mermaid
+classDiagram
+  direction TB
+
+  class Executor {
+    <<interface, Strategy>>
+    +name() String
+    +submit(JobSpec) JobHandle
+    +status(JobHandle) ExecutorStatus
+    +cancel(JobHandle) void
+  }
+  class LocalExecutor {
+    <<final>>
+    +NAME$ String
+    +EXIT_FILE$ String
+    ~WRAPPER$ String
+  }
+  class JobSpec {
+    <<final, Builder>>
+    -jobId String
+    -attempt int
+    -command List~String~
+    -workingDir Path
+    -runDir Path
+  }
+  class MeasurementSpec {
+    <<final>>
+    -checkpoint Checkpoint
+    -probe ResolvedProbe
+    -harnessCommand List~String~
+    -rawDir Path
+    -executor String
+    +runDir(int attempt) Path
+    +reportPath(int attempt) Path
+    +invocation(int attempt) HarnessInvocation
+    +jobSpec(String id, int attempt) JobSpec
+    +expectedReport() ExpectedReport
+  }
+  class Job {
+    <<final>>
+    -id String
+    -state JobState
+    -attempt int
+    -handle Optional~JobHandle~
+    -history List~StateChange~
+    +created(String, MeasurementSpec, Instant)$ Job
+    +restore(...)$ Job
+    +submitted(JobHandle, Instant) Job
+    +running(Instant, String) Job
+    +requeued(Instant, String) Job
+    +succeeded(Instant) Job
+    +failed(FailureReason, String, Instant) Job
+    +cancelled(Instant, String) Job
+    +retried(RetryPolicy, Instant) Job
+  }
+  class JobState {
+    <<enumeration, State>>
+    CREATED
+    SUBMITTED
+    RUNNING
+    SUCCEEDED
+    FAILED
+    CANCELLED
+    +checkTransition(JobState, JobState)$ void
+  }
+  class StateChange {
+    <<final>>
+    -from Optional~JobState~
+    -to JobState
+    -at Instant
+    -attempt int
+    -cause String
+    -failureReason Optional~FailureReason~
+  }
+  class FailureReason {
+    <<enumeration>>
+    +forExitCode(int)$ FailureReason
+  }
+  class RetryPolicy {
+    <<final>>
+    -maxRetries int
+    +allowsRetry(Job) boolean
+    +isRetryable(FailureReason)$ boolean
+  }
+  class JobPoller {
+    <<final>>
+    +poll(Job) Result
+  }
+  class JobHandle {
+    <<final>>
+    -executor String
+    -nativeId String
+    -runDir Path
+    -submittedAt Instant
+    -nativeStartTime Optional~Instant~
+  }
+  class ExecutorStatus {
+    <<final>>
+    -kind Kind
+    -exitCode OptionalInt
+    -startedAt Optional~Instant~
+    -endedAt Optional~Instant~
+  }
+  class JobIds {
+    <<interface>>
+    +next() String
+  }
+  class TimestampJobIds { <<final>> }
+  class IllegalJobTransitionException { <<final>> }
+
+  Executor <|.. LocalExecutor
+  Executor ..> JobSpec : runs
+  Executor ..> JobHandle : returns
+  Executor ..> ExecutorStatus : reports
+  Job *-- MeasurementSpec
+  Job *-- "1..*" StateChange
+  Job o-- "0..1" JobHandle
+  Job --> JobState
+  MeasurementSpec ..> JobSpec : builds per attempt
+  StateChange --> JobState
+  StateChange --> FailureReason
+  JobState ..> IllegalJobTransitionException : throws
+  Job ..> RetryPolicy : consults on retry
+  JobPoller --> Executor
+  JobPoller --> ReportParser
+  JobIds <|.. TimestampJobIds
+```
+
+## store: the state directory
+
+```mermaid
+classDiagram
+  direction TB
+
+  class JobRepository {
+    <<interface, Repository>>
+    +save(Job) void
+    +find(String id) Optional~Job~
+    +all() List~Job~
+  }
+  class ResultRepository {
+    <<interface, Repository>>
+    +append(Measurement) void
+    +history(String target, String probeHash) List~Measurement~
+    +find(String fingerprint, String probeHash) List~Measurement~
+    +latest(String fingerprint, String probeHash) Optional~Measurement~
+    +locate(Measurement) Path
+  }
+  class FileJobRepository { <<final>> }
+  class FileResultRepository { <<final>> }
+  class JsonCodec {
+    <<final>>
+    +jobJson(Job) ObjectNode
+    +job(JsonNode) Job
+    +measurementJson(Measurement) ObjectNode
+    +measurement(JsonNode) Measurement
+  }
+  class AtomicFiles {
+    <<final>>
+    +write(Path, byte[])$ void
+    +writeNew(Path, byte[])$ void
+  }
+  class StateLock {
+    <<final>>
+    +LOCK_FILE$ String
+    +acquire(Path stateDir, String command) Held
+    +holder(Path stateDir) Optional~LockHolder~
+  }
+  class Held {
+    <<final>>
+    +close() void
+  }
+  class LockHolder {
+    <<final>>
+    -host String
+    -pid long
+    -pidStart Optional~Instant~
+    -slurmJobId Optional~String~
+    -acquiredAt Instant
+    -command String
+  }
+  class HostIdentity {
+    <<interface>>
+    +hostname() String
+    +pid() long
+    +processStart() Optional~Instant~
+    +slurmJobId() Optional~String~
+  }
+  class ProcessTable {
+    <<interface>>
+    +isAlive(long pid, Optional~Instant~ start) boolean
+  }
+  class SystemHostIdentity { <<final>> }
+  class SystemProcessTable { <<final>> }
+  class StoreException { <<final>> }
+  class StateLockException { <<final>> }
+
+  JobRepository <|.. FileJobRepository
+  ResultRepository <|.. FileResultRepository
+  FileJobRepository --> JsonCodec
+  FileResultRepository --> JsonCodec
+  FileJobRepository ..> AtomicFiles : writes with
+  FileResultRepository ..> AtomicFiles : writes with
+  StateLock ..> Held : returns
+  StateLock ..> LockHolder : records
+  StateLock --> HostIdentity
+  StateLock --> ProcessTable
+  HostIdentity <|.. SystemHostIdentity
+  ProcessTable <|.. SystemProcessTable
+  StateLock ..> StateLockException : throws
+  FileResultRepository ..> StoreException : throws
+```
+
+Test doubles (in `src/test`) give each interface its second implementation: `FakeExecutor`,
+`ScriptedExecutor`, `InMemoryJobRepository`, `InMemoryResultRepository`, and test-local
+`HostIdentity` and `ProcessTable` fakes.
 
 ## Packages
 
 | Package | Populated in |
 |---|---|
-| `app`, `config`, `domain`, `fingerprint` | M0–M1 |
-| `discovery` | M1 (step extraction); M4 (checkpoint sources, completion policies) |
-| `harness` | M1 (prompt file reader); M2 (invocation, report parser) |
-| `exec`, `store`, `stats` | M2 |
+| `app`, `config`, `domain`, `fingerprint` | M0–M2 |
+| `discovery` | M1 (step extraction), M2 (completion policies, inspector); M4 (checkpoint sources) |
+| `harness`, `exec`, `store`, `stats` | M1–M2 |
 | `detect`, `events`, `notify`, `action` | M3 |
 | `trigger` | M4 |
 | `report` | M6 |
