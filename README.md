@@ -14,13 +14,12 @@ new checkpoint ──▶ trigger rules ──▶ measurement job ──▶ resul
 
 ## Status
 
-M5 (Slurm executor) is code complete; its last step needs the cluster. With `executor.type:
-slurm`, measurements are submitted with `sbatch` and followed through `squeue` and `sacct`.
-`draftwatch schedule` runs `watch --once` on the cluster as a CPU-only job that resubmits itself
-first, and `unschedule` ends it. The Slurm tests replay hand-written (synthetic) output in
-Slurm's documented formats. The roadmap requires output recorded on Explorer, plus a check of
-whether `sbatch` works inside a job: run `scripts/record_slurm_fixtures.py` there
-(DECISIONS.md D9, D64).
+M5 (Slurm executor) complete: with `executor.type: slurm`, measurements are submitted with
+`sbatch` and followed through `squeue` and `sacct`. `draftwatch schedule` runs `watch --once` on
+the cluster as a CPU-only job that resubmits itself first, and `unschedule` ends it. The Slurm
+tests replay output recorded on Explorer (Slurm 23.11.6) where the cluster can produce a state,
+and hand-written output in Slurm's documented formats where it cannot (DECISIONS.md D66, D67).
+Next: M6.
 
 M4 (discovery and triggers) is complete: `draftwatch watch` polls each target's checkpoint
 directory, passes every complete checkpoint through the target's trigger rules, submits the

@@ -5,7 +5,7 @@ Updated at the end of every milestone (DECISIONS.md D1). Shows the classes that 
 Accessors that only return a field are omitted; every domain and config class is immutable
 (private final fields, static factory or builder, no setters).
 
-**As of:** M5: Slurm executor (code complete; the recordings from Explorer are pending).
+**As of:** M5: Slurm executor.
 
 ## app: entry point, CLI commands, orchestration
 

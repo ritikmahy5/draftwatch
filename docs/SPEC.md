@@ -84,7 +84,8 @@ re-measures final checkpoints forever.
   `draftwatch schedule` submits a small CPU-only Slurm job that runs `watch --once` and then
   resubmits itself with `--begin=now+<interval>` (default 15 minutes). A one-off
   `watch --once` from a login node is allowed because it only fingerprints sampled blocks and
-  submits jobs (DECISIONS.md D9).
+  submits jobs (DECISIONS.md D9). On Explorer, whether it survives the login node is unverified,
+  so `schedule` is the way to run there (D66).
 - With `executor.type: slurm`, `submit` returns once sbatch has accepted its jobs, and
   `watch --once` or the schedule collects the results (DECISIONS.md D61).
 - Lifecycle and retry policy: see ARCHITECTURE.md, "Job state machine".
