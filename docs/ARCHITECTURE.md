@@ -21,7 +21,7 @@ src/main/java/dev/draftwatch/
   events/       EventBus, immutable event classes
   notify/       Notifier interface, ConsoleNotifier, LogFileNotifier
   action/       RegressionAction (Command), NotifyAction, RetrainDraftAction
-  report/       HtmlReportRenderer, DiffRenderer
+  report/       ReportModel + HtmlReportRenderer, MeasurementDiff + DiffRenderer, Traced
 ```
 
 `MetricCalculator` is shared by `ReportParser` (to verify the harness's numbers) and by the
@@ -85,6 +85,7 @@ interface ResultRepository {
   List<Measurement> history(String target, String probeHash);          // step order
   List<Measurement> find(String fingerprint, String probeHash);        // all attempts, oldest first
   Optional<Measurement> latest(String fingerprint, String probeHash);
+  List<Measurement> all();                                             // by target, then step (D72)
   Path locate(Measurement m);                                          // the result file
 }
 
@@ -108,7 +109,7 @@ interface RegressionAction { void execute(RegressionDetected event) throws Excep
 
 | Pattern | Where | Justification |
 |---|---|---|
-| Strategy | `Executor`, `Fingerprinter`, `EstimatorStrategy`, `CompletionPolicy`, `CheckpointSource`, `RegressionDetector`, `Notifier`, `CommandRunner`, renderers | Behavior varies by environment or policy and is selected by config; `CommandRunner` lets tests replay recorded Slurm output. |
+| Strategy | `Executor`, `Fingerprinter`, `EstimatorStrategy`, `CompletionPolicy`, `CheckpointSource`, `RegressionDetector`, `Notifier`, `CommandRunner` | Behavior varies by environment or policy and is selected by config; `CommandRunner` lets tests replay recorded Slurm output. The report renderers are not a Strategy: each output has one format (DECISIONS.md D72). |
 | Chain of Responsibility | `TriggerChain` over `TriggerRule`s | Ordered rules; first non-abstaining rule decides, with a reason. |
 | Observer | `EventBus` + subscribers | Decouples stages; notifiers and actions plug in without touching producers. |
 | State | `JobState` + transition table | Lifecycle has legal and illegal transitions; illegal ones throw. |
@@ -168,6 +169,16 @@ precise (exit codes come only from sacct; when `PREEMPTED` means "not requeued";
 states the table omits). D60 defines "one poll" as a later poll at least 5 minutes after the first
 unresolved observation, recorded in the run directory.
 
+## Reports
+
+`draftwatch report` builds a `ReportModel` from the stored results and detection records and
+renders it with `HtmlReportRenderer` as one static page. Every value in the model is `Traced`:
+its text, its result file, and its JSON Pointer in that file (`store.ResultPointers`). The
+renderer links each one to `file#pointer` and refuses any other text that contains a digit, so
+the page cannot show an untraced number (DECISIONS.md D68). One series per comparability key
+(D69). `draftwatch diff` builds a `MeasurementDiff` from two result files and renders it with
+`DiffRenderer`; it prints stored values only (D71).
+
 ## Statistics
 
 - `PairedBootstrap`: resample prompt indices with replacement (`resamples` times, seeded
@@ -200,8 +211,10 @@ unresolved observation, recorded in the run directory.
 Writes are atomic: write a temp file in the same directory, then rename. Results are
 append-only and keyed by job id, so re-measurements never overwrite.
 
-**StateLock:** every command that writes state acquires `.draftwatch/lock` by creating it
-exclusively, containing host, PID, timestamp, and `SLURM_JOB_ID` when set. A lock may be taken
+**StateLock:** every command that writes state acquires `.draftwatch/lock`, containing host,
+PID, timestamp, and `SLURM_JOB_ID` when set. The record is written in full to a unique file that
+is then hard-linked to `lock`, which fails if `lock` exists, so no reader sees a partial lock
+(DECISIONS.md D74; the link(2) recipe of open(2) for lock files on NFS). A lock may be taken
 over only when its holder is provably gone:
 - holder ran inside a Slurm job: that job id no longer appears in `squeue`;
 - holder ran outside Slurm on this host: its PID is not alive;

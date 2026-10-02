@@ -5,7 +5,7 @@ Updated at the end of every milestone (DECISIONS.md D1). Shows the classes that 
 Accessors that only return a field are omitted; every domain and config class is immutable
 (private final fields, static factory or builder, no setters).
 
-**As of:** M5: Slurm executor.
+**As of:** M6: reports.
 
 ## app: entry point, CLI commands, orchestration
 
@@ -132,6 +132,12 @@ classDiagram
   CliCommand <|.. WatchCommand
   CliCommand <|.. ScheduleCommand
   CliCommand <|.. UnscheduleCommand
+  CliCommand <|.. ReportCommand
+  CliCommand <|.. DiffCommand
+  ReportCommand ..> ReportModel : builds
+  ReportCommand ..> HtmlReportRenderer : renders with
+  DiffCommand ..> MeasurementDiff : builds
+  DiffCommand ..> DiffRenderer : renders with
   ScheduleCommand ..> Schedule : writes and submits
   UnscheduleCommand ..> Schedule : ends
   ScheduleCommand --> SlurmCli
@@ -1022,7 +1028,15 @@ classDiagram
     +history(String target, String probeHash) List~Measurement~
     +find(String fingerprint, String probeHash) List~Measurement~
     +latest(String fingerprint, String probeHash) Optional~Measurement~
+    +all() List~Measurement~
     +locate(Measurement) Path
+  }
+  class ResultPointers {
+    <<final>>
+    +CHECKPOINT_STEP$ String
+    +ALPHA_MEAN$ String
+    +TAU_MEAN$ String
+    +alphaByPosition(int seed, int k)$ String
   }
   class FileJobRepository { <<final>> }
   class FileResultRepository { <<final>> }
@@ -1321,6 +1335,85 @@ classDiagram
   EventBus o-- "*" Subscriber
   EventBus ..> SubscriberFailed : publishes on failure
 ```
+
+## report: the HTML report and diff
+
+```mermaid
+classDiagram
+  direction TB
+
+  class Traced {
+    <<final>>
+    -text String
+    -file Path
+    -pointer String
+    +number(double, Path, String)$ Traced
+  }
+  class ReportModel {
+    <<final>>
+    +build(List~String~, List~Measurement~, Function, List~DetectionRecord~, Path)$ ReportModel
+    +targets() List~TargetSection~
+    +configuredWithoutResults() List~String~
+  }
+  class TargetSection {
+    <<final>>
+    +name() Traced
+    +series() List~Series~
+  }
+  class Series {
+    <<final>>
+    +probeId() Traced
+    +probeHash() Traced
+    +rows() List~Row~
+    +latest() Positional
+  }
+  class Row {
+    <<final>>
+    +step() Traced
+    +alphaMean() Traced
+    +tauMean() Traced
+    +outcomes() List~Outcome~
+  }
+  class Positional {
+    <<final>>
+    +seeds() List~SeedPositions~
+  }
+  class Outcome {
+    <<final>>
+    +kind() String
+    +detector() Optional~String~
+  }
+  class HtmlReportRenderer {
+    <<final>>
+    +render(ReportModel, Path reportFile, Instant)$ String
+  }
+  class MeasurementDiff {
+    <<final>>
+    +of(Side a, Side b)$ MeasurementDiff
+    +metrics() List~Line~
+    +differences() List~Line~
+    +incomparable() Optional~String~
+  }
+  class DiffRenderer {
+    <<final>>
+    +render(MeasurementDiff)$ String
+  }
+
+  ReportModel *-- "*" TargetSection
+  TargetSection *-- "1..*" Series
+  Series *-- "1..*" Row
+  Series *-- "1" Positional
+  Row *-- "*" Outcome
+  Row ..> Traced : values
+  Positional ..> Traced : values
+  ReportModel ..> ResultPointers : points into result files
+  HtmlReportRenderer ..> ReportModel : renders
+  MeasurementDiff ..> Comparability : checks
+  DiffRenderer ..> MeasurementDiff : renders
+```
+
+Each output is a model and a renderer, not a Strategy: there is one format each (DECISIONS.md
+D72). Every `Traced` value is rendered as a link to its file and JSON Pointer (D68).
 
 ## notify and action: alerts
 

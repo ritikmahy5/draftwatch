@@ -14,12 +14,18 @@ new checkpoint ──▶ trigger rules ──▶ measurement job ──▶ resul
 
 ## Status
 
+M6 (reports) complete: `draftwatch report` writes a static HTML page (inline SVG, no external
+assets) with acceptance against step for each comparable series, regression and error markers,
+and positional acceptance of the latest checkpoint. Every number on it is a link to the value in
+the stored result file it comes from, which a test checks (DECISIONS.md D68). `draftwatch diff`
+prints two stored results side by side, with every provenance field that differs. Next: M7, a
+stretch milestone.
+
 M5 (Slurm executor) complete: with `executor.type: slurm`, measurements are submitted with
 `sbatch` and followed through `squeue` and `sacct`. `draftwatch schedule` runs `watch --once` on
 the cluster as a CPU-only job that resubmits itself first, and `unschedule` ends it. The Slurm
 tests replay output recorded on Explorer (Slurm 23.11.6) where the cluster can produce a state,
 and hand-written output in Slurm's documented formats where it cannot (DECISIONS.md D66, D67).
-Next: M6.
 
 M4 (discovery and triggers) is complete: `draftwatch watch` polls each target's checkpoint
 directory, passes every complete checkpoint through the target's trigger rules, submits the
