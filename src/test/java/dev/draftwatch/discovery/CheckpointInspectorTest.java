@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.draftwatch.domain.Checkpoint;
 import dev.draftwatch.domain.CheckpointType;
 import dev.draftwatch.domain.Target;
+import dev.draftwatch.fingerprint.AdapterFingerprint;
 import dev.draftwatch.fingerprint.SampledBlockFingerprinter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -67,13 +68,51 @@ public class CheckpointInspectorTest {
     assertFalse(c.isFinal());
   }
 
+  private Path baseModel(byte weight) throws IOException {
+    Path base = Files.createDirectories(runs.resolve("base"));
+    Files.write(base.resolve("model.safetensors"), new byte[] {weight, 9, 9});
+    return base;
+  }
+
   @Test
-  public void finalMarkerAndBaseModelAreRecorded() throws IOException {
+  public void finalMarkerIsDetected() throws IOException {
     Path dir = checkpoint("checkpoint-900");
     Files.writeString(dir.resolve("FINAL"), "");
+    assertTrue(inspector.inspect(target(CheckpointType.FULL), dir, COMPLETE).isFinal());
+  }
+
+  @Test
+  public void adapterFingerprintCoversAdapterAndBaseModel() throws IOException {
+    Path dir = checkpoint("checkpoint-900");
+    Path base = baseModel((byte) 1);
     Checkpoint c = inspector.inspect(target(CheckpointType.ADAPTER), dir, COMPLETE);
-    assertTrue(c.isFinal());
-    assertEquals(Optional.of(runs.resolve("base")), c.baseModel());
+    SampledBlockFingerprinter f = new SampledBlockFingerprinter();
+    assertEquals(Optional.of(base), c.baseModel());
+    assertEquals(Optional.of(f.fingerprint(base)), c.baseModelFingerprint());
+    assertEquals(
+        AdapterFingerprint.combine(f.fingerprint(dir), f.fingerprint(base)), c.fingerprint());
+  }
+
+  @Test
+  public void sameAdapterOnAnotherBaseModelIsAnotherCheckpoint() throws IOException {
+    Path dir = checkpoint("checkpoint-900");
+    baseModel((byte) 1);
+    String before = inspector.inspect(target(CheckpointType.ADAPTER), dir, COMPLETE).fingerprint();
+    baseModel((byte) 2);
+    String after = inspector.inspect(target(CheckpointType.ADAPTER), dir, COMPLETE).fingerprint();
+    assertTrue(!before.equals(after));
+  }
+
+  @Test
+  public void adapterWithoutBaseWeightsIsRejected() throws IOException {
+    Path dir = checkpoint("checkpoint-900");
+    Files.createDirectories(runs.resolve("base"));
+    try {
+      inspector.inspect(target(CheckpointType.ADAPTER), dir, COMPLETE);
+      fail("expected CheckpointRejectedException");
+    } catch (CheckpointRejectedException e) {
+      assertTrue(e.getMessage(), e.getMessage().contains("cannot fingerprint base model"));
+    }
   }
 
   @Test

@@ -79,7 +79,8 @@ public final class ReportScenario {
               .fingerprint("sampled-" + "c".repeat(64))
               .type(adapter ? CheckpointType.ADAPTER : CheckpointType.FULL);
       if (adapter) {
-        checkpoint.baseModel(Files.createDirectories(dir.resolve("base")));
+        checkpoint.baseModel(
+            Files.createDirectories(dir.resolve("base")), "sampled-" + "b".repeat(64));
       }
       Probe probe =
           Probe.of(

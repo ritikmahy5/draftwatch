@@ -3,6 +3,7 @@ package dev.draftwatch.discovery;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.draftwatch.domain.Checkpoint;
 import dev.draftwatch.domain.Target;
+import dev.draftwatch.fingerprint.AdapterFingerprint;
 import dev.draftwatch.fingerprint.FingerprintException;
 import dev.draftwatch.fingerprint.Fingerprinter;
 import java.nio.file.Files;
@@ -13,8 +14,9 @@ import java.util.Optional;
 
 /**
  * Turns a directory into a {@link Checkpoint} of a target: checks completion, extracts the step,
- * fingerprints the weights, and detects the final marker (SPEC.md F1). Manual {@code submit}
- * and {@code watch} share it, so both apply the same rules.
+ * fingerprints the weights, and detects the final marker (SPEC.md F1). An adapter checkpoint's
+ * fingerprint also covers its base model's weights (DECISIONS.md D42). Manual {@code submit} and
+ * {@code watch} share it, so both apply the same rules.
  */
 public final class CheckpointInspector {
   private final Fingerprinter fingerprinter;
@@ -31,7 +33,8 @@ public final class CheckpointInspector {
    * Inspects {@code dir} as a checkpoint of {@code target}.
    *
    * @throws CheckpointRejectedException naming the directory if it is not a directory, is not
-   *     complete under {@code completion}, has no determinable step, or has no weight files
+   *     complete under {@code completion}, has no determinable step, or has no weight files, or
+   *     if an adapter target's base model cannot be fingerprinted
    */
   public Checkpoint inspect(Target target, Path dir, CompletionPolicy completion) {
     Path path = dir.toAbsolutePath().normalize();
@@ -59,10 +62,20 @@ public final class CheckpointInspector {
             .targetName(target.name())
             .path(path)
             .step(step)
-            .fingerprint(fingerprint)
             .type(target.checkpointType())
             .isFinal(Files.exists(path.resolve(target.finalMarker())));
-    target.baseModel().ifPresent(checkpoint::baseModel);
-    return checkpoint.build();
+    if (target.baseModel().isPresent()) {
+      Path base = target.baseModel().get();
+      String baseFingerprint;
+      try {
+        baseFingerprint = fingerprinter.fingerprint(base);
+      } catch (FingerprintException e) {
+        throw new CheckpointRejectedException(
+            path, "cannot fingerprint base model: " + e.getMessage(), e);
+      }
+      checkpoint.baseModel(base, baseFingerprint);
+      fingerprint = AdapterFingerprint.combine(fingerprint, baseFingerprint);
+    }
+    return checkpoint.fingerprint(fingerprint).build();
   }
 }

@@ -77,6 +77,7 @@ final class Project {
       Files.createDirectories(dir.resolve("draft"));
       Files.write(dir.resolve("draft/model.safetensors"), new byte[] {7, 7, 7});
       Files.createDirectories(dir.resolve("base"));
+      Files.write(dir.resolve("base/model.safetensors"), new byte[] {5, 5, 5});
       FakeHarness.writePrompts(dir, 3);
       Map<String, String> env = new HashMap<>(fakeEnv);
       env.put("DRAFTWATCH_FAKE_FIXTURE", FakeHarness.fixture(fixture).toString());

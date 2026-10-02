@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.draftwatch.fingerprint.SampledBlockFingerprinter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Files;
@@ -40,6 +41,7 @@ public class SubmitCommandTest {
           "checkpoint_fingerprint",
           "checkpoint_type",
           "base_model",
+          "base_model_fingerprint",
           "checkpoint_final",
           "probe_id",
           "probe_hash",
@@ -95,13 +97,14 @@ public class SubmitCommandTest {
     JsonNode provenance = json.readTree(files.get(0).toFile()).get("provenance");
     assertEquals(F4_FIELDS, fieldNames(provenance));
     for (String field : F4_FIELDS) {
-      if (!field.equals("base_model")) {
+      if (!field.startsWith("base_model")) {
         assertFalse(field + " is null", provenance.get(field).isNull());
         JsonNode value = provenance.get(field);
         assertFalse(field + " is empty", value.asText().isEmpty() && !value.isContainerNode());
       }
     }
     assertTrue("base model is recorded only for adapters", provenance.get("base_model").isNull());
+    assertTrue(provenance.get("base_model_fingerprint").isNull());
     assertEquals(ckpt.toString(), provenance.get("checkpoint_path").textValue());
     assertEquals(100, provenance.get("checkpoint_step").intValue());
     assertEquals("local", provenance.get("executor").textValue());
@@ -116,6 +119,9 @@ public class SubmitCommandTest {
     assertEquals(cli.err(), Cli.EXIT_OK, submit(p, p.checkpoint(200, (byte) 2)));
     JsonNode provenance = json.readTree(resultFiles(p).get(0).toFile()).get("provenance");
     assertEquals(p.dir().resolve("base").toString(), provenance.get("base_model").textValue());
+    assertEquals(
+        new SampledBlockFingerprinter().fingerprint(p.dir().resolve("base")),
+        provenance.get("base_model_fingerprint").textValue());
     assertEquals("adapter", provenance.get("checkpoint_type").textValue());
     JsonNode report = json.readTree(resultFiles(p).get(0).toFile()).get("report");
     assertEquals("merged", report.get("adapter_handling").textValue());

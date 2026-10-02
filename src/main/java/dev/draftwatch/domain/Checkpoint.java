@@ -18,6 +18,7 @@ public final class Checkpoint {
   private final String fingerprint;
   private final CheckpointType type;
   private final Optional<Path> baseModel;
+  private final Optional<String> baseModelFingerprint;
   private final boolean isFinal;
 
   private Checkpoint(Builder b) {
@@ -27,6 +28,7 @@ public final class Checkpoint {
     this.fingerprint = b.fingerprint;
     this.type = b.type;
     this.baseModel = b.baseModel;
+    this.baseModelFingerprint = b.baseModelFingerprint;
     this.isFinal = b.isFinal;
   }
 
@@ -46,7 +48,10 @@ public final class Checkpoint {
     return step;
   }
 
-  /** Content fingerprint of the weight files (SPEC.md F1); the checkpoint's identity. */
+  /**
+   * Content fingerprint of the weight files (SPEC.md F1); the checkpoint's identity. For an
+   * adapter it covers the adapter and its base model (DECISIONS.md D42).
+   */
   public String fingerprint() {
     return fingerprint;
   }
@@ -58,6 +63,11 @@ public final class Checkpoint {
   /** Present exactly when {@link #type()} is {@link CheckpointType#ADAPTER}. */
   public Optional<Path> baseModel() {
     return baseModel;
+  }
+
+  /** The base model's own weight fingerprint; present exactly with {@link #baseModel()}. */
+  public Optional<String> baseModelFingerprint() {
+    return baseModelFingerprint;
   }
 
   public boolean isFinal() {
@@ -79,12 +89,14 @@ public final class Checkpoint {
         && fingerprint.equals(that.fingerprint)
         && type == that.type
         && baseModel.equals(that.baseModel)
+        && baseModelFingerprint.equals(that.baseModelFingerprint)
         && isFinal == that.isFinal;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(targetName, path, step, fingerprint, type, baseModel, isFinal);
+    return Objects.hash(
+        targetName, path, step, fingerprint, type, baseModel, baseModelFingerprint, isFinal);
   }
 
   @Override
@@ -100,6 +112,7 @@ public final class Checkpoint {
     private String fingerprint;
     private CheckpointType type;
     private Optional<Path> baseModel = Optional.empty();
+    private Optional<String> baseModelFingerprint = Optional.empty();
     private boolean isFinal;
 
     private Builder() {}
@@ -129,8 +142,11 @@ public final class Checkpoint {
       return this;
     }
 
-    public Builder baseModel(Path baseModel) {
-      this.baseModel = Optional.of(baseModel);
+    /** The base model an adapter is merged into, and that base model's weight fingerprint. */
+    public Builder baseModel(Path baseModel, String baseModelFingerprint) {
+      this.baseModel = Optional.of(Require.nonNull(baseModel, "base model"));
+      this.baseModelFingerprint =
+          Optional.of(Require.nonBlank(baseModelFingerprint, "base model fingerprint"));
       return this;
     }
 

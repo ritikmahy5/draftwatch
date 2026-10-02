@@ -36,7 +36,7 @@ public final class SyntheticMeasurements {
             .fingerprint("sampled-" + String.format("%064x", step))
             .type(base.type())
             .isFinal(false);
-    base.baseModel().ifPresent(ckpt::baseModel);
+    base.baseModel().ifPresent(path -> ckpt.baseModel(path, base.baseModelFingerprint().get()));
     Provenance provenance =
         Provenance.builder()
             .checkpoint(ckpt.build())

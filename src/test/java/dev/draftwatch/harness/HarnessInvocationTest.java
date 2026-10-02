@@ -78,7 +78,10 @@ public class HarnessInvocationTest {
     HarnessInvocation inv =
         HarnessInvocation.builder()
             .harnessCommand(List.of("h"))
-            .checkpoint(checkpoint(CheckpointType.ADAPTER).baseModel(Paths.get("/base")).build())
+            .checkpoint(
+                checkpoint(CheckpointType.ADAPTER)
+                    .baseModel(Paths.get("/base"), "sampled-b")
+                    .build())
             .probe(probe("0.7", List.of(3, 1, 2)))
             .out(OUT)
             .build();

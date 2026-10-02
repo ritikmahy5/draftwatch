@@ -110,6 +110,7 @@ public final class JsonCodec {
     node.put("fingerprint", c.fingerprint());
     node.put("type", c.type().wireName());
     putOptionalPath(node, "base_model", c.baseModel());
+    putOptionalText(node, "base_model_fingerprint", c.baseModelFingerprint());
     node.put("final", c.isFinal());
     return node;
   }
@@ -123,7 +124,7 @@ public final class JsonCodec {
             .fingerprint(f.text("fingerprint"))
             .type(wire(CheckpointType.class, f.text("type")))
             .isFinal(f.bool("final"));
-    f.optionalPath("base_model").ifPresent(b::baseModel);
+    baseModel(b, f);
     return b.build();
   }
 
@@ -237,6 +238,7 @@ public final class JsonCodec {
     prov.put("checkpoint_fingerprint", c.fingerprint());
     prov.put("checkpoint_type", c.type().wireName());
     putOptionalPath(prov, "base_model", c.baseModel());
+    putOptionalText(prov, "base_model_fingerprint", c.baseModelFingerprint());
     prov.put("checkpoint_final", c.isFinal());
     prov.put("probe_id", p.probeId());
     prov.put("probe_hash", p.probeHash());
@@ -275,7 +277,7 @@ public final class JsonCodec {
             .fingerprint(p.text("checkpoint_fingerprint"))
             .type(wire(CheckpointType.class, p.text("checkpoint_type")))
             .isFinal(p.bool("checkpoint_final"));
-    p.optionalPath("base_model").ifPresent(c::baseModel);
+    baseModel(c, p);
     Provenance provenance =
         Provenance.builder()
             .checkpoint(c.build())
@@ -313,6 +315,25 @@ public final class JsonCodec {
             () ->
                 new IllegalArgumentException(
                     "'" + name + "' is not one of " + WireNamed.allNames(type)));
+  }
+
+  /** {@code base_model} and {@code base_model_fingerprint}: both present or both null. */
+  private static void baseModel(Checkpoint.Builder b, Fields f) {
+    Optional<Path> base = f.optionalPath("base_model");
+    Optional<String> fingerprint = f.optionalText("base_model_fingerprint");
+    if (base.isPresent() != fingerprint.isPresent()) {
+      throw new IllegalArgumentException(
+          "base_model and base_model_fingerprint must both be set or both be null");
+    }
+    base.ifPresent(path -> b.baseModel(path, fingerprint.get()));
+  }
+
+  private static void putOptionalText(ObjectNode node, String key, Optional<String> value) {
+    if (value.isPresent()) {
+      node.put(key, value.get());
+    } else {
+      node.putNull(key);
+    }
   }
 
   private static void putOptionalPath(ObjectNode node, String key, Optional<Path> value) {
