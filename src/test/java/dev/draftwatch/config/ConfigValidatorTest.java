@@ -119,6 +119,7 @@ public class ConfigValidatorTest {
     assertEquals(Optional.of("00:45:00"), slurm.time());
     assertTrue(slurm.requeueOnPreempt());
     assertEquals(List.of("--mem=32G"), slurm.extraSbatchArgs());
+    assertEquals(List.of("--time=00:30:00"), slurm.scheduleSbatchArgs());
     assertEquals(List.of("python", "python/measure_acceptance.py"), c.harness().command());
 
     TargetConfig sft = c.target("my-sft-run").orElseThrow();
@@ -511,6 +512,71 @@ public class ConfigValidatorTest {
     setUpQuietly();
     ((ObjectNode) executor().get("slurm")).put("time", "45m");
     assertOnlyError("executor.slurm.time", "must be in an sbatch --time format");
+  }
+
+  private ObjectNode slurm() {
+    return (ObjectNode) executor().get("slurm");
+  }
+
+  /** Resets the config, then sets {@code executor.slurm.<key>} to {@code args}. */
+  private void sbatchArgs(String key, String... args) {
+    setUpQuietly();
+    ArrayNode list = slurm().putArray(key);
+    for (String arg : args) {
+      list.add(arg);
+    }
+  }
+
+  @Test
+  public void extraSbatchArgsMayNotSetWhatDraftwatchControls() {
+    String[][] refused = {
+      {"--output=x.log", "sets --output, which draftwatch sets itself"},
+      {"--out=x.log", "sets --output, which draftwatch sets itself"}, // getopt_long abbreviation
+      {"-o", "sets --output"},
+      {"-ox.log", "sets --output"},
+      {"--job-name=mine", "sets --job-name"},
+      {"--no-requeue", "sets --no-requeue"},
+      {"--wait", "sets --wait"},
+      {"--partition=short", "sets --partition; use executor.slurm.partition instead"},
+      {"-pshort", "sets --partition; use executor.slurm.partition instead"},
+      {"--gres=gpu:2", "sets --gres; use executor.slurm.gres instead"},
+      {"-t", "sets --time; use executor.slurm.time instead"},
+    };
+    for (String[] r : refused) {
+      sbatchArgs("extra_sbatch_args", "--mem=32G", r[0]);
+      assertOnlyError("executor.slurm.extra_sbatch_args[1]", "'" + r[0] + "' " + r[1]);
+    }
+    sbatchArgs(
+        "extra_sbatch_args",
+        "--mem=32G",
+        "--mem-per-gpu=8G",
+        "--gpus=1",
+        "--time-min=10",
+        "--wait-all-nodes=1",
+        "--gres-flags=enforce-binding",
+        "--account=lab");
+    assertEquals(7, valid().executor().slurm().orElseThrow().extraSbatchArgs().size());
+  }
+
+  @Test
+  public void scheduleSbatchArgsMayNotRequestAGpu() {
+    String[] gpu = {
+      "--gres=gpu:1", "--gpus=1", "-G1", "--gpus-per-node=1", "--gpus-per-task=1",
+      "--cpus-per-gpu=4", "--mem-per-gpu=8G", "--gres-flags=enforce-binding", "--gpus-per=1"
+    };
+    for (String arg : gpu) {
+      sbatchArgs("schedule_sbatch_args", arg);
+      assertOnlyError(
+          "executor.slurm.schedule_sbatch_args[0]", "the schedule job must not request a GPU");
+    }
+    sbatchArgs("schedule_sbatch_args", "--error=e.log");
+    assertOnlyError("executor.slurm.schedule_sbatch_args[0]", "sets --error");
+    sbatchArgs("schedule_sbatch_args", "--partition=short", "--time=00:10:00", "--mem=4G");
+    assertEquals(
+        List.of("--partition=short", "--time=00:10:00", "--mem=4G"),
+        valid().executor().slurm().orElseThrow().scheduleSbatchArgs());
+    sbatchArgs("schedule_sbatch_args");
+    assertEquals(List.of(), valid().executor().slurm().orElseThrow().scheduleSbatchArgs());
   }
 
   @Test

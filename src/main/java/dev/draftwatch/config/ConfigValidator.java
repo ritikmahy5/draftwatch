@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -142,22 +143,48 @@ public final class ConfigValidator {
 
     private SlurmConfig slurm(ConfigNode n) {
       int mark = errors.size();
-      if (!n.mapping("partition", "gres", "time", "requeue_on_preempt", "extra_sbatch_args")) {
+      if (!n.mapping(
+          "partition",
+          "gres",
+          "time",
+          "requeue_on_preempt",
+          "extra_sbatch_args",
+          "schedule_sbatch_args")) {
         return null;
       }
       Optional<String> partition = optionalString(n.optional("partition"));
       Optional<String> gres = optionalString(n.optional("gres"));
       Optional<String> time = slurmTime(n.optional("time"));
       Boolean requeue = n.required("requeue_on_preempt").asBoolean();
-      ConfigNode extraNode = n.optional("extra_sbatch_args");
-      List<String> extra = new ArrayList<>();
-      for (ConfigNode element : extraNode.elements()) {
-        extra.add(element.asString());
-      }
+      List<String> extra =
+          sbatchArgs(n.optional("extra_sbatch_args"), SbatchOptions::refuseForMeasurement);
+      ConfigNode scheduleNode = n.optional("schedule_sbatch_args");
+      List<String> schedule =
+          scheduleNode.isAbsent()
+              ? SlurmConfig.DEFAULT_SCHEDULE_SBATCH_ARGS
+              : sbatchArgs(scheduleNode, SbatchOptions::refuseForSchedule);
       if (errors.size() > mark) {
         return null;
       }
-      return build(n, () -> SlurmConfig.of(partition, gres, time, requeue, extra));
+      return build(n, () -> SlurmConfig.of(partition, gres, time, requeue, extra, schedule));
+    }
+
+    /** A list of sbatch arguments, each checked against {@code refusal} (DECISIONS.md D65). */
+    private List<String> sbatchArgs(
+        ConfigNode n, Function<String, Optional<String>> refusal) {
+      List<String> args = new ArrayList<>();
+      for (ConfigNode element : n.elements()) {
+        String arg = element.asString();
+        if (arg == null) {
+          continue;
+        }
+        Optional<String> refused = refusal.apply(arg);
+        if (refused.isPresent()) {
+          element.error("'" + arg + "' " + refused.get());
+        }
+        args.add(arg);
+      }
+      return args;
     }
 
     private Optional<String> optionalString(ConfigNode n) {

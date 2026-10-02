@@ -157,7 +157,8 @@ executor:
     gres: gpu:1
     time: "00:45:00"
     requeue_on_preempt: true
-    extra_sbatch_args: []
+    extra_sbatch_args: []                       # may not set options draftwatch sets
+    schedule_sbatch_args: ["--time=00:30:00"]   # the CPU-only schedule job; no GPU options
   max_retries: 2
 
 harness:
