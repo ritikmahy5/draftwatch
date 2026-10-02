@@ -3,6 +3,7 @@ package dev.draftwatch.app;
 import dev.draftwatch.config.ConfigException;
 import dev.draftwatch.config.ConfigLoader;
 import dev.draftwatch.config.DraftwatchConfig;
+import dev.draftwatch.config.ExecutorType;
 import dev.draftwatch.config.TargetConfig;
 import dev.draftwatch.discovery.CheckpointRejectedException;
 import dev.draftwatch.domain.AggregateMetrics;
@@ -32,7 +33,9 @@ import java.util.stream.Collectors;
  * {@code draftwatch submit <target> <checkpoint>}: measures one checkpoint with every probe of
  * its target, under the state lock (DECISIONS.md D36). The checkpoint goes through the same
  * completion, step, and fingerprint logic as {@code watch}; trigger rules do not apply to an
- * explicit request. With the local executor the command waits until its jobs are done.
+ * explicit request. With the local executor the command waits until its jobs are done; with the
+ * slurm executor it returns once sbatch has accepted them, and {@code watch --once} or the
+ * schedule collects the results (DECISIONS.md D61).
  */
 public final class SubmitCommand implements CliCommand {
   private final ConfigLoader loader;
@@ -122,8 +125,13 @@ public final class SubmitCommand implements CliCommand {
                 + probe.probe().id() + "; measuring again");
       }
       Job job = runner.submit(runner.create(checkpoint, probe));
-      out.println("job " + job.id() + ": probe " + probe.probe().id() + " " + job.state());
+      out.println(
+          "job " + job.id() + ": probe " + probe.probe().id() + " " + job.state()
+              + job.handle().map(h -> " as " + h).orElse(""));
       jobs.add(job);
+    }
+    if (s.config().executor().type() == ExecutorType.SLURM) {
+      return submittedToSlurm(out, runner, jobs);
     }
     boolean allSucceeded = true;
     for (Job job : runner.runToCompletion(jobs, s.sleeper())) {
@@ -131,6 +139,22 @@ public final class SubmitCommand implements CliCommand {
       out.println(outcome(runner, job));
     }
     return allSucceeded ? Cli.EXIT_OK : Cli.EXIT_FAILURE;
+  }
+
+  /** Reports the Slurm submissions; succeeds if sbatch accepted every job (D61). */
+  private static int submittedToSlurm(PrintStream out, MeasurementRunner runner, List<Job> jobs) {
+    boolean allSubmitted = true;
+    for (Job job : jobs) {
+      if (job.state() != JobState.SUBMITTED) {
+        allSubmitted = false;
+        out.println(outcome(runner, job));
+      }
+    }
+    if (allSubmitted) {
+      out.println(
+          "submitted to Slurm; 'draftwatch watch --once' or the schedule collects the results");
+    }
+    return allSubmitted ? Cli.EXIT_OK : Cli.EXIT_FAILURE;
   }
 
   /** One line per job; every number is followed by the result file it comes from. */

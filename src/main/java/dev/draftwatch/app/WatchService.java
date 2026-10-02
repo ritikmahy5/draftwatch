@@ -12,6 +12,7 @@ import dev.draftwatch.domain.Baseline;
 import dev.draftwatch.domain.Checkpoint;
 import dev.draftwatch.domain.Probe;
 import dev.draftwatch.domain.ResolvedProbe;
+import dev.draftwatch.exec.ExecutorException;
 import dev.draftwatch.exec.Job;
 import dev.draftwatch.fingerprint.FingerprintException;
 import dev.draftwatch.harness.ProbeResolver;
@@ -39,7 +40,8 @@ import java.util.function.Function;
  *   <li>Each target's checkpoint source is polled; every complete checkpoint, in step order, goes
  *       through the target's trigger chain once per probe, and accepted ones are submitted.
  *   <li>Every unfinished job is advanced once: polled, its result stored and detected, or
- *       retried.
+ *       retried. A job the executor cannot be asked about is reported and left as it was
+ *       (DECISIONS.md D61).
  * </ol>
  */
 public final class WatchService {
@@ -116,7 +118,14 @@ public final class WatchService {
       if (runner.isDone(job)) {
         continue;
       }
-      Job next = runner.advance(job);
+      Job next;
+      try {
+        next = runner.advance(job);
+      } catch (ExecutorException e) {
+        errors.add("job " + job.id() + " not polled: " + e.getMessage());
+        active++;
+        continue;
+      }
       if (runner.isDone(next)) {
         finished.add(next);
       } else {

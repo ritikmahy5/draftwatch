@@ -1,5 +1,6 @@
 package dev.draftwatch.app;
 
+import dev.draftwatch.exec.slurm.CommandRunner;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +30,19 @@ final class CommandTestSupport {
                 System.getenv(),
                 Clock.systemUTC(),
                 sleeper)
+            .cli();
+  }
+
+  /** With {@code slurm} answering every Slurm command, such as a {@code FakeSlurm}. */
+  CommandTestSupport(CommandRunner slurm) {
+    cli =
+        new Bootstrap(
+                new PrintStream(outBytes, true, StandardCharsets.UTF_8),
+                new PrintStream(errBytes, true, StandardCharsets.UTF_8),
+                System.getenv(),
+                Clock.systemUTC(),
+                Sleeper.system(),
+                slurm)
             .cli();
   }
 

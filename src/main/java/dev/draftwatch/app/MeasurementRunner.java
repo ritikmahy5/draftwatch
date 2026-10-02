@@ -142,6 +142,9 @@ public final class MeasurementRunner {
    * Moves {@code job} one step forward: submits it if CREATED, polls it if SUBMITTED or RUNNING
    * (storing its result if it just succeeded), and retries it if it is FAILED and the retry
    * policy allows. Done jobs are returned unchanged.
+   *
+   * @throws ExecutorException if the executor cannot be asked about a submitted job; nothing is
+   *     saved then, so the next call tries again
    */
   public Job advance(Job job) {
     Job next = job;
