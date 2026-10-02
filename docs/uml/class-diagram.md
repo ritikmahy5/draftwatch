@@ -5,7 +5,7 @@ Updated at the end of every milestone (DECISIONS.md D1). Shows the classes that 
 Accessors that only return a field are omitted; every domain and config class is immutable
 (private final fields, static factory or builder, no setters).
 
-**As of:** M2: contract, store, local execution, end to end.
+**As of:** M3: detection and alerts.
 
 ## app: entry point, CLI commands, orchestration
 
@@ -48,6 +48,16 @@ classDiagram
     +synopsis() String
   }
   class InitCommand { <<final>> }
+  class BaselineCommand { <<final>> }
+  class DetectionService {
+    <<final>>
+    +onMeasurementStored(MeasurementStored) void
+  }
+  class ConsoleDetectionPrinter {
+    <<final>>
+    +onDetection(DetectionEvent) void
+    +onBaselinePinned(BaselinePinned) void
+  }
   class ValidateCommand { <<final>> }
   class SubmitCommand { <<final>> }
   class StatusCommand { <<final>> }
@@ -61,6 +71,9 @@ classDiagram
     +results() ResultRepository
     +stateLock() StateLock
     +runner() MeasurementRunner
+    +baselines() BaselineRepository
+    +detections() DetectionLog
+    +bus() EventBus
   }
   class MeasurementRunner {
     <<final>>
@@ -87,6 +100,14 @@ classDiagram
   CliCommand <|.. SubmitCommand
   CliCommand <|.. StatusCommand
   CliCommand <|.. HistoryCommand
+  CliCommand <|.. BaselineCommand
+  Bootstrap ..> DetectionService : subscribes
+  Bootstrap ..> ConsoleDetectionPrinter : subscribes
+  DetectionService --> DetectorSuite
+  DetectionService --> BaselineRepository
+  DetectionService --> DetectionLog
+  DetectionService --> EventBus
+  MeasurementRunner --> EventBus : publishes MeasurementStored
   ValidateCommand ..> Services
   SubmitCommand ..> Services
   StatusCommand ..> Services
@@ -434,6 +455,15 @@ classDiagram
     <<final>>
     +isValid(String)$ boolean
   }
+  class Baseline {
+    <<final>>
+    -targetName String
+    -fingerprint String
+    -path Path
+    -step long
+    -setAt Instant
+    -source Source
+  }
 
   Probe *-- Draft
   Probe *-- Decoding
@@ -622,6 +652,7 @@ classDiagram
     +tau(Estimator, List~PromptCounts~) OptionalDouble
     +excludedPrompts(Estimator, List~PromptCounts~) int
     +alphaByPosition(List~PositionCount~) List~OptionalDouble~
+    +pooledPerPrompt(List~SeedReport~) List~PromptCounts~
     +mean(List~Double~) double
     +sampleStd(List~Double~) OptionalDouble
   }
@@ -634,6 +665,25 @@ classDiagram
   }
   class TokenWeightedEstimator { <<final>> }
   class SimpleMeanEstimator { <<final>> }
+  class PairedBootstrap {
+    <<final>>
+    +run(List~PromptCounts~ current, List~PromptCounts~ baseline, Function statistic, int resamples, double confidence, long seed)$ BootstrapInterval
+    ~quantile(double[] sorted, double q)$ double
+  }
+  class BootstrapInterval {
+    <<final>>
+    -observed double
+    -lower double
+    -upper double
+  }
+  class LeastSquaresSlope {
+    <<final>>
+    +slope(List~Double~ y)$ double
+  }
+  class UndefinedStatisticException { <<final>> }
+
+  PairedBootstrap ..> BootstrapInterval : returns
+  PairedBootstrap ..> UndefinedStatisticException : throws
 
   MetricCalculator o-- "2" EstimatorStrategy
   EstimatorStrategy <|.. TokenWeightedEstimator
@@ -792,6 +842,29 @@ classDiagram
   }
   class FileJobRepository { <<final>> }
   class FileResultRepository { <<final>> }
+  class BaselineRepository {
+    <<interface, Repository>>
+    +get(String target) Optional~Baseline~
+    +set(Baseline) void
+  }
+  class FileBaselineRepository { <<final>> }
+  class DetectionLog {
+    <<interface, Repository>>
+    +append(DetectionRecord) void
+    +all() List~DetectionRecord~
+  }
+  class FileDetectionLog { <<final>> }
+  class DetectionRecord {
+    <<final>>
+    -kind String
+    -subject DetectionSubject
+    -detector Optional~String~
+    -observed OptionalDouble
+    -threshold OptionalDouble
+    -baselineJobId Optional~String~
+    -explanation String
+    +of(DetectionEvent)$ DetectionRecord
+  }
   class JsonCodec {
     <<final>>
     +jobJson(Job) ObjectNode
@@ -840,6 +913,9 @@ classDiagram
   class StateLockException { <<final>> }
 
   JobRepository <|.. FileJobRepository
+  BaselineRepository <|.. FileBaselineRepository
+  DetectionLog <|.. FileDetectionLog
+  DetectionLog ..> DetectionRecord
   ResultRepository <|.. FileResultRepository
   FileJobRepository --> JsonCodec
   FileResultRepository --> JsonCodec
@@ -856,8 +932,184 @@ classDiagram
 ```
 
 Test doubles (in `src/test`) give each interface its second implementation: `FakeExecutor`,
-`ScriptedExecutor`, `InMemoryJobRepository`, `InMemoryResultRepository`, and test-local
-`HostIdentity` and `ProcessTable` fakes.
+`ScriptedExecutor`, `InMemoryJobRepository`, `InMemoryResultRepository`,
+`InMemoryBaselineRepository`, `InMemoryDetectionLog`, and test-local `HostIdentity`,
+`ProcessTable`, `Notifier`, and `RegressionDetector` fakes.
+
+## detect: regression detection
+
+```mermaid
+classDiagram
+  direction TB
+
+  class RegressionDetector {
+    <<interface, Strategy>>
+    +describe() String
+    +metric() Metric
+    +evaluate(Measurement current, Optional~Measurement~ baseline, List~Measurement~ history) DetectorVerdict
+  }
+  class BaselineDetector {
+    <<abstract, Template Method>>
+    +evaluate(...) DetectorVerdict
+    #compare(Measurement current, Measurement baseline)* DetectorVerdict
+  }
+  class PairedBootstrapDetector { <<final>> }
+  class AbsoluteDropDetector { <<final>> }
+  class NoiseFloorDetector {
+    <<final>>
+    ~floor() double
+  }
+  class TrendDetector { <<final>> }
+  class Comparability {
+    <<final>>
+    +mismatch(Measurement, Measurement)$ Optional~String~
+  }
+  class DetectorSuite {
+    <<final>>
+    +run(Measurement, Optional~Measurement~, List~Measurement~) List~DetectorVerdict~
+  }
+  class DetectorVerdict {
+    <<final>>
+    -kind Kind
+    -detector String
+    -metric Metric
+    -observed OptionalDouble
+    -threshold OptionalDouble
+    -intervalLower OptionalDouble
+    -intervalUpper OptionalDouble
+    -baselineJobId Optional~String~
+    -explanation String
+  }
+  class Kind {
+    <<enumeration>>
+    OK
+    REGRESSION
+    ERROR
+    INSUFFICIENT_DATA
+  }
+
+  RegressionDetector <|.. BaselineDetector
+  RegressionDetector <|.. TrendDetector
+  BaselineDetector <|-- PairedBootstrapDetector
+  BaselineDetector <|-- AbsoluteDropDetector
+  BaselineDetector <|-- NoiseFloorDetector
+  BaselineDetector ..> Comparability : guard
+  TrendDetector ..> Comparability : filters history
+  PairedBootstrapDetector ..> PairedBootstrap : uses
+  TrendDetector ..> LeastSquaresSlope : uses
+  DetectorSuite o-- "*" RegressionDetector
+  DetectorSuite ..> DetectorVerdict : returns
+  DetectorVerdict --> Kind
+```
+
+## events: the event bus
+
+```mermaid
+classDiagram
+  direction TB
+
+  class Event {
+    <<interface>>
+    +at() Instant
+  }
+  class Subscriber {
+    <<interface>>
+    +on(E event) void
+  }
+  class EventBus {
+    <<final, Observer>>
+    +subscribe(Class~E~ type, String name, Subscriber subscriber) void
+    +publish(Event) void
+  }
+  class MeasurementStored {
+    <<final>>
+    -measurement Measurement
+    -resultFile Path
+  }
+  class SubscriberFailed {
+    <<final>>
+    -subscriber String
+    -error String
+  }
+  class BaselinePinned {
+    <<final>>
+    -baseline Baseline
+  }
+  class DetectionSubject {
+    <<final>>
+    -target String
+    -probeId String
+    -probeHash String
+    -step long
+    -jobId String
+    -resultFile Path
+  }
+  class DetectionEvent {
+    <<abstract>>
+    +of(Instant, DetectionSubject, DetectorVerdict)$ DetectionEvent
+    +verdict()* Optional~DetectorVerdict~
+    +kind()* String
+    +explanation()* String
+  }
+  class DetectionOk { <<final>> }
+  class RegressionDetected { <<final>> }
+  class DetectionError { <<final>> }
+  class DetectionInsufficientData { <<final>> }
+  class DetectionDeferred { <<final>> }
+
+  Event <|.. MeasurementStored
+  Event <|.. SubscriberFailed
+  Event <|.. BaselinePinned
+  Event <|.. DetectionEvent
+  DetectionEvent <|-- DetectionOk
+  DetectionEvent <|-- RegressionDetected
+  DetectionEvent <|-- DetectionError
+  DetectionEvent <|-- DetectionInsufficientData
+  DetectionEvent <|-- DetectionDeferred
+  DetectionEvent *-- DetectionSubject
+  EventBus o-- "*" Subscriber
+  EventBus ..> SubscriberFailed : publishes on failure
+```
+
+## notify and action: alerts
+
+```mermaid
+classDiagram
+  direction LR
+
+  class Notifier {
+    <<interface, Strategy>>
+    +name() String
+    +notify(DetectionEvent) void
+  }
+  class ConsoleNotifier { <<final>> }
+  class LogFileNotifier {
+    <<final>>
+    +FILE$ String
+  }
+  class AlertFormat {
+    <<final>>
+    +line(DetectionEvent)$ String
+  }
+  class RegressionAction {
+    <<interface, Command>>
+    +name() String
+    +execute(RegressionDetected) void
+  }
+  class NotifyAction {
+    <<final>>
+    -notifiers List~Notifier~
+  }
+  class ActionFailedException { <<final>> }
+
+  Notifier <|.. ConsoleNotifier
+  Notifier <|.. LogFileNotifier
+  ConsoleNotifier ..> AlertFormat : uses
+  LogFileNotifier ..> AlertFormat : uses
+  RegressionAction <|.. NotifyAction
+  NotifyAction o-- "*" Notifier
+  NotifyAction ..> ActionFailedException : throws
+```
 
 ## Packages
 

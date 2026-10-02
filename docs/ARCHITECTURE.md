@@ -39,9 +39,15 @@ CheckpointSource ─discovers─▶ CheckpointDiscovered
   Executor.submit ───────────▶ JobStateChanged (CREATED → SUBMITTED)
   JobPoller ─────────────────▶ JobStateChanged … SUCCEEDED | FAILED | CANCELLED
   ReportParser ──────────────▶ MeasurementStored (Measurement + Provenance in ResultRepository)
-  DetectorSuite ─────────────▶ RegressionDetected | DetectionOk | DetectionError
-  Notifiers + RegressionActions subscribe to RegressionDetected and DetectionError
+  DetectionService ──────────▶ RegressionDetected | DetectionOk | DetectionError
+                               | DetectionInsufficientData | DetectionDeferred | BaselinePinned
+  detections.log subscribes to every DetectionEvent; notifiers to DetectionError;
+  each target's on_regression actions to its RegressionDetected
 ```
+
+As of M3, `MeasurementStored` onward runs on the bus: `MeasurementRunner` publishes it and
+`DetectionService` subscribes (DECISIONS.md D44, D50). The discovery and job-state events arrive
+with `watch` in M4.
 
 Each arrow is an event on the `EventBus`. Components subscribe; none call each other
 directly across package boundaries except through interfaces injected by `Bootstrap`.
@@ -72,13 +78,20 @@ interface ResultRepository {
   Path locate(Measurement m);                                          // the result file
 }
 
-final class DetectorVerdict { enum Kind { OK, REGRESSION, ERROR } Kind kind(); String metric(); /* observed, threshold, explanation */ }
+final class DetectorVerdict {
+  enum Kind { OK, REGRESSION, ERROR, INSUFFICIENT_DATA }      // DECISIONS.md D43
+  Kind kind(); Metric metric(); /* observed, threshold, interval, baseline job, explanation */
+}
 interface RegressionDetector {
-  DetectorVerdict evaluate(Measurement current, Measurement baseline, List<Measurement> recent);
+  DetectorVerdict evaluate(Measurement current, Optional<Measurement> baseline,
+                           List<Measurement> history);       // baseline empty: first baseline result
 }
 
-interface Notifier { void notify(DetectionEvent event); }
-interface RegressionAction { void execute(RegressionDetected event); }
+interface BaselineRepository { Optional<Baseline> get(String target); void set(Baseline b); }
+interface DetectionLog { void append(DetectionRecord r); List<DetectionRecord> all(); }
+
+interface Notifier { void notify(DetectionEvent event) throws Exception; }
+interface RegressionAction { void execute(RegressionDetected event) throws Exception; }
 ```
 
 ## Patterns and why each one is here
@@ -91,7 +104,7 @@ interface RegressionAction { void execute(RegressionDetected event); }
 | State | `JobState` + transition table | Lifecycle has legal and illegal transitions; illegal ones throw. |
 | Command | `RegressionAction`; `CliCommand` | Actions are configured data, executed later, and logged; CLI subcommands are looked up by name, so adding one never changes the dispatcher. |
 | Builder | `JobSpec`, `HarnessInvocation`; domain `Target`, `Checkpoint`, `Provenance`, `AcceptanceReport`, `SeedReport` | Many fields; invalid combinations rejected at `build()`. |
-| Template Method | `WeightFileFingerprinter` (base of both fingerprinters) | The file walk, ordering, and encoding are shared; only the per-file digest differs, so the two methods cannot drift apart (DECISIONS.md D23). |
+| Template Method | `WeightFileFingerprinter` (base of both fingerprinters); `BaselineDetector` (base of the baseline-relative detectors) | The file walk, ordering, and encoding are shared, so the fingerprint methods cannot drift apart (DECISIONS.md D23); the Comparability guard runs before every baseline comparison, so no detector can skip it (D47). |
 | Repository | `ResultRepository`, `JobRepository`, `BaselineRepository` | Storage swappable (files now) and testable with in-memory fakes. |
 | Adapter | `SlurmExecutor` over `sbatch`/`squeue`/`sacct` text output | Isolates cluster CLI parsing behind `Executor`. |
 | Factory | `Bootstrap` | The single place where config type names become objects. |
@@ -159,9 +172,10 @@ missing from both is re-polled before being declared failed.
   raw/<job-id>/attempt-<n>/invocation.json the exact argv of attempt n
   raw/<job-id>/attempt-<n>/report.json     harness output exactly as written
   raw/<job-id>/attempt-<n>/stdout.log, stderr.log, exit_code
-  baselines.json                           target → baseline checkpoint fingerprint
-  detections.log                           every detector outcome, including Ok and Error
-  alerts.log
+  baselines.json                           target → baseline checkpoint (fingerprint, path, step,
+                                           set_at, source manual|auto)
+  detections.log                           every detection outcome, one JSON object per line
+  alerts.log                               one human-readable line per alert
 ```
 
 Writes are atomic: write a temp file in the same directory, then rename. Results are
