@@ -14,10 +14,14 @@ new checkpoint ──▶ trigger rules ──▶ measurement job ──▶ resul
 
 ## Status
 
-M3 (detection and alerts) complete: every stored measurement is checked by the target's
-detectors against its baseline (`draftwatch baseline`); regressions and errors are alerted on the
-console and in `alerts.log`, and every outcome is recorded in `detections.log`. Tests use the
-fake harness (`scripts/fake_harness.py`, synthetic data only). Next: M4. See `docs/ROADMAP.md`.
+M4 (discovery and triggers) complete: `draftwatch watch` polls each target's checkpoint
+directory, passes every complete checkpoint through the target's trigger rules, submits the
+accepted ones, and advances running jobs. Each pass holds the state lock (`--once` for one pass,
+or a local-only loop with `--interval`). Every stored measurement is checked by the target's
+detectors against its baseline (`draftwatch baseline`). Regressions and errors are alerted on
+the console and in `alerts.log`, and every outcome is recorded in `detections.log`. Tests use
+the fake harness (`scripts/fake_harness.py`, synthetic data only). Next: M5. See
+`docs/ROADMAP.md`.
 
 ## Layout
 
