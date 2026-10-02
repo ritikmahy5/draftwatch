@@ -222,13 +222,6 @@ public class SubmitCommandTest {
   }
 
   @Test
-  public void slurmExecutorIsRefusedUntilM5() {
-    Project p = project().executor("slurm").write();
-    assertEquals(Cli.EXIT_FAILURE, submit(p, p.checkpoint(100, (byte) 1)));
-    assertTrue(cli.err(), cli.err().contains("not available until M5"));
-  }
-
-  @Test
   public void unknownTargetAndBadArgumentsAreReported() {
     Project p = project().write();
     assertEquals(

@@ -41,6 +41,7 @@ import dev.draftwatch.exec.TimestampJobIds;
 import dev.draftwatch.exec.slurm.CommandRunner;
 import dev.draftwatch.exec.slurm.ProcessCommandRunner;
 import dev.draftwatch.exec.slurm.SlurmCli;
+import dev.draftwatch.exec.slurm.SlurmExecutor;
 import dev.draftwatch.fingerprint.CachingFingerprinter;
 import dev.draftwatch.fingerprint.FingerprintMethod;
 import dev.draftwatch.fingerprint.Fingerprinter;
@@ -343,19 +344,17 @@ public final class Bootstrap {
         config.baseDir());
   }
 
-  /**
-   * The executor for {@code executor.type}.
-   *
-   * @throws UnsupportedOperationException for {@code slurm}, which arrives in M5
-   */
+  /** The executor for {@code executor.type}. */
   private Executor executor(ExecutorConfig config) {
     switch (config.type()) {
       case LOCAL:
         return new LocalExecutor(clock);
       case SLURM:
-        throw new UnsupportedOperationException(
-            "executor.type slurm is not available until M5 (docs/ROADMAP.md); use"
-                + " executor.type: local");
+        return new SlurmExecutor(
+            config.slurm().orElseThrow(),
+            new SlurmCli(slurmCommands),
+            clock,
+            warning -> err.println("draftwatch: " + warning));
       default:
         throw new IllegalArgumentException("unknown executor type " + config.type());
     }

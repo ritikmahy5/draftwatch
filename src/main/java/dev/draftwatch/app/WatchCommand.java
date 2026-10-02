@@ -73,12 +73,7 @@ public final class WatchCommand implements CliCommand {
               + " 'draftwatch schedule'");
     }
     Services s = services.apply(config);
-    WatchService watch;
-    try {
-      watch = s.watch();
-    } catch (UnsupportedOperationException e) {
-      return context.fail(e.getMessage());
-    }
+    WatchService watch = s.watch();
     while (true) {
       int result = onePass(context, s, watch, once);
       if (once) {

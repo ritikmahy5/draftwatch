@@ -70,12 +70,7 @@ public final class SubmitCommand implements CliCommand {
       return context.fail("unknown target '" + args.get(0) + "'; configured: " + configured);
     }
     Services s = services.apply(config);
-    MeasurementRunner runner;
-    try {
-      runner = s.runner();
-    } catch (UnsupportedOperationException e) {
-      return context.fail(e.getMessage());
-    }
+    MeasurementRunner runner = s.runner();
     StateLock.Held lock;
     try {
       lock = s.stateLock().acquire(config.stateDir(), "submit");

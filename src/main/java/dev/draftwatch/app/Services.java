@@ -108,20 +108,12 @@ public final class Services {
     return stateLock;
   }
 
-  /**
-   * The runner for the configured executor.
-   *
-   * @throws UnsupportedOperationException if the configured executor is not available yet
-   */
+  /** The runner for the configured executor. */
   public MeasurementRunner runner() {
     return runner.get();
   }
 
-  /**
-   * A watch pass runner for the configured executor.
-   *
-   * @throws UnsupportedOperationException if the configured executor is not available yet
-   */
+  /** A watch pass runner for the configured executor. */
   public WatchService watch() {
     return watch.get();
   }
