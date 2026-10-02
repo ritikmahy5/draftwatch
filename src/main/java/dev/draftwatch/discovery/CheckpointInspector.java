@@ -43,7 +43,7 @@ public final class CheckpointInspector {
     }
     Optional<String> incomplete = completion.incompleteReason(path, clock.instant());
     if (incomplete.isPresent()) {
-      throw new CheckpointRejectedException(path, "not complete: " + incomplete.get());
+      throw CheckpointRejectedException.incomplete(path, incomplete.get());
     }
     long step;
     try {
