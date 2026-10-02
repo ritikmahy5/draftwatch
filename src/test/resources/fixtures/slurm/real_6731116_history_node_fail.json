@@ -1,0 +1,35 @@
+{
+  "source": "recorded on c0586 by scripts/record_slurm_fixtures.py at 2026-10-02T08:07:25Z (slurm 23.11.6)",
+  "note": "from the user's sacct history, state NODE_FAIL",
+  "job_id": "6731116",
+  "observations": [
+    {
+      "at": "2026-10-02T08:07:25Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=6731116"
+        ],
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "slurm_load_jobs error: Invalid job id specified\n"
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=6731116"
+        ],
+        "exit_code": 0,
+        "stdout": "6731116|COMPLETED|0:0|2026-05-12T07:37:27+0000|2026-05-12T11:03:19+0000\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

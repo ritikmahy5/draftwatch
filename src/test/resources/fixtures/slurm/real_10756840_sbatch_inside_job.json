@@ -1,0 +1,138 @@
+{
+  "source": "recorded on c0586 by scripts/record_slurm_fixtures.py at 2026-10-02T07:54:17Z (slurm 23.11.6)",
+  "note": "scenario sbatch_inside_job",
+  "job_id": "10756840",
+  "submitted_with": {
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--job-name=draftwatch-fixture-sbatch_inside_job",
+      "--output=/scratch/user/draftwatch-record/out2/logs/sbatch_inside_job-%j.out",
+      "--error=/scratch/user/draftwatch-record/out2/logs/sbatch_inside_job-%j.err",
+      "--time=5",
+      "--mem=100M",
+      "--ntasks=1",
+      "--cpus-per-task=1",
+      "/scratch/user/draftwatch-record/out2/scripts/sbatch_inside_job.sh"
+    ],
+    "exit_code": 0,
+    "stdout": "10756840\n",
+    "stderr": ""
+  },
+  "actions": [],
+  "finished": true,
+  "observations": [
+    {
+      "at": "2026-10-02T07:54:22Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756840"
+        ],
+        "exit_code": 0,
+        "stdout": "10756840|PENDING|N/A\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756840"
+        ],
+        "exit_code": 0,
+        "stdout": "10756840|PENDING|0:0|Unknown|Unknown\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T07:54:50Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756840"
+        ],
+        "exit_code": 0,
+        "stdout": "10756840|COMPLETED|2026-10-02T07:54:35+0000\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756840"
+        ],
+        "exit_code": 0,
+        "stdout": "10756840|COMPLETED|0:0|2026-10-02T07:54:35+0000|2026-10-02T07:54:39+0000\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T07:59:37Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756840"
+        ],
+        "exit_code": 0,
+        "stdout": "10756840|COMPLETED|2026-10-02T07:54:35+0000\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756840"
+        ],
+        "exit_code": 0,
+        "stdout": "10756840|COMPLETED|0:0|2026-10-02T07:54:35+0000|2026-10-02T07:54:39+0000\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T08:00:05Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756840"
+        ],
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "slurm_load_jobs error: Invalid job id specified\n"
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756840"
+        ],
+        "exit_code": 0,
+        "stdout": "10756840|COMPLETED|0:0|2026-10-02T07:54:35+0000|2026-10-02T07:54:39+0000\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

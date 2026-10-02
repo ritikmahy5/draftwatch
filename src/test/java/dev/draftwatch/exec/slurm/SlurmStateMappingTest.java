@@ -260,6 +260,76 @@ public class SlurmStateMappingTest {
     assertEquals(Optional.of(FailureReason.PREEMPTED_NO_REQUEUE), jobs.get(1).failureReason());
   }
 
+  // --- recorded on Explorer, Slurm 23.11.6 (DECISIONS.md D66, D67) ---------------------------
+
+  @Test
+  public void recordedCompletedJobSucceedsWithSlurmsTimes() throws IOException {
+    harnessExited(0);
+    List<Job> jobs = replay("real_10756833_completed", true);
+    assertEquals(
+        "PENDING, RUNNING, then COMPLETED while squeue still lists it",
+        List.of(JobState.SUBMITTED, JobState.RUNNING, JobState.SUCCEEDED),
+        states(jobs).subList(0, 3));
+    assertEquals(Optional.of(Instant.parse("2026-10-02T07:54:35Z")), last(jobs).runningSince());
+    assertEquals(Instant.parse("2026-10-02T07:54:55Z"), last(jobs).lastChange().at());
+  }
+
+  @Test
+  public void recordedFailedJobTakesTheReasonOfExitCode3() throws IOException {
+    harnessExited(3);
+    Job job = last(replay("real_10756834_failed_exit_3", true));
+    assertEquals(Optional.of(FailureReason.MODEL_LOAD), job.failureReason());
+    assertEquals(Optional.of(Instant.parse("2026-10-02T07:54:35Z")), job.runningSince());
+  }
+
+  @Test
+  public void recordedTimeoutFailsAsTimeout() {
+    Job job = last(replay("real_10756837_timeout", true));
+    assertEquals(Optional.of(FailureReason.TIMEOUT), job.failureReason());
+    assertTrue(job.lastChange().cause(), job.lastChange().cause().contains("TIMEOUT"));
+  }
+
+  @Test
+  public void recordedCancellationsBeforeAndWhileRunningAreCancelled() {
+    Job pending = last(replay("real_10756835_cancelled_pending", true));
+    assertEquals(JobState.CANCELLED, pending.state());
+    assertTrue(
+        "sacct's Start is None: it never ran",
+        pending.history().stream().noneMatch(c -> c.to() == JobState.RUNNING));
+    setUp();
+    Job running = last(replay("real_10756836_cancelled_running", true));
+    assertEquals(JobState.CANCELLED, running.state());
+    assertTrue(running.lastChange().cause(), running.lastChange().cause().contains("CANCELLED by"));
+  }
+
+  @Test
+  public void recordedRequeueRunsTwiceAndSucceedsFromTheSecondStart() throws IOException {
+    harnessExited(0);
+    List<Job> jobs = replay("real_10756839_requeued", true);
+    assertEquals(JobState.RUNNING, jobs.get(1).state());
+    assertEquals("scontrol requeue: back to PENDING", JobState.SUBMITTED, jobs.get(2).state());
+    assertEquals(JobState.SUCCEEDED, last(jobs).state());
+    assertEquals(1, last(jobs).attempt());
+    assertEquals(Optional.of(Instant.parse("2026-10-02T07:57:17Z")), last(jobs).runningSince());
+  }
+
+  @Test
+  public void recordedNodeFailureThatSlurmRequeuedEndsAsItsLatestRecord() throws IOException {
+    harnessExited(0);
+    Job job = last(replay("real_6731116_history_node_fail", true));
+    assertEquals(
+        "sacct without --duplicates shows the COMPLETED record after the NODE_FAIL one",
+        JobState.SUCCEEDED,
+        job.state());
+  }
+
+  @Test
+  public void recordedMemoryOverrunWasNotEnforcedAndCompleted() throws IOException {
+    harnessExited(0); // Explorer let a --mem=64M job allocate 1 GiB (D67)
+    assertEquals(
+        JobState.SUCCEEDED, last(replay("real_10756838_out_of_memory", true)).state());
+  }
+
   // --- D59's other documented states ---------------------------------------------------------
 
   @Test

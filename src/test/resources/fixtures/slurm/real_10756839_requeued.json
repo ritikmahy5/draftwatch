@@ -1,0 +1,319 @@
+{
+  "source": "recorded on c0586 by scripts/record_slurm_fixtures.py at 2026-10-02T07:54:17Z (slurm 23.11.6)",
+  "note": "scenario requeued",
+  "job_id": "10756839",
+  "submitted_with": {
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--job-name=draftwatch-fixture-requeued",
+      "--output=/scratch/user/draftwatch-record/out2/logs/requeued-%j.out",
+      "--error=/scratch/user/draftwatch-record/out2/logs/requeued-%j.err",
+      "--time=5",
+      "--mem=100M",
+      "--ntasks=1",
+      "--cpus-per-task=1",
+      "--requeue",
+      "/scratch/user/draftwatch-record/out2/scripts/requeued.sh"
+    ],
+    "exit_code": 0,
+    "stdout": "10756839\n",
+    "stderr": ""
+  },
+  "actions": [
+    {
+      "command": [
+        "scontrol",
+        "requeue",
+        "10756839"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "at": "2026-10-02T07:54:50Z"
+    }
+  ],
+  "finished": true,
+  "observations": [
+    {
+      "at": "2026-10-02T07:54:21Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|PENDING|N/A\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|PENDING|0:0|Unknown|Unknown\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T07:54:48Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|RUNNING|2026-10-02T07:54:35+0000\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|RUNNING|0:0|2026-10-02T07:54:35+0000|Unknown\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T07:55:13Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|PENDING|2026-10-02T07:56:53+0000\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|PENDING|0:0|Unknown|Unknown\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T07:56:49Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|PENDING|2026-10-02T07:56:53+0000\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|PENDING|0:0|Unknown|Unknown\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T07:57:12Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|PENDING|N/A\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|PENDING|0:0|Unknown|Unknown\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T07:57:36Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|RUNNING|2026-10-02T07:57:17+0000\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|RUNNING|0:0|2026-10-02T07:57:17+0000|Unknown\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T07:57:59Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|RUNNING|2026-10-02T07:57:17+0000\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|RUNNING|0:0|2026-10-02T07:57:17+0000|Unknown\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T07:58:24Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|COMPLETED|2026-10-02T07:57:17+0000\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|COMPLETED|0:0|2026-10-02T07:57:17+0000|2026-10-02T07:58:18+0000\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T08:03:53Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|COMPLETED|2026-10-02T07:57:17+0000\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|COMPLETED|0:0|2026-10-02T07:57:17+0000|2026-10-02T07:58:18+0000\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T08:04:14Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756839"
+        ],
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "slurm_load_jobs error: Invalid job id specified\n"
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756839"
+        ],
+        "exit_code": 0,
+        "stdout": "10756839|COMPLETED|0:0|2026-10-02T07:57:17+0000|2026-10-02T07:58:18+0000\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

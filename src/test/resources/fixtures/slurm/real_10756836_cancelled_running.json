@@ -1,0 +1,177 @@
+{
+  "source": "recorded on c0586 by scripts/record_slurm_fixtures.py at 2026-10-02T07:54:17Z (slurm 23.11.6)",
+  "note": "scenario cancelled_running",
+  "job_id": "10756836",
+  "submitted_with": {
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--job-name=draftwatch-fixture-cancelled_running",
+      "--output=/scratch/user/draftwatch-record/out2/logs/cancelled_running-%j.out",
+      "--error=/scratch/user/draftwatch-record/out2/logs/cancelled_running-%j.err",
+      "--time=5",
+      "--mem=100M",
+      "--ntasks=1",
+      "--cpus-per-task=1",
+      "/scratch/user/draftwatch-record/out2/scripts/cancelled_running.sh"
+    ],
+    "exit_code": 0,
+    "stdout": "10756836\n",
+    "stderr": ""
+  },
+  "actions": [
+    {
+      "command": [
+        "scancel",
+        "10756836"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "at": "2026-10-02T07:54:45Z"
+    }
+  ],
+  "finished": true,
+  "observations": [
+    {
+      "at": "2026-10-02T07:54:20Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756836"
+        ],
+        "exit_code": 0,
+        "stdout": "10756836|PENDING|N/A\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756836"
+        ],
+        "exit_code": 0,
+        "stdout": "10756836|PENDING|0:0|Unknown|Unknown\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T07:54:44Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756836"
+        ],
+        "exit_code": 0,
+        "stdout": "10756836|RUNNING|2026-10-02T07:54:35+0000\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756836"
+        ],
+        "exit_code": 0,
+        "stdout": "10756836|RUNNING|0:0|2026-10-02T07:54:35+0000|Unknown\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T07:55:11Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756836"
+        ],
+        "exit_code": 0,
+        "stdout": "10756836|CANCELLED|2026-10-02T07:54:35+0000\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756836"
+        ],
+        "exit_code": 0,
+        "stdout": "10756836|CANCELLED by 1001|0:0|2026-10-02T07:54:35+0000|2026-10-02T07:54:45+0000\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T07:59:35Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756836"
+        ],
+        "exit_code": 0,
+        "stdout": "10756836|CANCELLED|2026-10-02T07:54:35+0000\n",
+        "stderr": ""
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756836"
+        ],
+        "exit_code": 0,
+        "stdout": "10756836|CANCELLED by 1001|0:0|2026-10-02T07:54:35+0000|2026-10-02T07:54:45+0000\n",
+        "stderr": ""
+      }
+    },
+    {
+      "at": "2026-10-02T08:00:02Z",
+      "squeue": {
+        "command": [
+          "squeue",
+          "--noheader",
+          "--states=all",
+          "--format=%i|%T|%S",
+          "--jobs=10756836"
+        ],
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "slurm_load_jobs error: Invalid job id specified\n"
+      },
+      "sacct": {
+        "command": [
+          "sacct",
+          "--noheader",
+          "--parsable2",
+          "--allocations",
+          "--format=JobIDRaw,State,ExitCode,Start,End",
+          "--jobs=10756836"
+        ],
+        "exit_code": 0,
+        "stdout": "10756836|CANCELLED by 1001|0:0|2026-10-02T07:54:35+0000|2026-10-02T07:54:45+0000\n",
+        "stderr": ""
+      }
+    }
+  ]
+}
