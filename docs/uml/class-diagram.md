@@ -285,6 +285,7 @@ classDiagram
     -fingerprint String
     -type CheckpointType
     -baseModel Optional~Path~
+    -baseModelFingerprint Optional~String~
     -isFinal boolean
     +builder()$ Builder
   }
@@ -489,7 +490,12 @@ classDiagram
     +newDigest()$ MessageDigest
     +hex(byte[])$ String
   }
+  class AdapterFingerprint {
+    <<final>>
+    +combine(String adapter, String base)$ String
+  }
 
+  AdapterFingerprint ..> Sha256 : uses
   Fingerprinter <|.. WeightFileFingerprinter
   WeightFileFingerprinter <|-- SampledBlockFingerprinter
   WeightFileFingerprinter <|-- FullFileFingerprinter
@@ -533,6 +539,7 @@ classDiagram
   CompletionPolicy <|.. MarkerCompletionPolicy
   CompletionPolicy <|.. SettleCompletionPolicy
   CheckpointInspector ..> CompletionPolicy : uses
+  CheckpointInspector ..> AdapterFingerprint : adapters
   CheckpointInspector ..> StepExtractor : uses
   CheckpointInspector --> Fingerprinter
   CheckpointInspector ..> CheckpointRejectedException : throws

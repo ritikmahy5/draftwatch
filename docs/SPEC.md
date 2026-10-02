@@ -51,6 +51,8 @@ with a draft model, and who train on a shared cluster (Slurm) or a single GPU ma
   evenly spaced offsets, always including the final MiB. Config option
   `fingerprint: full` hashes entire files instead. Metadata files (index JSON, config JSON)
   are never sufficient on their own: they are identical across checkpoints of one run.
+  For an adapter checkpoint, the fingerprint also covers the base model's weights, so the same
+  adapter on a different base model is a different checkpoint (DECISIONS.md D42).
 - Manual submission: `draftwatch submit <target> <checkpoint-path>` runs the same
   completion, step, and fingerprint logic.
 
@@ -86,8 +88,8 @@ re-measures final checkpoints forever.
 - Lifecycle and retry policy: see ARCHITECTURE.md, "Job state machine".
 
 ### F4 — Result store with provenance
-Every result records: target; checkpoint path, step, fingerprint, type, and base model (if
-adapter); probe id and probe hash; draft id and draft fingerprint; harness version; backend;
+Every result records: target; checkpoint path, step, fingerprint, type, and base model and
+its weight fingerprint (if adapter); probe id and probe hash; draft id and draft fingerprint; harness version; backend;
 dtype; estimator; seeds; prompt-set SHA-256; executor; job id and attempt; start/end time;
 raw report path. Results are append-only.
 
