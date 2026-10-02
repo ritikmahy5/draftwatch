@@ -89,6 +89,7 @@ public final class TargetConfig {
     return detectors;
   }
 
+  /** Actions on a regression; {@code [notify]} if not configured (DECISIONS.md D49). */
   public List<ActionKind> onRegression() {
     return onRegression;
   }

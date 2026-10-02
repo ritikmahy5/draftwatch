@@ -370,7 +370,9 @@ public final class ConfigValidator {
           detectorsNode.isAbsent()
               ? List.of(PairedBootstrapSpec.withDefaults(Metric.ALPHA))
               : detectors(detectorsNode);
-      List<ActionKind> actions = actions(n.optional("on_regression"));
+      ConfigNode actionsNode = n.optional("on_regression");
+      List<ActionKind> actions =
+          actionsNode.isAbsent() ? List.of(ActionKind.NOTIFY) : actions(actionsNode);
       if (errors.size() > mark) {
         return null;
       }

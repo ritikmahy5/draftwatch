@@ -164,7 +164,8 @@ public class ConfigValidatorTest {
     assertEquals("FINAL", lora.target().finalMarker());
     assertEquals(TriggerSpec.defaultChain(), lora.triggers());
     assertEquals(List.of(PairedBootstrapSpec.withDefaults(Metric.ALPHA)), lora.detectors());
-    assertEquals(List.of(), lora.onRegression());
+    assertEquals("regressions are alerted unless on_regression says otherwise (D49)",
+        List.of(ActionKind.NOTIFY), lora.onRegression());
   }
 
   @Test
@@ -429,6 +430,12 @@ public class ConfigValidatorTest {
   public void namesMustBePathSafe() {
     target(0).put("name", "../escape");
     assertOnlyError("targets[0].name", "must start with a letter or digit");
+  }
+
+  @Test
+  public void emptyOnRegressionMeansNoActions() {
+    target(0).set("on_regression", NODES.arrayNode());
+    assertEquals(List.of(), valid().target("my-sft-run").orElseThrow().onRegression());
   }
 
   @Test
