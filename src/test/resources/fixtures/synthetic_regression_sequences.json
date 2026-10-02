@@ -1,0 +1,59 @@
+{
+  "source": "synthetic: invented accepted-token counts for 10 prompts (each 10 steps, 40 proposed, num_speculative_tokens = 4) at checkpoints 100..400, designed so each scenario trips a known set of detectors; not a measurement",
+  "num_speculative_tokens": 4,
+  "steps_per_prompt": 10,
+  "proposed_per_prompt": 40,
+  "detectors": {
+    "paired_bootstrap": {"metric": "alpha", "confidence": 0.95, "min_effect": 0.0, "resamples": 2000, "bootstrap_seed": 0},
+    "absolute_drop": {"metric": "alpha", "max_drop": 0.05},
+    "noise_floor": {"metric": "alpha", "k": 2, "sigma": 0.02},
+    "trend": {"metric": "alpha", "window": 4, "max_slope": -0.01}
+  },
+  "scenarios": {
+    "stable": {
+      "expected": [],
+      "accepted": [
+        [28,28,28,28,28,28,28,28,28,28],
+        [28,28,28,28,28,28,28,28,28,28],
+        [28,28,28,28,28,28,28,28,28,28],
+        [28,28,28,28,28,28,28,28,28,28]
+      ]
+    },
+    "sharp_drop": {
+      "expected": ["paired_bootstrap", "absolute_drop", "noise_floor", "trend"],
+      "accepted": [
+        [28,28,28,28,28,28,28,28,28,28],
+        [28,28,28,28,28,28,28,28,28,28],
+        [28,28,28,28,28,28,28,28,28,28],
+        [22,22,22,22,22,22,22,22,22,22]
+      ]
+    },
+    "small_consistent_drop": {
+      "expected": ["paired_bootstrap"],
+      "accepted": [
+        [28,28,28,28,28,28,28,28,28,28],
+        [28,28,28,28,28,28,28,28,28,28],
+        [28,28,28,28,28,28,28,28,28,28],
+        [27,27,27,27,27,27,27,27,27,27]
+      ]
+    },
+    "one_prompt_collapses": {
+      "expected": ["absolute_drop", "noise_floor", "trend"],
+      "accepted": [
+        [28,28,28,28,28,28,28,28,28,28],
+        [28,28,28,28,28,28,28,28,28,28],
+        [28,28,28,28,28,28,28,28,28,28],
+        [28,28,28,28,28,28,28,28,28,0]
+      ]
+    },
+    "gradual_noisy_decline": {
+      "expected": ["trend"],
+      "accepted": [
+        [28,28,28,28,28,28,28,28,28,28],
+        [28,27,28,27,28,27,28,27,28,26],
+        [27,26,27,26,27,26,27,26,28,28],
+        [19,19,19,19,31,31,31,31,31,31]
+      ]
+    }
+  }
+}
