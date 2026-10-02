@@ -1,19 +1,14 @@
 package dev.draftwatch.fingerprint;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.TreeMap;
-import java.util.stream.Stream;
 
 /**
  * The fingerprint algorithm of SPEC.md F1, shared by both methods; subclasses supply only the
@@ -49,7 +44,7 @@ public abstract class WeightFileFingerprinter implements Fingerprinter {
     if (!Files.isDirectory(dir)) {
       throw new FingerprintException(dir, "not a directory");
     }
-    TreeMap<String, Path> files = weightFiles(dir);
+    TreeMap<String, Path> files = WeightFiles.under(dir);
     if (files.isEmpty()) {
       throw new FingerprintException(dir, "no weight files (*.safetensors, *.bin)");
     }
@@ -132,38 +127,6 @@ public abstract class WeightFileFingerprinter implements Fingerprinter {
         remaining -= read;
       }
     }
-  }
-
-  /** True if {@code fileName} is a weight file name per SPEC.md F1. */
-  static boolean isWeightFile(String fileName) {
-    return fileName.endsWith(".safetensors") || fileName.endsWith(".bin");
-  }
-
-  private static TreeMap<String, Path> weightFiles(Path dir) {
-    List<Path> found = new ArrayList<>();
-    try (Stream<Path> walk = Files.walk(dir, FileVisitOption.FOLLOW_LINKS)) {
-      walk.filter(p -> isWeightFile(p.getFileName().toString()))
-          .filter(Files::isRegularFile)
-          .forEach(found::add);
-    } catch (IOException | UncheckedIOException e) {
-      throw new FingerprintException(dir, "cannot list files: " + e.getMessage(), e);
-    }
-    TreeMap<String, Path> byRelativePath = new TreeMap<>();
-    for (Path file : found) {
-      byRelativePath.put(relativeName(dir.relativize(file)), file);
-    }
-    return byRelativePath;
-  }
-
-  private static String relativeName(Path relative) {
-    StringBuilder name = new StringBuilder();
-    for (Path part : relative) {
-      if (name.length() > 0) {
-        name.append('/');
-      }
-      name.append(part.toString());
-    }
-    return name.toString();
   }
 
   private static long size(Path file) {

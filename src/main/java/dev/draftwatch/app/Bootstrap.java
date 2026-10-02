@@ -36,6 +36,7 @@ import dev.draftwatch.exec.JobPoller;
 import dev.draftwatch.exec.LocalExecutor;
 import dev.draftwatch.exec.RetryPolicy;
 import dev.draftwatch.exec.TimestampJobIds;
+import dev.draftwatch.fingerprint.CachingFingerprinter;
 import dev.draftwatch.fingerprint.FingerprintMethod;
 import dev.draftwatch.fingerprint.Fingerprinter;
 import dev.draftwatch.fingerprint.FullFileFingerprinter;
@@ -52,6 +53,7 @@ import dev.draftwatch.store.DetectionLog;
 import dev.draftwatch.store.DetectionRecord;
 import dev.draftwatch.store.FileBaselineRepository;
 import dev.draftwatch.store.FileDetectionLog;
+import dev.draftwatch.store.FileFingerprintCache;
 import dev.draftwatch.store.FileJobRepository;
 import dev.draftwatch.store.FileResultRepository;
 import dev.draftwatch.store.JobRepository;
@@ -139,7 +141,11 @@ public final class Bootstrap {
   Services services(DraftwatchConfig config) {
     ObjectMapper json = new ObjectMapper();
     Path stateDir = config.stateDir();
-    Fingerprinter fingerprinter = fingerprinter(config.fingerprintMethod());
+    Fingerprinter fingerprinter =
+        new CachingFingerprinter(
+            fingerprinter(config.fingerprintMethod()),
+            config.fingerprintMethod(),
+            new FileFingerprintCache(stateDir, json));
     JsonCodec codec = new JsonCodec();
     JobRepository jobs = new FileJobRepository(stateDir, codec, json);
     ResultRepository results = new FileResultRepository(stateDir, codec, json);
