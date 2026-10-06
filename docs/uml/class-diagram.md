@@ -5,7 +5,7 @@ Updated at the end of every milestone (DECISIONS.md D1). Shows the classes that 
 Accessors that only return a field are omitted; every domain and config class is immutable
 (private final fields, static factory or builder, no setters).
 
-**As of:** M7: retrain action.
+**As of:** M8: reference harness (Python; the Java classes are unchanged since M7).
 
 ## app: entry point, CLI commands, orchestration
 

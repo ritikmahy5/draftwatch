@@ -14,12 +14,17 @@ new checkpoint ──▶ trigger rules ──▶ measurement job ──▶ resul
 
 ## Status
 
+M8 (reference vLLM harness) complete: `python/measure_acceptance.py` measures draft acceptance
+with vLLM's offline API, one prompt per call from counter deltas, and validates its own report
+against the contract. Its reports from a real run on an A100 pass `ReportParser`; the run's
+reports and recorded counters are committed and replayed by the tests (DECISIONS.md D80–D87).
+Every milestone in `docs/ROADMAP.md` is now done.
+
 M7 (retrain action, stretch) complete: `on_regression` can include
 `retrain_draft: { command: [...] }`, which submits the training command through the configured
 executor, once per target and draft version, with the regression's context in `DRAFTWATCH_*`
 environment variables. draftwatch does not deploy the new draft; once the probe points at it,
-its results are never compared with the old draft's (DECISIONS.md D75–D79). Next: M8, the
-reference vLLM harness.
+its results are never compared with the old draft's (DECISIONS.md D75–D79).
 
 M6 (reports) complete: `draftwatch report` writes a static HTML page (inline SVG, no external
 assets) with acceptance against step for each comparable series, regression and error markers,

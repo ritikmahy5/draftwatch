@@ -123,10 +123,10 @@ the counter deltas between calls. `position_counts.eligible` is derived as: elig
 position 1 = steps; eligible at position k > 1 = accepted at position k − 1. That derivation
 is valid only if acceptance is prefix-based; the harness verifies it per prompt
 (accepted at position k ≤ accepted at position k − 1) and exits with code 5 if it fails.
-It is also exact only if every step proposed all `num_speculative_tokens` positions. Whether
-vLLM shortens drafts near the end of a generation is not verified, so the harness sets
-`position_counts_exact` to `true` only when `proposed == steps · num_speculative_tokens` for
-every prompt, and `false` otherwise. Detectors never use positional acceptance; reports show
+It is also exact only if every step proposed all `num_speculative_tokens` positions. vLLM
+0.31.0 did not shorten drafts in the acceptance run (DECISIONS.md D87), but that is not
+guaranteed in general. So the harness sets `position_counts_exact` to `true` only when
+`proposed == steps · num_speculative_tokens` for every prompt, and `false` otherwise. Detectors never use positional acceptance; reports show
 it with an "approximate" label when the flag is `false`.
 
 At startup the harness runs one warm-up prompt and checks that all four counters exist and
@@ -139,7 +139,9 @@ per-batch-size k (DECISIONS.md D80).
 
 Each prompt line holds exactly one of `prompt` (a string, passed to `LLM.generate`) or
 `messages` (a list of chat messages, passed to `LLM.chat`), and nothing else (DECISIONS.md
-D81). Each call uses `SamplingParams(temperature, max_tokens=max_new_tokens, seed=<seed>)`. The harness looks these exact names up in the `get_metrics()` output, so if
+D81). Each call uses `SamplingParams(temperature, max_tokens=max_new_tokens, seed=<seed>)`. The
+harness pins vLLM's native sampler (`VLLM_USE_FLASHINFER_SAMPLER=0`), so a measurement never
+depends on the caller's environment (D87). The harness looks these exact names up in the `get_metrics()` output, so if
 a future vLLM version renames one, the lookup fails and the harness exits with code 5 instead
 of silently producing zeros.
 
