@@ -249,7 +249,8 @@ the error. The engine never repairs a report.
 Two measurements are comparable only if all of these match: probe hash (which covers draft
 fingerprint, prompt-set SHA-256, decoding including dtype, estimator, and seeds), harness
 version, backend, draft structure, and `hardware` (GPU model and count). The same probe on an
-A100 and on an H200 gave different counts under greedy decoding (DECISIONS.md D89).
+A100 and on an H200 gave different counts, greedy and sampled, while repeats on one H200 gave
+identical counts (DECISIONS.md D89, D91).
 `wall_clock_seconds` is recorded but never used by detectors.
 
 ## Fake harness
