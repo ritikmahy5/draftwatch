@@ -14,12 +14,18 @@ new checkpoint ──▶ trigger rules ──▶ measurement job ──▶ resul
 
 ## Status
 
+M7 (retrain action, stretch) complete: `on_regression` can include
+`retrain_draft: { command: [...] }`, which submits the training command through the configured
+executor, once per target and draft version, with the regression's context in `DRAFTWATCH_*`
+environment variables. draftwatch does not deploy the new draft; once the probe points at it,
+its results are never compared with the old draft's (DECISIONS.md D75–D79). Next: M8, the
+reference vLLM harness.
+
 M6 (reports) complete: `draftwatch report` writes a static HTML page (inline SVG, no external
 assets) with acceptance against step for each comparable series, regression and error markers,
 and positional acceptance of the latest checkpoint. Every number on it is a link to the value in
 the stored result file it comes from, which a test checks (DECISIONS.md D68). `draftwatch diff`
-prints two stored results side by side, with every provenance field that differs. Next: M7, a
-stretch milestone.
+prints two stored results side by side, with every provenance field that differs.
 
 M5 (Slurm executor) complete: with `executor.type: slurm`, measurements are submitted with
 `sbatch` and followed through `squeue` and `sacct`. `draftwatch schedule` runs `watch --once` on

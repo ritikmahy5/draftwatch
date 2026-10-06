@@ -123,7 +123,11 @@ silently skipped and nothing crashes the loop.
 ### F6 — Alerts and actions
 - Notifiers: console and append-only `alerts.log`. No network notifiers in v1 (DECISIONS.md D12).
 - Actions on regression (optional, per target): `notify`; `retrain_draft` submits a
-  user-configured training command through the same executor abstraction.
+  user-configured training command through the same executor abstraction, at most once per
+  target and draft version, with the regression's context in `DRAFTWATCH_*` environment
+  variables (DECISIONS.md D75–D77). draftwatch does not deploy the new draft: pointing the
+  probe's `draft.path` at it gives it a new fingerprint and probe hash, so its results are never
+  compared with the old draft's (D78).
 
 ### F7 — Reports
 - `draftwatch report` generates a static HTML file: acceptance vs. training step per target
@@ -190,6 +194,7 @@ targets:
     detectors:
       - paired_bootstrap: { metric: alpha, confidence: 0.95, min_effect: 0.0 }
       - trend: { metric: tau, window: 4, max_slope: -0.02 }
+    # also retrain the draft: [notify, {retrain_draft: {command: ["python", "train_draft.py"]}}]
     on_regression: [notify]
 ```
 

@@ -5,7 +5,7 @@ Updated at the end of every milestone (DECISIONS.md D1). Shows the classes that 
 Accessors that only return a field are omitted; every domain and config class is immutable
 (private final fields, static factory or builder, no setters).
 
-**As of:** M6: reports.
+**As of:** M7: retrain action.
 
 ## app: entry point, CLI commands, orchestration
 
@@ -249,7 +249,7 @@ classDiagram
     -probeIds List~String~
     -triggers List~TriggerSpec~
     -detectors List~DetectorSpec~
-    -onRegression List~ActionKind~
+    -onRegression List~ActionSpec~
   }
   class CompletionSpec {
     <<final>>
@@ -298,6 +298,16 @@ classDiagram
   class ActionKind {
     <<enumeration>>
     NOTIFY
+    RETRAIN_DRAFT
+  }
+  class ActionSpec {
+    <<final>>
+    -kind ActionKind
+    -retrain Optional~RetrainSpec~
+  }
+  class RetrainSpec {
+    <<final>>
+    -command List~String~
   }
   class CanonicalJson {
     <<final>>
@@ -326,6 +336,9 @@ classDiagram
   ConfigValidator ..> SbatchOptions : checks sbatch args
   ExecutorConfig --> ExecutorType
   TargetConfig *-- Target
+  TargetConfig *-- "*" ActionSpec
+  ActionSpec --> ActionKind
+  ActionSpec *-- "0..1" RetrainSpec
   TargetConfig *-- CompletionSpec
   TargetConfig *-- "1..*" TriggerSpec
   TargetConfig *-- "1..*" DetectorSpec
@@ -1444,6 +1457,27 @@ classDiagram
     <<final>>
     -notifiers List~Notifier~
   }
+  class RetrainDraftAction {
+    <<final>>
+    -spec RetrainSpec
+    -executor Executor
+    -requests RetrainRequestRepository
+    ~command(Provenance, DetectionSubject, Path) List~String~
+  }
+  class RetrainRequestRepository {
+    <<interface, Repository>>
+    +find(String target, String draftId, String draftFingerprint) Optional~RetrainRequest~
+    +record(RetrainRequest) void
+    +all() List~RetrainRequest~
+  }
+  class FileRetrainRequestRepository { <<final>> }
+  class RetrainRequest {
+    <<final>>
+    -retrainId String
+    -draftFingerprint String
+    -triggeredByJob String
+    -handle JobHandle
+  }
   class ActionFailedException { <<final>> }
 
   Notifier <|.. ConsoleNotifier
@@ -1453,7 +1487,16 @@ classDiagram
   RegressionAction <|.. NotifyAction
   NotifyAction o-- "*" Notifier
   NotifyAction ..> ActionFailedException : throws
+  RegressionAction <|.. RetrainDraftAction
+  RetrainDraftAction --> Executor : submits the training job
+  RetrainDraftAction --> RetrainRequestRepository : one per draft version
+  RetrainDraftAction ..> ActionFailedException : throws
+  RetrainRequestRepository <|.. FileRetrainRequestRepository
+  RetrainRequestRepository ..> RetrainRequest
 ```
+
+`RetrainRequestRepository` and its file implementation live in `store`; they are drawn here
+next to the action that uses them. The in-memory fake is `InMemoryRetrainRequestRepository`.
 
 ## Packages
 

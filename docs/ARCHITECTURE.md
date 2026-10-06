@@ -116,7 +116,7 @@ interface RegressionAction { void execute(RegressionDetected event) throws Excep
 | Command | `RegressionAction`; `CliCommand` | Actions are configured data, executed later, and logged; CLI subcommands are looked up by name, so adding one never changes the dispatcher. |
 | Builder | `JobSpec`, `HarnessInvocation`; domain `Target`, `Checkpoint`, `Provenance`, `AcceptanceReport`, `SeedReport` | Many fields; invalid combinations rejected at `build()`. |
 | Template Method | `WeightFileFingerprinter` (base of both fingerprinters); `BaselineDetector` (base of the baseline-relative detectors) | The file walk, ordering, and encoding are shared, so the fingerprint methods cannot drift apart (DECISIONS.md D23); the Comparability guard runs before every baseline comparison, so no detector can skip it (D47). |
-| Repository | `ResultRepository`, `JobRepository`, `BaselineRepository` | Storage swappable (files now) and testable with in-memory fakes. |
+| Repository | `ResultRepository`, `JobRepository`, `BaselineRepository`, `RetrainRequestRepository` | Storage swappable (files now) and testable with in-memory fakes. |
 | Adapter | `SlurmCli` over `sbatch`/`squeue`/`sacct`/`scancel` text output, used by `SlurmExecutor` | Isolates cluster CLI arguments and parsing behind `Executor` (DECISIONS.md D58). |
 | Decorator | `CachingFingerprinter` over any `Fingerprinter` | Adds caching by file signature without changing the fingerprinters (D53). |
 | Factory | `Bootstrap` | The single place where config type names become objects. |
@@ -204,6 +204,10 @@ the page cannot show an untraced number (DECISIONS.md D68). One series per compa
   detections.log                           every detection outcome, one JSON object per line
   alerts.log                               one human-readable line per alert
   fingerprints.json                        fingerprint cache: directory → signature, fingerprint
+  retrain/<retrain-id>/                    a retrain job's run directory: invocation.json, logs,
+                                           exit_code (D76)
+  retrain/requests/<target>__<draft-id>__<draft-fingerprint>.json
+                                           one submitted retrain per draft version (D77)
   schedule/watch.sbatch, active, job_id,   the self-resubmitting watch job: its script, token,
            watch.log, stopped              latest job id, log, and a failed resubmission (D63)
 ```
