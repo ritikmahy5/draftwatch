@@ -141,7 +141,7 @@ public class ConfigValidatorTest {
             NoiseFloorSpec.of(Metric.TAU, 2, 0.01),
             TrendSpec.of(Metric.TAU, 4, -0.02)),
         sft.detectors());
-    assertEquals(List.of(ActionKind.NOTIFY), sft.onRegression());
+    assertEquals(List.of(ActionSpec.notifyAction()), sft.onRegression());
 
     Probe sampled = c.probe("chat-sampled").orElseThrow();
     assertEquals(new BigDecimal("0.7"), sampled.decoding().temperature());
@@ -166,7 +166,7 @@ public class ConfigValidatorTest {
     assertEquals(TriggerSpec.defaultChain(), lora.triggers());
     assertEquals(List.of(PairedBootstrapSpec.withDefaults(Metric.ALPHA)), lora.detectors());
     assertEquals("regressions are alerted unless on_regression says otherwise (D49)",
-        List.of(ActionKind.NOTIFY), lora.onRegression());
+        List.of(ActionSpec.notifyAction()), lora.onRegression());
   }
 
   @Test
@@ -440,9 +440,36 @@ public class ConfigValidatorTest {
   }
 
   @Test
-  public void retrainDraftIsNotAcceptedYet() {
-    target(0).set("on_regression", yaml("[notify, retrain_draft]"));
-    assertOnlyError("targets[0].on_regression[1]", "retrain_draft arrives with M7");
+  public void retrainDraftTakesACommand() {
+    target(0).set(
+        "on_regression", yaml("[notify, {retrain_draft: {command: [python, train_draft.py]}}]"));
+    assertEquals(
+        List.of(
+            ActionSpec.notifyAction(),
+            ActionSpec.retrainDraft(RetrainSpec.of(List.of("python", "train_draft.py")))),
+        valid().target("my-sft-run").orElseThrow().onRegression());
+  }
+
+  @Test
+  public void retrainDraftWithoutAUsableCommandIsRejected() {
+    String[][] cases = {
+      {"[retrain_draft]", "targets[0].on_regression[0]", "needs a command"},
+      {"[{retrain_draft: {}}]", "targets[0].on_regression[0].retrain_draft.command", "required"},
+      {"[{retrain_draft: {command: []}}]", "targets[0].on_regression[0].retrain_draft.command",
+        "must not be empty"},
+      {"[{retrain_draft: {command: python train.py}}]",
+        "targets[0].on_regression[0].retrain_draft.command", "must be a list of arguments"},
+      {"[{retrain_draft: {command: [x], gpus: 1}}]",
+        "targets[0].on_regression[0].retrain_draft.gpus", "unknown key"},
+      {"[{notify: {}}]", "targets[0].on_regression[0]", "only retrain_draft takes settings"},
+      {"[{retrain_draft: {command: [a]}}, {retrain_draft: {command: [b]}}]",
+        "targets[0].on_regression[1]", "duplicate action retrain_draft"},
+    };
+    for (String[] c : cases) {
+      setUpQuietly();
+      target(0).set("on_regression", yaml(c[0]));
+      assertOnlyError(c[1], c[2]);
+    }
   }
 
   @Test

@@ -6,6 +6,7 @@ import dev.draftwatch.config.DraftwatchConfig;
 import dev.draftwatch.exec.Job;
 import dev.draftwatch.exec.JobState;
 import dev.draftwatch.store.LockHolder;
+import dev.draftwatch.store.RetrainRequest;
 import dev.draftwatch.store.StateLockException;
 import dev.draftwatch.store.StoreException;
 import java.io.IOException;
@@ -19,9 +20,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * {@code draftwatch status}: the state lock's holder, the schedule (D63), active jobs, and jobs
- * that failed in the last seven days, as of their last recorded state (DECISIONS.md D39). It only
- * reads state, so it does not take the lock or ask Slurm.
+ * {@code draftwatch status}: the state lock's holder, the schedule (D63), active jobs, jobs that
+ * failed in the last seven days, as of their last recorded state (DECISIONS.md D39), and retrain
+ * requests (D77). It only reads state, so it does not take the lock or ask Slurm.
  */
 public final class StatusCommand implements CliCommand {
   static final Duration RECENT = Duration.ofDays(7);
@@ -78,6 +79,20 @@ public final class StatusCommand implements CliCommand {
             out.println(
                 "  " + line(j) + ", " + j.failureReason().map(r -> r.wireName()).orElse("?")
                     + ": " + j.lastChange().cause()));
+    List<RetrainRequest> retrains;
+    try {
+      retrains = s.retrainRequests().all();
+    } catch (StoreException e) {
+      return context.fail(e.getMessage());
+    }
+    out.println("retrain requests: " + retrains.size());
+    for (RetrainRequest r : retrains) {
+      out.println(
+          "  " + r.retrainId() + "  " + r.handle() + "  target " + r.target() + "  draft "
+              + r.draftId() + " (" + r.draftFingerprint() + ")  after job " + r.triggeredByJob()
+              + " at step " + r.checkpointStep() + "  since " + r.submittedAt() + "  output "
+              + r.handle().runDir());
+    }
     return Cli.EXIT_OK;
   }
 

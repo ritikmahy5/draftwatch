@@ -398,8 +398,8 @@ public final class ConfigValidator {
               ? List.of(PairedBootstrapSpec.withDefaults(Metric.ALPHA))
               : detectors(detectorsNode);
       ConfigNode actionsNode = n.optional("on_regression");
-      List<ActionKind> actions =
-          actionsNode.isAbsent() ? List.of(ActionKind.NOTIFY) : actions(actionsNode);
+      List<ActionSpec> actions =
+          actionsNode.isAbsent() ? List.of(ActionSpec.notifyAction()) : actions(actionsNode);
       if (errors.size() > mark) {
         return null;
       }
@@ -721,18 +721,58 @@ public final class ConfigValidator {
       }
     }
 
-    private List<ActionKind> actions(ConfigNode n) {
-      List<ActionKind> actions = new ArrayList<>();
+    /** {@code notify}, or {@code retrain_draft: { command: [...] }} (DECISIONS.md D75). */
+    private List<ActionSpec> actions(ConfigNode n) {
+      List<ActionSpec> actions = new ArrayList<>();
       Set<ActionKind> seen = new HashSet<>();
       for (ConfigNode element : n.elements()) {
-        ActionKind action =
-            element.asEnum(ActionKind.class, "retrain_draft arrives with M7 (docs/ROADMAP.md)");
-        if (action != null && !seen.add(action)) {
-          element.error("duplicate action " + action.wireName());
+        ActionSpec action = element.isText() ? textAction(element) : retrainAction(element);
+        if (action != null && !seen.add(action.kind())) {
+          element.error("duplicate action " + action.kind().wireName());
         }
         actions.add(action);
       }
       return actions;
+    }
+
+    private ActionSpec textAction(ConfigNode element) {
+      ActionKind kind = element.asEnum(ActionKind.class);
+      if (kind == ActionKind.RETRAIN_DRAFT) {
+        element.error("needs a command: write 'retrain_draft: { command: [...] }'");
+        return null;
+      }
+      return kind == null ? null : ActionSpec.notifyAction();
+    }
+
+    private ActionSpec retrainAction(ConfigNode element) {
+      Map.Entry<String, ConfigNode> entry = element.singleKey("action");
+      if (entry == null) {
+        return null;
+      }
+      if (!entry.getKey().equals(ActionKind.RETRAIN_DRAFT.wireName())) {
+        element.error(
+            "unknown action '" + entry.getKey() + "'; only retrain_draft takes settings, and"
+                + " notify is written without them");
+        return null;
+      }
+      ConfigNode n = entry.getValue();
+      int mark = errors.size();
+      if (!n.mapping("command")) {
+        return null;
+      }
+      ConfigNode commandNode = n.required("command");
+      if (commandNode.isText()) {
+        commandNode.error("must be a list of arguments, such as [\"python\", \"train_draft.py\"]");
+        return null;
+      }
+      List<String> command = new ArrayList<>();
+      for (ConfigNode arg : commandNode.elements("must not be empty")) {
+        command.add(arg.asString());
+      }
+      if (errors.size() > mark) {
+        return null;
+      }
+      return build(n, () -> ActionSpec.retrainDraft(RetrainSpec.of(command)));
     }
   }
 }

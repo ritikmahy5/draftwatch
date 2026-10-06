@@ -3,8 +3,9 @@ package dev.draftwatch.app;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.draftwatch.action.NotifyAction;
 import dev.draftwatch.action.RegressionAction;
+import dev.draftwatch.action.RetrainDraftAction;
 import dev.draftwatch.config.AbsoluteDropSpec;
-import dev.draftwatch.config.ActionKind;
+import dev.draftwatch.config.ActionSpec;
 import dev.draftwatch.config.CompletionSpec;
 import dev.draftwatch.config.ConfigLoader;
 import dev.draftwatch.config.ConfigValidator;
@@ -62,9 +63,11 @@ import dev.draftwatch.store.FileDetectionLog;
 import dev.draftwatch.store.FileFingerprintCache;
 import dev.draftwatch.store.FileJobRepository;
 import dev.draftwatch.store.FileResultRepository;
+import dev.draftwatch.store.FileRetrainRequestRepository;
 import dev.draftwatch.store.JobRepository;
 import dev.draftwatch.store.JsonCodec;
 import dev.draftwatch.store.ResultRepository;
+import dev.draftwatch.store.RetrainRequestRepository;
 import dev.draftwatch.store.SqueueJobTable;
 import dev.draftwatch.store.StateLock;
 import dev.draftwatch.store.SystemHostIdentity;
@@ -216,7 +219,8 @@ public final class Bootstrap {
     BaselineRepository baselines = new FileBaselineRepository(stateDir, json);
     DetectionLog detections = new FileDetectionLog(stateDir, json);
     EventBus bus = new EventBus(err::println, clock);
-    subscribe(bus, config, results, baselines, detections);
+    RetrainRequestRepository retrainRequests = new FileRetrainRequestRepository(stateDir, json);
+    subscribe(bus, config, results, baselines, detections, retrainRequests);
     ProbeResolver resolver = new ProbeResolver(fingerprinter, new PromptSetReader(json));
     CheckpointInspector inspector = new CheckpointInspector(fingerprinter, json, clock);
     return new Services(
@@ -228,6 +232,7 @@ public final class Bootstrap {
         results,
         baselines,
         detections,
+        retrainRequests,
         bus,
         new StateLock(
             new SystemHostIdentity(environment),
@@ -287,7 +292,8 @@ public final class Bootstrap {
       DraftwatchConfig config,
       ResultRepository results,
       BaselineRepository baselines,
-      DetectionLog detections) {
+      DetectionLog detections,
+      RetrainRequestRepository retrainRequests) {
     bus.subscribe(
         DetectionEvent.class, "detections.log", e -> detections.append(DetectionRecord.of(e)));
     ConsoleDetectionPrinter printer = new ConsoleDetectionPrinter(out);
@@ -301,8 +307,9 @@ public final class Bootstrap {
       bus.subscribe(DetectionError.class, "alert " + notifier.name(), notifier::notify);
     }
     for (TargetConfig target : config.targets()) {
-      for (ActionKind kind : target.onRegression()) {
-        RegressionAction action = action(kind, notifiers);
+      for (ActionSpec spec : target.onRegression()) {
+        RegressionAction action =
+            action(spec, target, notifiers, config, results, retrainRequests);
         bus.subscribe(
             RegressionDetected.class,
             "on_regression " + target.name() + " " + action.name(),
@@ -320,13 +327,31 @@ public final class Bootstrap {
     bus.subscribe(MeasurementStored.class, "detection", detection::onMeasurementStored);
   }
 
-  /** The action for an {@code on_regression} entry. */
-  static RegressionAction action(ActionKind kind, List<Notifier> notifiers) {
-    switch (kind) {
+  /** The action for one of {@code target}'s {@code on_regression} entries. */
+  private RegressionAction action(
+      ActionSpec spec,
+      TargetConfig target,
+      List<Notifier> notifiers,
+      DraftwatchConfig config,
+      ResultRepository results,
+      RetrainRequestRepository retrainRequests) {
+    switch (spec.kind()) {
       case NOTIFY:
         return new NotifyAction(notifiers);
+      case RETRAIN_DRAFT:
+        return new RetrainDraftAction(
+            target.name(),
+            spec.retrain().orElseThrow(),
+            executor(config.executor()),
+            results,
+            retrainRequests,
+            config::probe,
+            new TimestampJobIds(clock, new SecureRandom()),
+            config.stateDir(),
+            config.baseDir(),
+            out::println);
       default:
-        throw new IllegalArgumentException("unknown action " + kind);
+        throw new IllegalArgumentException("unknown action " + spec.kind());
     }
   }
 

@@ -14,7 +14,7 @@ public final class TargetConfig {
   private final List<String> probeIds;
   private final List<TriggerSpec> triggers;
   private final List<DetectorSpec> detectors;
-  private final List<ActionKind> onRegression;
+  private final List<ActionSpec> onRegression;
 
   private TargetConfig(
       Target target,
@@ -22,7 +22,7 @@ public final class TargetConfig {
       List<String> probeIds,
       List<TriggerSpec> triggers,
       List<DetectorSpec> detectors,
-      List<ActionKind> onRegression) {
+      List<ActionSpec> onRegression) {
     this.target = target;
     this.completion = completion;
     this.probeIds = probeIds;
@@ -44,7 +44,7 @@ public final class TargetConfig {
       List<String> probeIds,
       List<TriggerSpec> triggers,
       List<DetectorSpec> detectors,
-      List<ActionKind> onRegression) {
+      List<ActionSpec> onRegression) {
     Objects.requireNonNull(target, "target");
     Objects.requireNonNull(completion, "completion");
     List<String> probes = nonEmpty(probeIds, "probes");
@@ -90,7 +90,7 @@ public final class TargetConfig {
   }
 
   /** Actions on a regression; {@code [notify]} if not configured (DECISIONS.md D49). */
-  public List<ActionKind> onRegression() {
+  public List<ActionSpec> onRegression() {
     return onRegression;
   }
 

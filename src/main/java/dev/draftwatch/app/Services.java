@@ -10,6 +10,7 @@ import dev.draftwatch.store.BaselineRepository;
 import dev.draftwatch.store.DetectionLog;
 import dev.draftwatch.store.JobRepository;
 import dev.draftwatch.store.ResultRepository;
+import dev.draftwatch.store.RetrainRequestRepository;
 import dev.draftwatch.store.StateLock;
 import java.time.Clock;
 import java.util.Objects;
@@ -29,6 +30,7 @@ public final class Services {
   private final ResultRepository results;
   private final BaselineRepository baselines;
   private final DetectionLog detections;
+  private final RetrainRequestRepository retrainRequests;
   private final EventBus bus;
   private final StateLock stateLock;
   private final Supplier<MeasurementRunner> runner;
@@ -45,6 +47,7 @@ public final class Services {
       ResultRepository results,
       BaselineRepository baselines,
       DetectionLog detections,
+      RetrainRequestRepository retrainRequests,
       EventBus bus,
       StateLock stateLock,
       Supplier<MeasurementRunner> runner,
@@ -59,12 +62,18 @@ public final class Services {
     this.results = Objects.requireNonNull(results, "results");
     this.baselines = Objects.requireNonNull(baselines, "baselines");
     this.detections = Objects.requireNonNull(detections, "detections");
+    this.retrainRequests = Objects.requireNonNull(retrainRequests, "retrainRequests");
     this.bus = Objects.requireNonNull(bus, "bus");
     this.stateLock = Objects.requireNonNull(stateLock, "stateLock");
     this.runner = Objects.requireNonNull(runner, "runner");
     this.watch = Objects.requireNonNull(watch, "watch");
     this.sleeper = Objects.requireNonNull(sleeper, "sleeper");
     this.clock = Objects.requireNonNull(clock, "clock");
+  }
+
+  /** Retrain jobs submitted by {@code retrain_draft} (DECISIONS.md D77). */
+  public RetrainRequestRepository retrainRequests() {
+    return retrainRequests;
   }
 
   public DraftwatchConfig config() {

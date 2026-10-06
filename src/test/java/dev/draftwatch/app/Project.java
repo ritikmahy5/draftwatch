@@ -24,6 +24,8 @@ final class Project {
   private String checkpointType = "full";
   private String executorType = "local";
   private int maxRetries = 0;
+  private String onRegression = "";
+  private String draftPath = "draft";
   private String temperature = "0";
   private String seeds = "[0]";
 
@@ -72,6 +74,18 @@ final class Project {
 
   Project executor(String type) {
     executorType = type;
+    return this;
+  }
+
+  /** A YAML flow list for the target's {@code on_regression}; the default if not set. */
+  Project onRegression(String yamlList) {
+    onRegression = yamlList;
+    return this;
+  }
+
+  /** The probe's {@code draft.path}; {@code draft} (written by {@link #write}) if not set. */
+  Project draftPath(String path) {
+    draftPath = path;
     return this;
   }
 
@@ -130,7 +144,7 @@ final class Project {
               "harness: { command: " + command + " }",
               "probes:",
               "  - id: chat",
-              "    draft: { id: my-draft, path: draft, structure: chain }",
+              "    draft: { id: my-draft, path: \"" + draftPath + "\", structure: chain }",
               "    prompts: { path: prompts.jsonl }",
               "    decoding: { temperature: " + temperature + ", max_new_tokens: 16,"
                   + " num_speculative_tokens: 3, dtype: bfloat16 }",
@@ -144,6 +158,7 @@ final class Project {
               "    probes: [chat]",
               detectors.isEmpty() ? "" : "    detectors: " + detectors,
               triggers.isEmpty() ? "" : "    triggers: " + triggers,
+              onRegression.isEmpty() ? "" : "    on_regression: " + onRegression,
               "");
       Files.writeString(config(), String.join("\n", lines));
       return this;

@@ -1,6 +1,7 @@
 package dev.draftwatch.app;
 
 import dev.draftwatch.config.CanonicalJson;
+import dev.draftwatch.config.ActionSpec;
 import dev.draftwatch.config.ConfigException;
 import dev.draftwatch.config.ConfigLoader;
 import dev.draftwatch.config.DetectorSpec;
@@ -15,7 +16,6 @@ import dev.draftwatch.discovery.StepExtractor;
 import dev.draftwatch.domain.Probe;
 import dev.draftwatch.domain.ResolvedProbe;
 import dev.draftwatch.domain.Target;
-import dev.draftwatch.domain.WireNamed;
 import dev.draftwatch.fingerprint.FingerprintException;
 import dev.draftwatch.harness.ProbeResolver;
 import dev.draftwatch.harness.PromptSetException;
@@ -170,13 +170,13 @@ public final class ValidateCommand implements CliCommand {
     return text.append(")").toString();
   }
 
-  private static String names(List<? extends WireNamed> values) {
-    if (values.isEmpty()) {
+  private static String names(List<ActionSpec> actions) {
+    if (actions.isEmpty()) {
       return "(none)";
     }
     StringJoiner joined = new StringJoiner(", ");
-    for (WireNamed value : values) {
-      joined.add(value.wireName());
+    for (ActionSpec action : actions) {
+      joined.add(action.toString());
     }
     return joined.toString();
   }
