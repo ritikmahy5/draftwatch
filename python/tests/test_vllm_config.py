@@ -71,3 +71,36 @@ class ImportFailureTest(unittest.TestCase):
             sys.modules.update(saved)
         self.assertEqual(EXIT_MODEL_LOAD, c.exception.code)
         self.assertIn("OSError: libnvrtc.so.13", str(c.exception))
+
+    def test_the_sampler_is_pinned_before_vllm_is_imported(self):
+        import importlib.abc
+        import os
+        import sys
+
+        from draftwatch_harness.vllm_backend import VllmBackend
+
+        seen = {}
+
+        class Watch(importlib.abc.MetaPathFinder):
+            def find_spec(self, name, path=None, target=None):
+                if name in ("torch", "vllm"):
+                    seen.setdefault(name, os.environ.get("VLLM_USE_FLASHINFER_SAMPLER"))
+                    raise ImportError(name)
+                return None
+
+        saved = {m: sys.modules.pop(m) for m in list(sys.modules) if m in ("torch", "vllm")}
+        previous = os.environ.get("VLLM_USE_FLASHINFER_SAMPLER")
+        os.environ["VLLM_USE_FLASHINFER_SAMPLER"] = "1"  # what a caller's environment might say
+        sys.meta_path.insert(0, Watch())
+        try:
+            with self.assertRaises(HarnessError):
+                VllmBackend("t", None, "d", {"num_speculative_tokens": 3, "dtype": "bfloat16",
+                                             "temperature": 0, "max_new_tokens": 8})
+        finally:
+            sys.meta_path.pop(0)
+            sys.modules.update(saved)
+            if previous is None:
+                os.environ.pop("VLLM_USE_FLASHINFER_SAMPLER", None)
+            else:
+                os.environ["VLLM_USE_FLASHINFER_SAMPLER"] = previous
+        self.assertEqual("0", seen["torch"])

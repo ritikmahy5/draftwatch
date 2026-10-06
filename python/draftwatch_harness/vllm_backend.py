@@ -4,11 +4,18 @@ This is the only module that imports vLLM, torch, transformers, or PEFT, and it 
 only when a backend is created, so the rest of the harness is testable without them.
 """
 
+import os
 import shutil
 import tempfile
 
 from .counters import Snapshot
 from .errors import (EXIT_BACKEND_COUNTERS, EXIT_MODEL_LOAD, HarnessError, is_out_of_memory)
+
+# vLLM settings read from the environment that change what is measured, pinned so that a
+# measurement never depends on the caller's environment (DECISIONS.md D87). With FlashInfer's
+# sampler, temperature > 0 draws a different random stream than vLLM's native sampler, and the
+# FlashInfer kernel is compiled at first use, which needs nvcc.
+PINNED_ENVIRONMENT = {"VLLM_USE_FLASHINFER_SAMPLER": "0"}
 
 # (attribute of vllm's SpeculativeConfig, the value it must have, why) - D80.
 REQUIRED_CONFIG = (
@@ -44,6 +51,7 @@ class VllmBackend:
         self.k = decoding["num_speculative_tokens"]
         self.decoding = decoding
         self._merged_dir = None
+        os.environ.update(PINNED_ENVIRONMENT)  # before vLLM reads its environment
         try:
             import torch  # noqa: F401  (imported here so OOM errors can be recognized)
             import vllm
