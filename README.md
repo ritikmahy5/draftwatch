@@ -14,37 +14,75 @@ new checkpoint ──▶ trigger rules ──▶ measurement job ──▶ resul
 
 ## Status
 
-M8 (reference vLLM harness) complete: `python/measure_acceptance.py` measures draft acceptance
-with vLLM's offline API, one prompt per call from counter deltas, and validates its own report
-against the contract. Its reports from a real run on an A100 pass `ReportParser`; the run's
-reports and recorded counters are committed and replayed by the tests (DECISIONS.md D80–D87).
-Every milestone in `docs/ROADMAP.md` is now done.
+Every milestone in `docs/ROADMAP.md` (M0–M8) is complete. On 2026-10-06 the whole system ran on
+Northeastern's Explorer cluster. A scheduled CPU job ran `watch --once`, which sent measurements
+of two new checkpoints to H200 GPUs with the reference vLLM harness, then ran detection, `report`,
+and `diff` (DECISIONS.md D88; evidence in `docs/evidence/e2e_explorer/`).
 
-M7 (retrain action, stretch) complete: `on_regression` can include
-`retrain_draft: { command: [...] }`, which submits the training command through the configured
-executor, once per target and draft version, with the regression's context in `DRAFTWATCH_*`
-environment variables. draftwatch does not deploy the new draft; once the probe points at it,
-its results are never compared with the old draft's (DECISIONS.md D75–D79).
+- **Discovery and triggers:** `watch` polls checkpoint directories, waits until a checkpoint is
+  complete, and passes it through the target's trigger rules (D52–D57).
+- **Measurement:** the harness runs as a subprocess behind a fixed contract
+  (`docs/MEASUREMENT_CONTRACT.md`). Every report is validated against the contract's rules
+  before it is stored with full provenance.
+- **Executors:** jobs run locally or on Slurm via `sbatch`, followed through `squeue` and `sacct`.
+  Slurm tests replay output recorded on Explorer (D58–D67).
+- **Detection:** paired bootstrap, absolute drop, and noise floor compare each result with the
+  target's baseline, and trend fits a slope over recent results. Results are compared only when
+  they are comparable: same probe, harness, backend, draft structure, and GPU. A refused comparison is an
+  alerted error, never silently skipped (D43–D51, D89).
+- **Reports:** `report` writes a static HTML page on which every number links to the stored value
+  it comes from (D68). `diff` compares two results with their provenance.
+- **Retraining:** `on_regression` can submit a draft-training command, once per draft version
+  (D75–D79).
+- **Reference harness:** `python/measure_acceptance.py` uses vLLM 0.31.0. Its reports from real
+  A100 and H200 runs are committed. On one GPU model, repeated runs give identical counts. On
+  different models they do not, which is why the GPU is part of comparability (D80–D87, D91).
 
-M6 (reports) complete: `draftwatch report` writes a static HTML page (inline SVG, no external
-assets) with acceptance against step for each comparable series, regression and error markers,
-and positional acceptance of the latest checkpoint. Every number on it is a link to the value in
-the stored result file it comes from, which a test checks (DECISIONS.md D68). `draftwatch diff`
-prints two stored results side by side, with every provenance field that differs.
+## Quick start (no GPU)
 
-M5 (Slurm executor) complete: with `executor.type: slurm`, measurements are submitted with
-`sbatch` and followed through `squeue` and `sacct`. `draftwatch schedule` runs `watch --once` on
-the cluster as a CPU-only job that resubmits itself first, and `unschedule` ends it. The Slurm
-tests replay output recorded on Explorer (Slurm 23.11.6) where the cluster can produce a state,
-and hand-written output in Slurm's documented formats where it cannot (DECISIONS.md D66, D67).
+Requirements: a JDK 11 installed locally (the build compiles and tests with a Java 11
+toolchain and does not download one, D18), Python 3.10+, `/bin/sh`, and `env`.
 
-M4 (discovery and triggers) is complete: `draftwatch watch` polls each target's checkpoint
-directory, passes every complete checkpoint through the target's trigger rules, submits the
-accepted ones, and advances running jobs. Each pass holds the state lock (`--once` for one pass,
-or a local-only loop with `--interval`). Every stored measurement is checked by the target's
-detectors against its baseline (`draftwatch baseline`). Regressions and errors are alerted on
-the console and in `alerts.log`, and every outcome is recorded in `detections.log`. Tests use
-the fake harness (`scripts/fake_harness.py`, synthetic data only). See `docs/ROADMAP.md`.
+```
+./gradlew build      # compile, then run the Java and Python tests
+scripts/demo.sh      # the whole pipeline with the fake harness, in a new temporary directory
+```
+
+`scripts/demo.sh` writes a config and creates checkpoints 100, 200, and 300. It runs
+`watch --once` until no job is active, then `history` and `report`. Step 100 becomes the baseline
+automatically, and step 200 is OK. Before step 300, the fake harness is pointed at lower counts,
+so both detectors report a regression and alert. Every number in the demo comes from synthetic
+fixtures in `src/test/resources/fixtures/`, not from a measurement.
+
+## Using it
+
+```
+./gradlew installDist                  # launcher: build/install/draftwatch/bin/draftwatch
+draftwatch init                        # draftwatch.yaml with placeholders, and the state directory
+draftwatch validate                    # resolve probes, fingerprint the draft, show trigger chains
+draftwatch watch --once                # one pass; or 'watch --interval 60s' (local executor only)
+draftwatch history <target> --probe <id>
+draftwatch report --out report.html
+```
+
+`draftwatch --help` lists every command. `docs/SPEC.md` describes the configuration. For real
+measurements, set `harness.command` to `python/measure_acceptance.py`, run in a Python
+environment with vLLM 0.31.0 (MEASUREMENT_CONTRACT.md, "Reference backend").
+
+## On a Slurm cluster
+
+- **Executor:** set `executor.type: slurm`. `draftwatch schedule --interval 15m` runs
+  `watch --once` as a CPU-only job that resubmits itself first, and `draftwatch unschedule` ends
+  it. A looping `watch` is refused, because login nodes are not for long-running processes.
+- **GPU model:** name it in the job's resources, for example `gres: "gpu:h200:1"`. Results from
+  different GPU models are not compared. After a deliberate GPU change, measure the baseline
+  checkpoint again with `draftwatch submit <target> <baseline checkpoint>` (D92).
+- **Explorer, as verified on 2026-10-06:**
+  - Set `JAVA_HOME` to the `OpenJDK/22.0.2` module, because `/usr/bin/java` is Java 8 (D14).
+  - Run one-off draftwatch commands in a job (`sbatch --wrap '<command>'`), because the login
+    node killed some of them (D66, D88).
+  - Use vLLM's `+cu129` wheel, because the GPU driver supports CUDA 12.8 (D87).
+  - Keep environments and models in `/scratch`.
 
 ## Layout
 
@@ -53,11 +91,10 @@ docs/SPEC.md                  what draftwatch does (features, CLI, config)
 docs/ARCHITECTURE.md          Java design: modules, interfaces, patterns
 docs/MEASUREMENT_CONTRACT.md  Java ⇄ Python harness boundary and metric definitions
 docs/uml/class-diagram.md     Mermaid class diagram of the current code
+scripts/demo.sh               the whole pipeline on this machine with the fake harness
 scripts/fake_harness.py       stdlib-only fake harness for tests (synthetic numbers only)
 scripts/bootstrap_reference.py  independent reference for the paired bootstrap (used by tests)
 scripts/record_slurm_fixtures.py  records real Slurm output on the cluster for the tests (D64)
-python/measure_acceptance.py  the reference vLLM harness (MEASUREMENT_CONTRACT.md; D80-D86)
+python/measure_acceptance.py  the reference vLLM harness (MEASUREMENT_CONTRACT.md; D80-D87)
 python/tests/                 its unit tests: standard library only, no vLLM or GPU
 ```
-
-Tests need `python3` (3.10+), `/bin/sh`, and `env` on the PATH (DECISIONS.md D41).
