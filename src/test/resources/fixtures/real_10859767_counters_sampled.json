@@ -1,0 +1,1159 @@
+{
+  "source": "recorded by python/measure_acceptance.py with vllm==0.31.0",
+  "num_speculative_tokens": 4,
+  "seeds": [
+    0,
+    1
+  ],
+  "num_prompts": 20,
+  "snapshots": [
+    {
+      "label": "warm-up before",
+      "counters": {
+        "drafts": 0,
+        "draft_tokens": 0,
+        "accepted": 0,
+        "accepted_per_pos": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "label": "warm-up after",
+      "counters": {
+        "drafts": 20,
+        "draft_tokens": 80,
+        "accepted": 37,
+        "accepted_per_pos": [
+          13,
+          11,
+          7,
+          6
+        ]
+      }
+    },
+    {
+      "label": "before prompt 0 with seed 0",
+      "counters": {
+        "drafts": 20,
+        "draft_tokens": 80,
+        "accepted": 37,
+        "accepted_per_pos": [
+          13,
+          11,
+          7,
+          6
+        ]
+      }
+    },
+    {
+      "label": "after prompt 0 with seed 0",
+      "counters": {
+        "drafts": 40,
+        "draft_tokens": 160,
+        "accepted": 74,
+        "accepted_per_pos": [
+          26,
+          22,
+          14,
+          12
+        ]
+      }
+    },
+    {
+      "label": "before prompt 1 with seed 0",
+      "counters": {
+        "drafts": 40,
+        "draft_tokens": 160,
+        "accepted": 74,
+        "accepted_per_pos": [
+          26,
+          22,
+          14,
+          12
+        ]
+      }
+    },
+    {
+      "label": "after prompt 1 with seed 0",
+      "counters": {
+        "drafts": 52,
+        "draft_tokens": 208,
+        "accepted": 86,
+        "accepted_per_pos": [
+          32,
+          25,
+          16,
+          13
+        ]
+      }
+    },
+    {
+      "label": "before prompt 2 with seed 0",
+      "counters": {
+        "drafts": 52,
+        "draft_tokens": 208,
+        "accepted": 86,
+        "accepted_per_pos": [
+          32,
+          25,
+          16,
+          13
+        ]
+      }
+    },
+    {
+      "label": "after prompt 2 with seed 0",
+      "counters": {
+        "drafts": 99,
+        "draft_tokens": 396,
+        "accepted": 167,
+        "accepted_per_pos": [
+          66,
+          48,
+          30,
+          23
+        ]
+      }
+    },
+    {
+      "label": "before prompt 3 with seed 0",
+      "counters": {
+        "drafts": 99,
+        "draft_tokens": 396,
+        "accepted": 167,
+        "accepted_per_pos": [
+          66,
+          48,
+          30,
+          23
+        ]
+      }
+    },
+    {
+      "label": "after prompt 3 with seed 0",
+      "counters": {
+        "drafts": 151,
+        "draft_tokens": 604,
+        "accepted": 208,
+        "accepted_per_pos": [
+          89,
+          61,
+          33,
+          25
+        ]
+      }
+    },
+    {
+      "label": "before prompt 4 with seed 0",
+      "counters": {
+        "drafts": 151,
+        "draft_tokens": 604,
+        "accepted": 208,
+        "accepted_per_pos": [
+          89,
+          61,
+          33,
+          25
+        ]
+      }
+    },
+    {
+      "label": "after prompt 4 with seed 0",
+      "counters": {
+        "drafts": 187,
+        "draft_tokens": 748,
+        "accepted": 299,
+        "accepted_per_pos": [
+          116,
+          86,
+          54,
+          43
+        ]
+      }
+    },
+    {
+      "label": "before prompt 5 with seed 0",
+      "counters": {
+        "drafts": 187,
+        "draft_tokens": 748,
+        "accepted": 299,
+        "accepted_per_pos": [
+          116,
+          86,
+          54,
+          43
+        ]
+      }
+    },
+    {
+      "label": "after prompt 5 with seed 0",
+      "counters": {
+        "drafts": 236,
+        "draft_tokens": 944,
+        "accepted": 381,
+        "accepted_per_pos": [
+          151,
+          110,
+          68,
+          52
+        ]
+      }
+    },
+    {
+      "label": "before prompt 6 with seed 0",
+      "counters": {
+        "drafts": 236,
+        "draft_tokens": 944,
+        "accepted": 381,
+        "accepted_per_pos": [
+          151,
+          110,
+          68,
+          52
+        ]
+      }
+    },
+    {
+      "label": "after prompt 6 with seed 0",
+      "counters": {
+        "drafts": 290,
+        "draft_tokens": 1160,
+        "accepted": 455,
+        "accepted_per_pos": [
+          184,
+          129,
+          82,
+          60
+        ]
+      }
+    },
+    {
+      "label": "before prompt 7 with seed 0",
+      "counters": {
+        "drafts": 290,
+        "draft_tokens": 1160,
+        "accepted": 455,
+        "accepted_per_pos": [
+          184,
+          129,
+          82,
+          60
+        ]
+      }
+    },
+    {
+      "label": "after prompt 7 with seed 0",
+      "counters": {
+        "drafts": 333,
+        "draft_tokens": 1332,
+        "accepted": 540,
+        "accepted_per_pos": [
+          217,
+          151,
+          99,
+          73
+        ]
+      }
+    },
+    {
+      "label": "before prompt 8 with seed 0",
+      "counters": {
+        "drafts": 333,
+        "draft_tokens": 1332,
+        "accepted": 540,
+        "accepted_per_pos": [
+          217,
+          151,
+          99,
+          73
+        ]
+      }
+    },
+    {
+      "label": "after prompt 8 with seed 0",
+      "counters": {
+        "drafts": 391,
+        "draft_tokens": 1564,
+        "accepted": 609,
+        "accepted_per_pos": [
+          246,
+          171,
+          111,
+          81
+        ]
+      }
+    },
+    {
+      "label": "before prompt 9 with seed 0",
+      "counters": {
+        "drafts": 391,
+        "draft_tokens": 1564,
+        "accepted": 609,
+        "accepted_per_pos": [
+          246,
+          171,
+          111,
+          81
+        ]
+      }
+    },
+    {
+      "label": "after prompt 9 with seed 0",
+      "counters": {
+        "drafts": 458,
+        "draft_tokens": 1832,
+        "accepted": 670,
+        "accepted_per_pos": [
+          273,
+          187,
+          122,
+          88
+        ]
+      }
+    },
+    {
+      "label": "before prompt 10 with seed 0",
+      "counters": {
+        "drafts": 458,
+        "draft_tokens": 1832,
+        "accepted": 670,
+        "accepted_per_pos": [
+          273,
+          187,
+          122,
+          88
+        ]
+      }
+    },
+    {
+      "label": "after prompt 10 with seed 0",
+      "counters": {
+        "drafts": 474,
+        "draft_tokens": 1896,
+        "accepted": 694,
+        "accepted_per_pos": [
+          283,
+          194,
+          126,
+          91
+        ]
+      }
+    },
+    {
+      "label": "before prompt 11 with seed 0",
+      "counters": {
+        "drafts": 474,
+        "draft_tokens": 1896,
+        "accepted": 694,
+        "accepted_per_pos": [
+          283,
+          194,
+          126,
+          91
+        ]
+      }
+    },
+    {
+      "label": "after prompt 11 with seed 0",
+      "counters": {
+        "drafts": 504,
+        "draft_tokens": 2016,
+        "accepted": 792,
+        "accepted_per_pos": [
+          309,
+          219,
+          150,
+          114
+        ]
+      }
+    },
+    {
+      "label": "before prompt 12 with seed 0",
+      "counters": {
+        "drafts": 504,
+        "draft_tokens": 2016,
+        "accepted": 792,
+        "accepted_per_pos": [
+          309,
+          219,
+          150,
+          114
+        ]
+      }
+    },
+    {
+      "label": "after prompt 12 with seed 0",
+      "counters": {
+        "drafts": 548,
+        "draft_tokens": 2192,
+        "accepted": 875,
+        "accepted_per_pos": [
+          342,
+          241,
+          166,
+          126
+        ]
+      }
+    },
+    {
+      "label": "before prompt 13 with seed 0",
+      "counters": {
+        "drafts": 548,
+        "draft_tokens": 2192,
+        "accepted": 875,
+        "accepted_per_pos": [
+          342,
+          241,
+          166,
+          126
+        ]
+      }
+    },
+    {
+      "label": "after prompt 13 with seed 0",
+      "counters": {
+        "drafts": 596,
+        "draft_tokens": 2384,
+        "accepted": 955,
+        "accepted_per_pos": [
+          375,
+          261,
+          180,
+          139
+        ]
+      }
+    },
+    {
+      "label": "before prompt 14 with seed 0",
+      "counters": {
+        "drafts": 596,
+        "draft_tokens": 2384,
+        "accepted": 955,
+        "accepted_per_pos": [
+          375,
+          261,
+          180,
+          139
+        ]
+      }
+    },
+    {
+      "label": "after prompt 14 with seed 0",
+      "counters": {
+        "drafts": 636,
+        "draft_tokens": 2544,
+        "accepted": 1045,
+        "accepted_per_pos": [
+          409,
+          288,
+          197,
+          151
+        ]
+      }
+    },
+    {
+      "label": "before prompt 15 with seed 0",
+      "counters": {
+        "drafts": 636,
+        "draft_tokens": 2544,
+        "accepted": 1045,
+        "accepted_per_pos": [
+          409,
+          288,
+          197,
+          151
+        ]
+      }
+    },
+    {
+      "label": "after prompt 15 with seed 0",
+      "counters": {
+        "drafts": 673,
+        "draft_tokens": 2692,
+        "accepted": 1137,
+        "accepted_per_pos": [
+          439,
+          314,
+          218,
+          166
+        ]
+      }
+    },
+    {
+      "label": "before prompt 16 with seed 0",
+      "counters": {
+        "drafts": 673,
+        "draft_tokens": 2692,
+        "accepted": 1137,
+        "accepted_per_pos": [
+          439,
+          314,
+          218,
+          166
+        ]
+      }
+    },
+    {
+      "label": "after prompt 16 with seed 0",
+      "counters": {
+        "drafts": 720,
+        "draft_tokens": 2880,
+        "accepted": 1219,
+        "accepted_per_pos": [
+          468,
+          337,
+          237,
+          177
+        ]
+      }
+    },
+    {
+      "label": "before prompt 17 with seed 0",
+      "counters": {
+        "drafts": 720,
+        "draft_tokens": 2880,
+        "accepted": 1219,
+        "accepted_per_pos": [
+          468,
+          337,
+          237,
+          177
+        ]
+      }
+    },
+    {
+      "label": "after prompt 17 with seed 0",
+      "counters": {
+        "drafts": 748,
+        "draft_tokens": 2992,
+        "accepted": 1321,
+        "accepted_per_pos": [
+          496,
+          365,
+          261,
+          199
+        ]
+      }
+    },
+    {
+      "label": "before prompt 18 with seed 0",
+      "counters": {
+        "drafts": 748,
+        "draft_tokens": 2992,
+        "accepted": 1321,
+        "accepted_per_pos": [
+          496,
+          365,
+          261,
+          199
+        ]
+      }
+    },
+    {
+      "label": "after prompt 18 with seed 0",
+      "counters": {
+        "drafts": 771,
+        "draft_tokens": 3084,
+        "accepted": 1339,
+        "accepted_per_pos": [
+          506,
+          369,
+          264,
+          200
+        ]
+      }
+    },
+    {
+      "label": "before prompt 19 with seed 0",
+      "counters": {
+        "drafts": 771,
+        "draft_tokens": 3084,
+        "accepted": 1339,
+        "accepted_per_pos": [
+          506,
+          369,
+          264,
+          200
+        ]
+      }
+    },
+    {
+      "label": "after prompt 19 with seed 0",
+      "counters": {
+        "drafts": 818,
+        "draft_tokens": 3272,
+        "accepted": 1421,
+        "accepted_per_pos": [
+          538,
+          391,
+          279,
+          213
+        ]
+      }
+    },
+    {
+      "label": "before prompt 0 with seed 1",
+      "counters": {
+        "drafts": 818,
+        "draft_tokens": 3272,
+        "accepted": 1421,
+        "accepted_per_pos": [
+          538,
+          391,
+          279,
+          213
+        ]
+      }
+    },
+    {
+      "label": "after prompt 0 with seed 1",
+      "counters": {
+        "drafts": 839,
+        "draft_tokens": 3356,
+        "accepted": 1446,
+        "accepted_per_pos": [
+          550,
+          397,
+          284,
+          215
+        ]
+      }
+    },
+    {
+      "label": "before prompt 1 with seed 1",
+      "counters": {
+        "drafts": 839,
+        "draft_tokens": 3356,
+        "accepted": 1446,
+        "accepted_per_pos": [
+          550,
+          397,
+          284,
+          215
+        ]
+      }
+    },
+    {
+      "label": "after prompt 1 with seed 1",
+      "counters": {
+        "drafts": 848,
+        "draft_tokens": 3392,
+        "accepted": 1457,
+        "accepted_per_pos": [
+          556,
+          400,
+          286,
+          215
+        ]
+      }
+    },
+    {
+      "label": "before prompt 2 with seed 1",
+      "counters": {
+        "drafts": 848,
+        "draft_tokens": 3392,
+        "accepted": 1457,
+        "accepted_per_pos": [
+          556,
+          400,
+          286,
+          215
+        ]
+      }
+    },
+    {
+      "label": "after prompt 2 with seed 1",
+      "counters": {
+        "drafts": 888,
+        "draft_tokens": 3552,
+        "accepted": 1544,
+        "accepted_per_pos": [
+          588,
+          424,
+          304,
+          228
+        ]
+      }
+    },
+    {
+      "label": "before prompt 3 with seed 1",
+      "counters": {
+        "drafts": 888,
+        "draft_tokens": 3552,
+        "accepted": 1544,
+        "accepted_per_pos": [
+          588,
+          424,
+          304,
+          228
+        ]
+      }
+    },
+    {
+      "label": "after prompt 3 with seed 1",
+      "counters": {
+        "drafts": 929,
+        "draft_tokens": 3716,
+        "accepted": 1592,
+        "accepted_per_pos": [
+          613,
+          437,
+          310,
+          232
+        ]
+      }
+    },
+    {
+      "label": "before prompt 4 with seed 1",
+      "counters": {
+        "drafts": 929,
+        "draft_tokens": 3716,
+        "accepted": 1592,
+        "accepted_per_pos": [
+          613,
+          437,
+          310,
+          232
+        ]
+      }
+    },
+    {
+      "label": "after prompt 4 with seed 1",
+      "counters": {
+        "drafts": 974,
+        "draft_tokens": 3896,
+        "accepted": 1677,
+        "accepted_per_pos": [
+          645,
+          459,
+          327,
+          246
+        ]
+      }
+    },
+    {
+      "label": "before prompt 5 with seed 1",
+      "counters": {
+        "drafts": 974,
+        "draft_tokens": 3896,
+        "accepted": 1677,
+        "accepted_per_pos": [
+          645,
+          459,
+          327,
+          246
+        ]
+      }
+    },
+    {
+      "label": "after prompt 5 with seed 1",
+      "counters": {
+        "drafts": 1029,
+        "draft_tokens": 4116,
+        "accepted": 1753,
+        "accepted_per_pos": [
+          677,
+          482,
+          341,
+          253
+        ]
+      }
+    },
+    {
+      "label": "before prompt 6 with seed 1",
+      "counters": {
+        "drafts": 1029,
+        "draft_tokens": 4116,
+        "accepted": 1753,
+        "accepted_per_pos": [
+          677,
+          482,
+          341,
+          253
+        ]
+      }
+    },
+    {
+      "label": "after prompt 6 with seed 1",
+      "counters": {
+        "drafts": 1077,
+        "draft_tokens": 4308,
+        "accepted": 1830,
+        "accepted_per_pos": [
+          708,
+          506,
+          355,
+          261
+        ]
+      }
+    },
+    {
+      "label": "before prompt 7 with seed 1",
+      "counters": {
+        "drafts": 1077,
+        "draft_tokens": 4308,
+        "accepted": 1830,
+        "accepted_per_pos": [
+          708,
+          506,
+          355,
+          261
+        ]
+      }
+    },
+    {
+      "label": "after prompt 7 with seed 1",
+      "counters": {
+        "drafts": 1116,
+        "draft_tokens": 4464,
+        "accepted": 1920,
+        "accepted_per_pos": [
+          739,
+          531,
+          374,
+          276
+        ]
+      }
+    },
+    {
+      "label": "before prompt 8 with seed 1",
+      "counters": {
+        "drafts": 1116,
+        "draft_tokens": 4464,
+        "accepted": 1920,
+        "accepted_per_pos": [
+          739,
+          531,
+          374,
+          276
+        ]
+      }
+    },
+    {
+      "label": "after prompt 8 with seed 1",
+      "counters": {
+        "drafts": 1162,
+        "draft_tokens": 4648,
+        "accepted": 2002,
+        "accepted_per_pos": [
+          773,
+          554,
+          389,
+          286
+        ]
+      }
+    },
+    {
+      "label": "before prompt 9 with seed 1",
+      "counters": {
+        "drafts": 1162,
+        "draft_tokens": 4648,
+        "accepted": 2002,
+        "accepted_per_pos": [
+          773,
+          554,
+          389,
+          286
+        ]
+      }
+    },
+    {
+      "label": "after prompt 9 with seed 1",
+      "counters": {
+        "drafts": 1220,
+        "draft_tokens": 4880,
+        "accepted": 2072,
+        "accepted_per_pos": [
+          803,
+          572,
+          401,
+          296
+        ]
+      }
+    },
+    {
+      "label": "before prompt 10 with seed 1",
+      "counters": {
+        "drafts": 1220,
+        "draft_tokens": 4880,
+        "accepted": 2072,
+        "accepted_per_pos": [
+          803,
+          572,
+          401,
+          296
+        ]
+      }
+    },
+    {
+      "label": "after prompt 10 with seed 1",
+      "counters": {
+        "drafts": 1233,
+        "draft_tokens": 4932,
+        "accepted": 2093,
+        "accepted_per_pos": [
+          811,
+          579,
+          405,
+          298
+        ]
+      }
+    },
+    {
+      "label": "before prompt 11 with seed 1",
+      "counters": {
+        "drafts": 1233,
+        "draft_tokens": 4932,
+        "accepted": 2093,
+        "accepted_per_pos": [
+          811,
+          579,
+          405,
+          298
+        ]
+      }
+    },
+    {
+      "label": "after prompt 11 with seed 1",
+      "counters": {
+        "drafts": 1266,
+        "draft_tokens": 5064,
+        "accepted": 2189,
+        "accepted_per_pos": [
+          840,
+          604,
+          426,
+          319
+        ]
+      }
+    },
+    {
+      "label": "before prompt 12 with seed 1",
+      "counters": {
+        "drafts": 1266,
+        "draft_tokens": 5064,
+        "accepted": 2189,
+        "accepted_per_pos": [
+          840,
+          604,
+          426,
+          319
+        ]
+      }
+    },
+    {
+      "label": "after prompt 12 with seed 1",
+      "counters": {
+        "drafts": 1325,
+        "draft_tokens": 5300,
+        "accepted": 2259,
+        "accepted_per_pos": [
+          875,
+          622,
+          435,
+          327
+        ]
+      }
+    },
+    {
+      "label": "before prompt 13 with seed 1",
+      "counters": {
+        "drafts": 1325,
+        "draft_tokens": 5300,
+        "accepted": 2259,
+        "accepted_per_pos": [
+          875,
+          622,
+          435,
+          327
+        ]
+      }
+    },
+    {
+      "label": "after prompt 13 with seed 1",
+      "counters": {
+        "drafts": 1371,
+        "draft_tokens": 5484,
+        "accepted": 2336,
+        "accepted_per_pos": [
+          908,
+          643,
+          448,
+          337
+        ]
+      }
+    },
+    {
+      "label": "before prompt 14 with seed 1",
+      "counters": {
+        "drafts": 1371,
+        "draft_tokens": 5484,
+        "accepted": 2336,
+        "accepted_per_pos": [
+          908,
+          643,
+          448,
+          337
+        ]
+      }
+    },
+    {
+      "label": "after prompt 14 with seed 1",
+      "counters": {
+        "drafts": 1411,
+        "draft_tokens": 5644,
+        "accepted": 2424,
+        "accepted_per_pos": [
+          938,
+          666,
+          466,
+          354
+        ]
+      }
+    },
+    {
+      "label": "before prompt 15 with seed 1",
+      "counters": {
+        "drafts": 1411,
+        "draft_tokens": 5644,
+        "accepted": 2424,
+        "accepted_per_pos": [
+          938,
+          666,
+          466,
+          354
+        ]
+      }
+    },
+    {
+      "label": "after prompt 15 with seed 1",
+      "counters": {
+        "drafts": 1450,
+        "draft_tokens": 5800,
+        "accepted": 2512,
+        "accepted_per_pos": [
+          966,
+          691,
+          486,
+          369
+        ]
+      }
+    },
+    {
+      "label": "before prompt 16 with seed 1",
+      "counters": {
+        "drafts": 1450,
+        "draft_tokens": 5800,
+        "accepted": 2512,
+        "accepted_per_pos": [
+          966,
+          691,
+          486,
+          369
+        ]
+      }
+    },
+    {
+      "label": "after prompt 16 with seed 1",
+      "counters": {
+        "drafts": 1499,
+        "draft_tokens": 5996,
+        "accepted": 2591,
+        "accepted_per_pos": [
+          998,
+          713,
+          499,
+          381
+        ]
+      }
+    },
+    {
+      "label": "before prompt 17 with seed 1",
+      "counters": {
+        "drafts": 1499,
+        "draft_tokens": 5996,
+        "accepted": 2591,
+        "accepted_per_pos": [
+          998,
+          713,
+          499,
+          381
+        ]
+      }
+    },
+    {
+      "label": "after prompt 17 with seed 1",
+      "counters": {
+        "drafts": 1514,
+        "draft_tokens": 6056,
+        "accepted": 2646,
+        "accepted_per_pos": [
+          1012,
+          727,
+          513,
+          394
+        ]
+      }
+    },
+    {
+      "label": "before prompt 18 with seed 1",
+      "counters": {
+        "drafts": 1514,
+        "draft_tokens": 6056,
+        "accepted": 2646,
+        "accepted_per_pos": [
+          1012,
+          727,
+          513,
+          394
+        ]
+      }
+    },
+    {
+      "label": "after prompt 18 with seed 1",
+      "counters": {
+        "drafts": 1539,
+        "draft_tokens": 6156,
+        "accepted": 2666,
+        "accepted_per_pos": [
+          1023,
+          732,
+          516,
+          395
+        ]
+      }
+    },
+    {
+      "label": "before prompt 19 with seed 1",
+      "counters": {
+        "drafts": 1539,
+        "draft_tokens": 6156,
+        "accepted": 2666,
+        "accepted_per_pos": [
+          1023,
+          732,
+          516,
+          395
+        ]
+      }
+    },
+    {
+      "label": "after prompt 19 with seed 1",
+      "counters": {
+        "drafts": 1589,
+        "draft_tokens": 6356,
+        "accepted": 2747,
+        "accepted_per_pos": [
+          1054,
+          753,
+          532,
+          408
+        ]
+      }
+    }
+  ]
+}

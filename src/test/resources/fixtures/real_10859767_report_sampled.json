@@ -1,0 +1,350 @@
+{
+  "schema_version": 1,
+  "harness_version": "0.1.0",
+  "backend": "vllm==0.31.0",
+  "adapter_handling": "none",
+  "draft_structure": "chain",
+  "estimator": "simple_mean",
+  "draft_id": "qwen2.5-0.5b-instruct",
+  "prompt_set_sha256": "ca64656be834246e8d2da59a29f2c1bf5e5abcfc2275d23a1eacea0baa037d53",
+  "num_prompts": 20,
+  "decoding": {
+    "temperature": 0.7,
+    "max_new_tokens": 128,
+    "num_speculative_tokens": 4,
+    "dtype": "bfloat16"
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "alpha": 0.44976676807698385,
+      "tau": 2.7990670723079347,
+      "alpha_by_position": [
+        0.6578947368421053,
+        0.7238095238095238,
+        0.7157894736842105,
+        0.7610294117647058
+      ],
+      "total_steps": 798,
+      "total_proposed": 3192,
+      "total_accepted": 1384,
+      "excluded_prompts": 0,
+      "position_counts_exact": true,
+      "per_prompt": [
+        {
+          "prompt_index": 0,
+          "steps": 20,
+          "proposed": 80,
+          "accepted": 37
+        },
+        {
+          "prompt_index": 1,
+          "steps": 12,
+          "proposed": 48,
+          "accepted": 12
+        },
+        {
+          "prompt_index": 2,
+          "steps": 47,
+          "proposed": 188,
+          "accepted": 81
+        },
+        {
+          "prompt_index": 3,
+          "steps": 52,
+          "proposed": 208,
+          "accepted": 41
+        },
+        {
+          "prompt_index": 4,
+          "steps": 36,
+          "proposed": 144,
+          "accepted": 91
+        },
+        {
+          "prompt_index": 5,
+          "steps": 49,
+          "proposed": 196,
+          "accepted": 82
+        },
+        {
+          "prompt_index": 6,
+          "steps": 54,
+          "proposed": 216,
+          "accepted": 74
+        },
+        {
+          "prompt_index": 7,
+          "steps": 43,
+          "proposed": 172,
+          "accepted": 85
+        },
+        {
+          "prompt_index": 8,
+          "steps": 58,
+          "proposed": 232,
+          "accepted": 69
+        },
+        {
+          "prompt_index": 9,
+          "steps": 67,
+          "proposed": 268,
+          "accepted": 61
+        },
+        {
+          "prompt_index": 10,
+          "steps": 16,
+          "proposed": 64,
+          "accepted": 24
+        },
+        {
+          "prompt_index": 11,
+          "steps": 30,
+          "proposed": 120,
+          "accepted": 98
+        },
+        {
+          "prompt_index": 12,
+          "steps": 44,
+          "proposed": 176,
+          "accepted": 83
+        },
+        {
+          "prompt_index": 13,
+          "steps": 48,
+          "proposed": 192,
+          "accepted": 80
+        },
+        {
+          "prompt_index": 14,
+          "steps": 40,
+          "proposed": 160,
+          "accepted": 90
+        },
+        {
+          "prompt_index": 15,
+          "steps": 37,
+          "proposed": 148,
+          "accepted": 92
+        },
+        {
+          "prompt_index": 16,
+          "steps": 47,
+          "proposed": 188,
+          "accepted": 82
+        },
+        {
+          "prompt_index": 17,
+          "steps": 28,
+          "proposed": 112,
+          "accepted": 102
+        },
+        {
+          "prompt_index": 18,
+          "steps": 23,
+          "proposed": 92,
+          "accepted": 18
+        },
+        {
+          "prompt_index": 19,
+          "steps": 47,
+          "proposed": 188,
+          "accepted": 82
+        }
+      ],
+      "position_counts": [
+        {
+          "position": 1,
+          "eligible": 798,
+          "accepted": 525
+        },
+        {
+          "position": 2,
+          "eligible": 525,
+          "accepted": 380
+        },
+        {
+          "position": 3,
+          "eligible": 380,
+          "accepted": 272
+        },
+        {
+          "position": 4,
+          "eligible": 272,
+          "accepted": 207
+        }
+      ]
+    },
+    {
+      "seed": 1,
+      "alpha": 0.44338315599267286,
+      "tau": 2.773532623970692,
+      "alpha_by_position": [
+        0.669260700389105,
+        0.7015503875968992,
+        0.6988950276243094,
+        0.7707509881422925
+      ],
+      "total_steps": 771,
+      "total_proposed": 3084,
+      "total_accepted": 1326,
+      "excluded_prompts": 0,
+      "position_counts_exact": true,
+      "per_prompt": [
+        {
+          "prompt_index": 0,
+          "steps": 21,
+          "proposed": 84,
+          "accepted": 25
+        },
+        {
+          "prompt_index": 1,
+          "steps": 9,
+          "proposed": 36,
+          "accepted": 11
+        },
+        {
+          "prompt_index": 2,
+          "steps": 40,
+          "proposed": 160,
+          "accepted": 87
+        },
+        {
+          "prompt_index": 3,
+          "steps": 41,
+          "proposed": 164,
+          "accepted": 48
+        },
+        {
+          "prompt_index": 4,
+          "steps": 45,
+          "proposed": 180,
+          "accepted": 85
+        },
+        {
+          "prompt_index": 5,
+          "steps": 55,
+          "proposed": 220,
+          "accepted": 76
+        },
+        {
+          "prompt_index": 6,
+          "steps": 48,
+          "proposed": 192,
+          "accepted": 77
+        },
+        {
+          "prompt_index": 7,
+          "steps": 39,
+          "proposed": 156,
+          "accepted": 90
+        },
+        {
+          "prompt_index": 8,
+          "steps": 46,
+          "proposed": 184,
+          "accepted": 82
+        },
+        {
+          "prompt_index": 9,
+          "steps": 58,
+          "proposed": 232,
+          "accepted": 70
+        },
+        {
+          "prompt_index": 10,
+          "steps": 13,
+          "proposed": 52,
+          "accepted": 21
+        },
+        {
+          "prompt_index": 11,
+          "steps": 33,
+          "proposed": 132,
+          "accepted": 96
+        },
+        {
+          "prompt_index": 12,
+          "steps": 59,
+          "proposed": 236,
+          "accepted": 70
+        },
+        {
+          "prompt_index": 13,
+          "steps": 46,
+          "proposed": 184,
+          "accepted": 77
+        },
+        {
+          "prompt_index": 14,
+          "steps": 40,
+          "proposed": 160,
+          "accepted": 88
+        },
+        {
+          "prompt_index": 15,
+          "steps": 39,
+          "proposed": 156,
+          "accepted": 88
+        },
+        {
+          "prompt_index": 16,
+          "steps": 49,
+          "proposed": 196,
+          "accepted": 79
+        },
+        {
+          "prompt_index": 17,
+          "steps": 15,
+          "proposed": 60,
+          "accepted": 55
+        },
+        {
+          "prompt_index": 18,
+          "steps": 25,
+          "proposed": 100,
+          "accepted": 20
+        },
+        {
+          "prompt_index": 19,
+          "steps": 50,
+          "proposed": 200,
+          "accepted": 81
+        }
+      ],
+      "position_counts": [
+        {
+          "position": 1,
+          "eligible": 771,
+          "accepted": 516
+        },
+        {
+          "position": 2,
+          "eligible": 516,
+          "accepted": 362
+        },
+        {
+          "position": 3,
+          "eligible": 362,
+          "accepted": 253
+        },
+        {
+          "position": 4,
+          "eligible": 253,
+          "accepted": 195
+        }
+      ]
+    }
+  ],
+  "aggregate": {
+    "alpha_mean": 0.4465749620348284,
+    "alpha_std": 0.004513895393280689,
+    "tau_mean": 2.786299848139313,
+    "tau_std": 0.01805558157312197
+  },
+  "hardware": {
+    "gpu": "NVIDIA A100-SXM4-80GB",
+    "count": 1
+  },
+  "wall_clock_seconds": 74.44645364861935
+}
