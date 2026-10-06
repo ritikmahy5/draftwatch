@@ -171,7 +171,7 @@ executor:
   type: slurm            # local | slurm
   slurm:
     partition: gpu
-    gres: gpu:1
+    gres: "gpu:a100:1"                          # name the GPU model (D92)
     time: "00:45:00"
     requeue_on_preempt: true
     extra_sbatch_args: []                       # may not set options draftwatch sets

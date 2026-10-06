@@ -10,7 +10,8 @@ executor:
   max_retries: 2             # retries for transient failures only
   # slurm:                   # required when type is slurm
   #   partition: gpu         # optional; omitted means the site default
-  #   gres: gpu:1            # optional
+  #   gres: "gpu:a100:1"     # optional; name the GPU model: results from different models are
+  #                          # never compared (DECISIONS.md D89, D92)
   #   time: "00:45:00"       # optional; any sbatch --time format, quoted
   #   requeue_on_preempt: true
   #   extra_sbatch_args: []                       # may not set options draftwatch sets
