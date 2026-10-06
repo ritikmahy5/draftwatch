@@ -24,6 +24,12 @@ src/main/java/dev/draftwatch/
   report/       ReportModel + HtmlReportRenderer, MeasurementDiff + DiffRenderer, Traced
 ```
 
+The reference harness is Python, in `python/` (MEASUREMENT_CONTRACT.md, "Reference backend";
+DECISIONS.md D80–D86). `measure_acceptance.py` is the entry point. In `draftwatch_harness/`,
+`inputs`, `counters`, `report`, and `measure` are standard-library only and unit-tested without
+vLLM; `vllm_backend` is the only module that imports vLLM. Java never imports it: the engine runs
+it as `harness.command`, and `ReportParser` validates what it writes.
+
 `MetricCalculator` is shared by `ReportParser` (to verify the harness's numbers) and by the
 detectors (to recompute metrics on bootstrap resamples), so there is one implementation of
 each estimator.
