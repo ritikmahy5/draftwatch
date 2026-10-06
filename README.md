@@ -51,6 +51,8 @@ docs/uml/class-diagram.md     Mermaid class diagram of the current code
 scripts/fake_harness.py       stdlib-only fake harness for tests (synthetic numbers only)
 scripts/bootstrap_reference.py  independent reference for the paired bootstrap (used by tests)
 scripts/record_slurm_fixtures.py  records real Slurm output on the cluster for the tests (D64)
+python/measure_acceptance.py  the reference vLLM harness (MEASUREMENT_CONTRACT.md; D80-D86)
+python/tests/                 its unit tests: standard library only, no vLLM or GPU
 ```
 
 Tests need `python3` (3.10+), `/bin/sh`, and `env` on the PATH (DECISIONS.md D41).

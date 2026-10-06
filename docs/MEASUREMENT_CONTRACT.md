@@ -104,8 +104,11 @@ using `per_prompt` counts — the harness does not compute confidence intervals.
 
 ## Reference backend: vLLM (DECISIONS.md D4)
 
-The reference harness uses vLLM's offline `LLM` API with a `speculative_config` and reads
-these engine counters via `LLM.get_metrics()`, as vLLM's own `spec_decode.py` example does:
+The reference harness (`python/measure_acceptance.py`) uses vLLM's offline `LLM` API with
+`speculative_config = {"method": "draft_model", "model": <--draft-path>,
+"num_speculative_tokens": k}` and `disable_log_stats=False`. It reads these engine counters via
+`LLM.get_metrics()`, as vLLM's own offline example does
+(`examples/features/speculative_decoding/spec_decode_offline.py` in v0.31.0):
 
 | vLLM metric | Contract quantity |
 |---|---|
@@ -127,8 +130,16 @@ every prompt, and `false` otherwise. Detectors never use positional acceptance; 
 it with an "approximate" label when the flag is `false`.
 
 At startup the harness runs one warm-up prompt and checks that all four counters exist and
-advanced; if not, it exits with code 5 and names the missing metric. It never substitutes
-estimated values. The harness looks these exact names up in the `get_metrics()` output, so if
+that the draft counters (`num_drafts`, `num_draft_tokens`) advanced. The accepted counts may
+stay at zero for a draft that is always rejected. If not, it exits with code 5 and names the
+metric. It never substitutes estimated values. After loading, it also exits with code 5 if vLLM
+resolved any setting that changes what the counters count: a method other than `draft_model`,
+non-standard rejection sampling, synthetic acceptance, adaptive verification, or a
+per-batch-size k (DECISIONS.md D80).
+
+Each prompt line holds exactly one of `prompt` (a string, passed to `LLM.generate`) or
+`messages` (a list of chat messages, passed to `LLM.chat`), and nothing else (DECISIONS.md
+D81). Each call uses `SamplingParams(temperature, max_tokens=max_new_tokens, seed=<seed>)`. The harness looks these exact names up in the `get_metrics()` output, so if
 a future vLLM version renames one, the lookup fails and the harness exits with code 5 instead
 of silently producing zeros.
 
