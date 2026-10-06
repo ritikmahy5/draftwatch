@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 import os
 import tempfile
@@ -55,22 +57,35 @@ class MeasureTest(unittest.TestCase):
         self.assertEqual(backend.fixture["snapshots"], recorded["snapshots"])
         self.assertEqual(3, recorded["num_speculative_tokens"])
 
+    def run_quietly(self, argv, factory):
+        """The exit code and what the harness printed on stderr."""
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            code = measure_acceptance.run(argv, factory)
+        return code, err.getvalue()
+
     def test_exit_codes(self):
         def refuse(args, decoding):
             raise HarnessError(EXIT_MODEL_LOAD, "cannot load")
 
-        self.assertEqual(3, measure_acceptance.run(self.argv(), refuse))
-        self.assertEqual(2, measure_acceptance.run(self.argv()[2:], refuse))
+        code, err = self.run_quietly(self.argv(), refuse)
+        self.assertEqual((3, "measure_acceptance: cannot load\n"), (code, err))
+        code, err = self.run_quietly(self.argv()[2:], refuse)
+        self.assertEqual(2, code)
+        self.assertIn("--target-checkpoint", err)
 
         oom = type("OutOfMemoryError", (RuntimeError,), {"__module__": "torch.cuda"})
 
         def out_of_memory(args, decoding):
             raise oom("CUDA out of memory")
 
-        self.assertEqual(4, measure_acceptance.run(self.argv(), out_of_memory))
+        code, err = self.run_quietly(self.argv(), out_of_memory)
+        self.assertEqual(4, code)
+        self.assertIn("out of GPU memory", err)
         # Two seeds against a one-seed recording: the replay runs out of snapshots.
-        self.assertEqual(1, measure_acceptance.run(self.argv("0,1"),
-                                                   lambda a, d: ReplayBackend(FIXTURE)))
+        code, err = self.run_quietly(self.argv("0,1"), lambda a, d: ReplayBackend(FIXTURE))
+        self.assertEqual(1, code)
+        self.assertIn("read more snapshots than were recorded", err)
         self.assertFalse(os.path.exists(self.out), "no report on failure")
 
 

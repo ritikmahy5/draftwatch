@@ -1,0 +1,20 @@
+{"messages": [{"role": "user", "content": "Explain in three sentences why the sky looks blue during the day."}]}
+{"messages": [{"role": "user", "content": "Write a short haiku about a quiet library."}]}
+{"messages": [{"role": "user", "content": "List five practical tips for keeping a houseplant healthy."}]}
+{"messages": [{"role": "user", "content": "Summarize the plot of a heist story in exactly four sentences."}]}
+{"messages": [{"role": "user", "content": "What is the difference between a list and a tuple in Python? Give one example of each."}]}
+{"messages": [{"role": "user", "content": "Describe how a bicycle's gears make it easier to climb a hill."}]}
+{"messages": [{"role": "user", "content": "Write a polite email declining a meeting invitation because of a schedule conflict."}]}
+{"messages": [{"role": "user", "content": "Explain what a binary search does, step by step, for a sorted list of numbers."}]}
+{"messages": [{"role": "user", "content": "Give three arguments for and three against working from home."}]}
+{"prompt": "The three most important ideas in the history of computing are"}
+{"messages": [{"role": "user", "content": "Translate this sentence into French and Spanish: The train leaves at nine in the morning."}]}
+{"messages": [{"role": "user", "content": "Write a function in JavaScript that reverses a string, and explain it briefly."}]}
+{"messages": [{"role": "user", "content": "What causes the seasons on Earth? Answer for a ten-year-old."}]}
+{"messages": [{"role": "user", "content": "Draft a two-paragraph product description for a reusable water bottle."}]}
+{"messages": [{"role": "user", "content": "Explain the rules of tic-tac-toe and a simple strategy that never loses."}]}
+{"messages": [{"role": "user", "content": "Describe the water cycle in five numbered steps."}]}
+{"messages": [{"role": "user", "content": "Suggest a three-day itinerary for a first visit to a mountain town."}]}
+{"messages": [{"role": "user", "content": "What is a prime number? List the first ten primes."}]}
+{"messages": [{"role": "user", "content": "Write a limerick about a cat who learns to code."}]}
+{"prompt": "Once upon a time, in a village at the edge of a forest,"}
