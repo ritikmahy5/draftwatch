@@ -13,7 +13,8 @@ public final class Comparability {
 
   /**
    * The first field, in the contract's order, on which {@code a} and {@code b} differ: one of
-   * {@code probe_hash}, {@code harness_version}, {@code backend}, {@code draft_structure}.
+   * {@code probe_hash}, {@code harness_version}, {@code backend}, {@code draft_structure},
+   * {@code hardware} (the GPU model and count; DECISIONS.md D89).
    * Empty if they are comparable.
    */
   public static Optional<String> mismatch(Measurement a, Measurement b) {
@@ -28,6 +29,9 @@ public final class Comparability {
     }
     if (a.report().draftStructure() != b.report().draftStructure()) {
       return Optional.of("draft_structure");
+    }
+    if (!a.report().hardware().equals(b.report().hardware())) {
+      return Optional.of("hardware");
     }
     return Optional.empty();
   }

@@ -88,6 +88,9 @@ public class DetectorTest {
     assertEquals("incomparable: harness_version", v.explanation());
     Measurement otherBackend = at(new CountsMeasurements(4).backend("vllm==0.9"), "c", 200, 20);
     assertEquals("incomparable: backend", absolute(0.05, otherBackend, base).explanation());
+    Measurement otherGpu =
+        at(new CountsMeasurements(4).hardware("NVIDIA H200", 1), "c", 200, 20);
+    assertEquals("incomparable: hardware", absolute(0.05, otherGpu, base).explanation());
   }
 
   @Test

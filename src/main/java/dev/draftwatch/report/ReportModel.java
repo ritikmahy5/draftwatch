@@ -246,6 +246,8 @@ public final class ReportModel {
     private final Traced harnessVersion;
     private final Traced backend;
     private final Traced draftStructure;
+    private final Traced gpu;
+    private final Traced gpuCount;
     private final List<Row> rows;
     private final Positional latest;
 
@@ -255,6 +257,8 @@ public final class ReportModel {
         Traced harnessVersion,
         Traced backend,
         Traced draftStructure,
+        Traced gpu,
+        Traced gpuCount,
         List<Row> rows,
         Positional latest) {
       this.probeId = probeId;
@@ -262,6 +266,8 @@ public final class ReportModel {
       this.harnessVersion = harnessVersion;
       this.backend = backend;
       this.draftStructure = draftStructure;
+      this.gpu = gpu;
+      this.gpuCount = gpuCount;
       this.rows = List.copyOf(rows);
       this.latest = latest;
     }
@@ -284,6 +290,15 @@ public final class ReportModel {
 
     public Traced draftStructure() {
       return draftStructure;
+    }
+
+    /** {@code hardware.gpu}: part of the comparability key (DECISIONS.md D89). */
+    public Traced gpu() {
+      return gpu;
+    }
+
+    public Traced gpuCount() {
+      return gpuCount;
     }
 
     /** Step order, then end time; at least one. */
@@ -396,7 +411,10 @@ public final class ReportModel {
         series);
   }
 
-  /** The comparability key of MEASUREMENT_CONTRACT.md, "Comparability", with the probe id. */
+  /**
+   * The comparability key of MEASUREMENT_CONTRACT.md, "Comparability", with the probe id; the
+   * probe hash stands for everything it covers.
+   */
   private static List<String> key(Measurement m) {
     Provenance p = m.provenance();
     return List.of(
@@ -404,7 +422,9 @@ public final class ReportModel {
         p.probeHash(),
         p.harnessVersion(),
         p.backend(),
-        m.report().draftStructure().wireName());
+        m.report().draftStructure().wireName(),
+        m.report().hardware().gpu(),
+        Integer.toString(m.report().hardware().count()));
   }
 
   private static Series series(
@@ -424,6 +444,9 @@ public final class ReportModel {
         Traced.of(p.harnessVersion(), file, ResultPointers.HARNESS_VERSION),
         Traced.of(p.backend(), file, ResultPointers.BACKEND),
         Traced.of(last.report().draftStructure().wireName(), file, ResultPointers.DRAFT_STRUCTURE),
+        Traced.of(last.report().hardware().gpu(), file, ResultPointers.HARDWARE_GPU),
+        Traced.number(
+            (long) last.report().hardware().count(), file, ResultPointers.HARDWARE_COUNT),
         rows,
         positional(last, file, rows.get(rows.size() - 1)));
   }

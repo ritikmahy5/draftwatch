@@ -35,6 +35,7 @@ public final class CountsMeasurements {
   private String harnessVersion = "fake-0.1.0";
   private String backend = "fake";
   private String probeHash = PROBE_HASH;
+  private Hardware hardware = Hardware.of("none", 0);
 
   public CountsMeasurements(int numSpeculativeTokens) {
     this.k = numSpeculativeTokens;
@@ -47,6 +48,11 @@ public final class CountsMeasurements {
 
   public CountsMeasurements backend(String backend) {
     this.backend = backend;
+    return this;
+  }
+
+  public CountsMeasurements hardware(String gpu, int count) {
+    this.hardware = Hardware.of(gpu, count);
     return this;
   }
 
@@ -109,7 +115,7 @@ public final class CountsMeasurements {
             .seeds(List.of(seed))
             .aggregate(
                 AggregateMetrics.of(alpha, OptionalDouble.empty(), tau, OptionalDouble.empty()))
-            .hardware(Hardware.of("none", 0))
+            .hardware(hardware)
             .wallClockSeconds(1.0)
             .build();
     Checkpoint checkpoint =

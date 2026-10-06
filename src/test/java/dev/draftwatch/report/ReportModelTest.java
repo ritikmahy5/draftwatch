@@ -88,6 +88,26 @@ public class ReportModelTest {
   }
 
   @Test
+  public void anotherGpuStartsANewSeries() {
+    Measurement a = m("j1", 100, T0);
+    ObjectNode json = codec.measurementJson(m("j2", 200, T0.plusSeconds(1)));
+    ((ObjectNode) json.get("report").get("hardware")).put("gpu", "NVIDIA H200").put("count", 1);
+    Measurement h200 = codec.measurement(json);
+    List<ReportModel.Series> series =
+        build(List.of("run"), List.of(h200, a), List.of()).targets().get(0).series();
+    assertEquals(2, series.size());
+    assertEquals(List.of(100L), steps(series.get(0)));
+    assertEquals(
+        Traced.of(report.hardware().gpu(), file(a), ResultPointers.HARDWARE_GPU),
+        series.get(0).gpu());
+    assertEquals(List.of(200L), steps(series.get(1)));
+    assertEquals(
+        Traced.of("NVIDIA H200", file(h200), ResultPointers.HARDWARE_GPU), series.get(1).gpu());
+    assertEquals(
+        Traced.of("1", file(h200), ResultPointers.HARDWARE_COUNT), series.get(1).gpuCount());
+  }
+
+  @Test
   public void targetsComeInConfigOrderThenStoredOnesSorted() {
     List<Measurement> ms =
         List.of(

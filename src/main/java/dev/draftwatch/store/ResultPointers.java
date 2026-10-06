@@ -17,6 +17,8 @@ public final class ResultPointers {
   public static final String END_TIME = "/provenance/end_time";
   public static final String DRAFT_STRUCTURE = "/report/draft_structure";
   public static final String NUM_PROMPTS = "/report/num_prompts";
+  public static final String HARDWARE_GPU = "/report/hardware/gpu";
+  public static final String HARDWARE_COUNT = "/report/hardware/count";
   public static final String ALPHA_MEAN = "/report/aggregate/alpha_mean";
   public static final String ALPHA_STD = "/report/aggregate/alpha_std";
   public static final String TAU_MEAN = "/report/aggregate/tau_mean";

@@ -155,6 +155,10 @@ public final class HtmlReportRenderer {
     value(s.backend());
     text(" · draft structure ");
     value(s.draftStructure());
+    text(" · GPU ");
+    value(s.gpu());
+    text(" × ");
+    value(s.gpuCount());
     raw("</p>\n<div class=\"charts\">\n");
     chart("alpha_mean by checkpoint step", "alpha", s.rows(), Row::alphaValue, Row::alphaMean,
         detectionsLog);
