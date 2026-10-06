@@ -120,6 +120,16 @@ silently skipped and nothing crashes the loop.
 **Missing baseline measurement:** if the baseline checkpoint has no result for a probe,
 `watch` submits one and defers detection for that probe until it exists.
 
+**Changed GPU:** measurements on different GPU models or counts are incomparable
+(MEASUREMENT_CONTRACT.md, "Comparability"). Detection uses the latest result of the baseline
+checkpoint that is comparable with the current measurement. So after a GPU change,
+`draftwatch submit <target> <baseline checkpoint>` on the new GPU is enough, and results from the
+old GPU stay stored. Until then, each new measurement is `ERROR(incomparable: hardware)`. The
+re-measured baseline is too, because it is compared with the baseline's earlier result. On a
+partition with several GPU models, name the model in the job's resources (for example
+`gres: "gpu:h200:1"`), so a series is not interrupted by whichever GPU is free (DECISIONS.md
+D92).
+
 ### F6 — Alerts and actions
 - Notifiers: console and append-only `alerts.log`. No network notifiers in v1 (DECISIONS.md D12).
 - Actions on regression (optional, per target): `notify`; `retrain_draft` submits a

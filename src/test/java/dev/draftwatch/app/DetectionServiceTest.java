@@ -117,6 +117,23 @@ public class DetectionServiceTest {
     assertEquals("old", r.baselineJobId().get());
   }
 
+  /** DECISIONS.md D89, D92: measuring the baseline checkpoint again on the new GPU suffices. */
+  @Test
+  public void anotherGpuIsAnErrorUntilTheBaselineIsMeasuredOnIt() {
+    CountsMeasurements a100 = new CountsMeasurements(4).hardware("NVIDIA A100-SXM4-80GB", 1);
+    CountsMeasurements h200 = new CountsMeasurements(4).hardware("NVIDIA H200", 1);
+    publish(store(a100, "base-a100", 100, 28));
+    publish(store(h200, "j2", 200, 27));
+    assertEquals(List.of("ERROR"), kindsOf("j2"));
+    assertEquals("incomparable: hardware", log.all().get(log.all().size() - 1).explanation());
+    publish(store(h200, "base-h200", 100, 28));
+    assertEquals(List.of("ERROR"), kindsOf("base-h200"));
+    publish(store(h200, "j3", 300, 27));
+    DetectionRecord r = log.all().get(log.all().size() - 1);
+    assertEquals("OK", r.kind());
+    assertEquals("base-h200", r.baselineJobId().get());
+  }
+
   @Test
   public void unconfiguredTargetFailsLoudlyThroughTheBus() {
     bus.subscribe(MeasurementStored.class, "detection", service::onMeasurementStored);
