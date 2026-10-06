@@ -48,8 +48,11 @@ class VllmBackend:
             import torch  # noqa: F401  (imported here so OOM errors can be recognized)
             import vllm
             from vllm import LLM, SamplingParams
-        except ImportError as e:
-            raise HarnessError(EXIT_MODEL_LOAD, "cannot import vLLM: %s" % e)
+        except Exception as e:
+            # Not only ImportError: a compiled library built for another CUDA version fails with
+            # OSError while vLLM imports. Retrying cannot fix the environment (D84).
+            raise HarnessError(
+                EXIT_MODEL_LOAD, "cannot import vLLM: %s: %s" % (type(e).__name__, e))
         self._sampling_params = SamplingParams
         self.backend = "vllm==" + vllm.__version__
         model = target_checkpoint

@@ -44,3 +44,30 @@ class SpeculativeConfigTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ImportFailureTest(unittest.TestCase):
+    def test_a_library_that_fails_to_load_while_importing_vllm_is_exit_3(self):
+        import importlib.abc
+        import sys
+
+        from draftwatch_harness.errors import EXIT_MODEL_LOAD
+        from draftwatch_harness.vllm_backend import VllmBackend
+
+        class Broken(importlib.abc.MetaPathFinder):
+            def find_spec(self, name, path=None, target=None):
+                if name in ("torch", "vllm"):
+                    raise OSError("libnvrtc.so.13: cannot open shared object file")
+                return None
+
+        saved = {m: sys.modules.pop(m) for m in list(sys.modules) if m in ("torch", "vllm")}
+        sys.meta_path.insert(0, Broken())
+        try:
+            with self.assertRaises(HarnessError) as c:
+                VllmBackend("t", None, "d", {"num_speculative_tokens": 3, "dtype": "bfloat16",
+                                             "temperature": 0, "max_new_tokens": 8})
+        finally:
+            sys.meta_path.pop(0)
+            sys.modules.update(saved)
+        self.assertEqual(EXIT_MODEL_LOAD, c.exception.code)
+        self.assertIn("OSError: libnvrtc.so.13", str(c.exception))
