@@ -1,0 +1,114 @@
+{
+  "source": "synthetic: invented cumulative counter snapshots for 3 prompts, one seed, num_speculative_tokens = 3; prompt 2 has a short draft (8 of 9 positions proposed); chosen to satisfy every contract rule; not a measurement",
+  "num_speculative_tokens": 3,
+  "seeds": [
+    0
+  ],
+  "num_prompts": 3,
+  "snapshots": [
+    {
+      "label": "warm-up before",
+      "counters": {
+        "drafts": 0,
+        "draft_tokens": 0,
+        "accepted": 0,
+        "accepted_per_pos": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "label": "warm-up after",
+      "counters": {
+        "drafts": 4,
+        "draft_tokens": 12,
+        "accepted": 5,
+        "accepted_per_pos": [
+          3,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "label": "before prompt 0 with seed 0",
+      "counters": {
+        "drafts": 4,
+        "draft_tokens": 12,
+        "accepted": 5,
+        "accepted_per_pos": [
+          3,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "label": "after prompt 0 with seed 0",
+      "counters": {
+        "drafts": 8,
+        "draft_tokens": 24,
+        "accepted": 11,
+        "accepted_per_pos": [
+          6,
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "label": "before prompt 1 with seed 0",
+      "counters": {
+        "drafts": 8,
+        "draft_tokens": 24,
+        "accepted": 11,
+        "accepted_per_pos": [
+          6,
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "label": "after prompt 1 with seed 0",
+      "counters": {
+        "drafts": 10,
+        "draft_tokens": 30,
+        "accepted": 13,
+        "accepted_per_pos": [
+          8,
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "label": "before prompt 2 with seed 0",
+      "counters": {
+        "drafts": 10,
+        "draft_tokens": 30,
+        "accepted": 13,
+        "accepted_per_pos": [
+          8,
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "label": "after prompt 2 with seed 0",
+      "counters": {
+        "drafts": 13,
+        "draft_tokens": 38,
+        "accepted": 17,
+        "accepted_per_pos": [
+          10,
+          4,
+          3
+        ]
+      }
+    }
+  ]
+}

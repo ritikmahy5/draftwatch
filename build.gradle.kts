@@ -41,3 +41,15 @@ tasks.test {
     exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
   }
 }
+
+// The reference harness's unit tests: standard library only, no vLLM, no GPU (DECISIONS.md D86).
+val pythonTest by tasks.registering(Exec::class) {
+  description = "Runs the reference harness's Python unit tests."
+  group = "verification"
+  workingDir = projectDir
+  commandLine("python3", "-m", "unittest", "discover", "-s", "python/tests", "-q")
+}
+
+tasks.named("check") {
+  dependsOn(pythonTest)
+}
