@@ -17,7 +17,7 @@ src/test/resources/fixtures/slurm/. It also:
 - asks a job to call sbatch, to check that a job may submit jobs (sbatch_inside_job.json);
 - reads your own sacct history for states a user cannot cause, such as NODE_FAIL and PREEMPTED
   (real_<job-id>_history_<state>.json);
-- records the Slurm settings the decisions depend on (recording.json).
+- records the Slurm settings draftwatch's Slurm handling depends on (recording.json).
 
 Every file holds output exactly as the commands printed it. History files contain your past
 job ids and times, and "CANCELLED by <uid>" names a numeric uid; review them before
@@ -70,7 +70,7 @@ HISTORY_STATES = "BF,DL,NF,OOM,PR,RQ,TO"
 
 # --- the jobs ----------------------------------------------------------------------------
 
-D9_CHILD = "draftwatch-fixture-d9-child"
+SBATCH_CHILD = "draftwatch-fixture-sbatch-child"
 
 SCENARIOS = [
     # name, sbatch options beyond the defaults, script body, action when observed
@@ -114,10 +114,10 @@ def sbatch_options(options, extra):
     return [k + "=" + v for k, v in merged.items()] + flags
 
 
-def d9_script(args):
+def sbatch_inside_job_script(args):
     """A job that submits a held child job from inside itself."""
     child_options = ["--parsable", "--begin=now+3600", "--time=1", "--mem=10M",
-                     "--job-name=" + D9_CHILD, "--output=/dev/null"]
+                     "--job-name=" + SBATCH_CHILD, "--output=/dev/null"]
     if args.partition:
         child_options.append("--partition=" + args.partition)
     if args.account:
@@ -230,7 +230,7 @@ def main():
 
     jobs = []  # dicts: name, id, sbatch, observations, action, actions, done
     scenarios = [] if args.history_only else SCENARIOS + [
-        ("sbatch_inside_job", [], d9_script(args), None)]
+        ("sbatch_inside_job", [], sbatch_inside_job_script(args), None)]
     try:
         for name, extra, body, action in scenarios:
             script = os.path.join(out, "scripts", name + ".sh")
@@ -293,9 +293,9 @@ def main():
         write(path, doc)
         written.append(path)
 
-    d9 = d9_answer(jobs, out, source)
-    if d9:
-        write(os.path.join(out, "sbatch_inside_job.json"), d9)
+    inside_job = sbatch_inside_job_answer(jobs, out, source)
+    if inside_job:
+        write(os.path.join(out, "sbatch_inside_job.json"), inside_job)
 
     start = (datetime.now(timezone.utc) - timedelta(days=args.history_days)).strftime(
         "%Y-%m-%d")
@@ -321,12 +321,12 @@ def main():
           {"source": source, "versions": versions, "settings": settings,
            "history_query": history, "files": [os.path.basename(p) for p in written]})
     print("\nwrote %d fixture files to %s" % (len(written), out))
-    if d9:
-        print("sbatch inside a job:", d9["answer"])
+    if inside_job:
+        print("sbatch inside a job:", inside_job["answer"])
     return 0
 
 
-def d9_answer(jobs, out, source):
+def sbatch_inside_job_answer(jobs, out, source):
     job = next((j for j in jobs if j["name"] == "sbatch_inside_job" and j.get("id")), None)
     if job is None:
         return None
