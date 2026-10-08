@@ -35,8 +35,7 @@ import org.junit.rules.TemporaryFolder;
  * Every {@code real_} fixture recorded on the cluster by {@code scripts/record_slurm_fixtures.py},
  * replayed through {@link SlurmExecutor}: the output must parse, and a finished job must end in
  * the engine state that ARCHITECTURE.md's table gives for its final sacct state. The table is
- * written out again here, independently of {@link SlurmState}. Skipped until recordings exist
- * (DECISIONS.md D64).
+ * written out again here, independently of {@link SlurmState}. Skipped until recordings exist.
  */
 public class RecordedSlurmOutputTest {
   @Rule public TemporaryFolder tmp = new TemporaryFolder();
@@ -67,7 +66,7 @@ public class RecordedSlurmOutputTest {
     return Optional.empty();
   }
 
-  /** ARCHITECTURE.md's table and D59: the expected end of a job that finished this way. */
+  /** ARCHITECTURE.md's table: the expected end of a job that finished this way. */
   private static Optional<String> expected(String state, String exitCode) {
     String[] code = exitCode.split(":");
     int n = Integer.parseInt(code[0]);
@@ -104,7 +103,7 @@ public class RecordedSlurmOutputTest {
   @Test
   public void everyRecordingParsesAndFinishedJobsEndAsTheTableSays() throws IOException {
     List<String> names = recorded();
-    assumeFalse("no real_ Slurm fixtures recorded yet (DECISIONS.md D64)", names.isEmpty());
+    assumeFalse("no real_ Slurm fixtures recorded yet", names.isEmpty());
     assertEquals(List.of(), mismatches(names));
   }
 

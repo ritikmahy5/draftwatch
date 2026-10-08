@@ -11,7 +11,7 @@ import dev.draftwatch.testing.ReplayCommandRunner;
 import dev.draftwatch.testing.SlurmScenario;
 import org.junit.Test;
 
-/** squeue answers, replayed from the executor's fixtures, as lock-holder liveness (D62). */
+/** squeue answers, replayed from the executor's fixtures, as lock-holder liveness. */
 public class SqueueJobTableTest {
   private final ReplayCommandRunner commands = new ReplayCommandRunner();
   private final SqueueJobTable table = new SqueueJobTable(new SlurmCli(commands));

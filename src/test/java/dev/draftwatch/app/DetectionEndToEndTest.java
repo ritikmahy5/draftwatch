@@ -108,7 +108,7 @@ public class DetectionEndToEndTest {
     assertTrue(alerts, alerts.contains("; result " + resultFile));
   }
 
-  // --- ROADMAP M3 "done when": an incomparable pair is ERROR, logged, alerted, not thrown ----
+  // --- an incomparable pair is ERROR, logged, alerted, not thrown ----
 
   @Test
   public void incomparablePairIsLoggedAndAlertedAndSubmitCarriesOn() throws IOException {
@@ -129,7 +129,7 @@ public class DetectionEndToEndTest {
     assertTrue(cli.out(), cli.out().contains("SUCCEEDED"));
   }
 
-  // --- ROADMAP M3: deferred detection when the baseline has no measurement yet ------------
+  // --- deferred detection when the baseline has no measurement yet ------------
 
   @Test
   public void detectionIsDeferredUntilTheBaselineIsMeasured() throws IOException {

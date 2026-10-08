@@ -1,4 +1,4 @@
-"""Arguments, ``--decoding-json``, and the prompt file (contract "Invocation", "Prompt file"; D81)."""
+"""Arguments, ``--decoding-json``, and the prompt file (contract "Invocation", "Prompt file")."""
 
 import argparse
 import hashlib
@@ -40,7 +40,7 @@ def parse_seeds(text):
 
 
 def parse_decoding(text):
-    """The decoding object: exactly the four keys of the report schema (DECISIONS.md D25)."""
+    """The decoding object: exactly the four keys of the report schema."""
     try:
         decoding = json.loads(text)
     except ValueError as e:
@@ -61,7 +61,7 @@ def parse_decoding(text):
 
 
 class Prompt:
-    """One prompt: exactly one of ``prompt`` (text) or ``messages`` (chat) (D81)."""
+    """One prompt: exactly one of ``prompt`` (text) or ``messages`` (chat)."""
 
     def __init__(self, index, text=None, messages=None):
         self.index = index
@@ -101,7 +101,7 @@ def read_prompts(path):
             raise HarnessError(
                 EXIT_BAD_ARGUMENTS,
                 "prompt line %d must have exactly one of 'prompt' (a string) or 'messages'"
-                " (a non-empty list) (DECISIONS.md D81)" % number)
+                " (a non-empty list)" % number)
     if not prompts:
         raise HarnessError(EXIT_BAD_ARGUMENTS, "prompt file has no prompts")
     return hashlib.sha256(data).hexdigest(), prompts

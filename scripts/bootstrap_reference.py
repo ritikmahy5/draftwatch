@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent reference implementation of draftwatch's paired bootstrap (DECISIONS.md D45).
+"""Independent reference implementation of draftwatch's paired bootstrap.
 
 Reimplements, from their published specifications, java.util.Random (the 48-bit linear
 congruential generator and nextInt(bound) as documented in its Javadoc), the two estimators of

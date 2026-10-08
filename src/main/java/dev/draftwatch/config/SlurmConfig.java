@@ -6,7 +6,7 @@ import java.util.Optional;
 
 /**
  * {@code executor.slurm}. Omitted {@code partition}, {@code gres}, and {@code time} mean the
- * corresponding sbatch option is not passed, so Slurm's site defaults apply (DECISIONS.md D65).
+ * corresponding sbatch option is not passed, so Slurm's site defaults apply.
  */
 public final class SlurmConfig {
   private final Optional<String> partition;
@@ -16,7 +16,7 @@ public final class SlurmConfig {
   private final List<String> extraSbatchArgs;
   private final List<String> scheduleSbatchArgs;
 
-  /** {@code schedule_sbatch_args} when omitted: a time limit for one watch pass (D63). */
+  /** {@code schedule_sbatch_args} when omitted: a time limit for one watch pass. */
   public static final List<String> DEFAULT_SCHEDULE_SBATCH_ARGS = List.of("--time=00:30:00");
 
   private SlurmConfig(
@@ -58,7 +58,7 @@ public final class SlurmConfig {
     return gres;
   }
 
-  /** In one of the six formats {@code sbatch --time} accepts (DECISIONS.md D28). */
+  /** In one of the six formats {@code sbatch --time} accepts. */
   public Optional<String> time() {
     return time;
   }
@@ -72,7 +72,7 @@ public final class SlurmConfig {
     return extraSbatchArgs;
   }
 
-  /** The sbatch arguments of the CPU-only schedule job, after the ones draftwatch sets (D63). */
+  /** The sbatch arguments of the CPU-only schedule job, after the ones draftwatch sets. */
   public List<String> scheduleSbatchArgs() {
     return scheduleSbatchArgs;
   }

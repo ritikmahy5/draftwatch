@@ -50,7 +50,7 @@ public final class Checkpoint {
 
   /**
    * Content fingerprint of the weight files (SPEC.md F1); the checkpoint's identity. For an
-   * adapter it covers the adapter and its base model (DECISIONS.md D42).
+   * adapter it covers the adapter and its base model.
    */
   public String fingerprint() {
     return fingerprint;

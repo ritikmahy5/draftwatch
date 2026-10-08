@@ -6,7 +6,7 @@ import java.util.Objects;
 /**
  * {@code noise_floor(metric, k, sigma)}: regression when baseline − current > k · √2 · sigma.
  * {@code sigma} is the standard deviation of a single measurement from an external source, such
- * as replicate training runs; it cannot be estimated from one run (DECISIONS.md D10), so it has
+ * as replicate training runs; it cannot be estimated from one run, so it has
  * no default.
  */
 public final class NoiseFloorSpec implements DetectorSpec {

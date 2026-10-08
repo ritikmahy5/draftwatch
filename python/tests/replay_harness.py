@@ -2,7 +2,7 @@
 """measure_acceptance.py with the vLLM backend replaced by recorded counter snapshots.
 
 Used by the Java tests to check that the reference harness's reports pass ReportParser without
-a GPU. Environment: DRAFTWATCH_REPLAY, the snapshot fixture to replay (DECISIONS.md D86).
+a GPU. Environment: DRAFTWATCH_REPLAY, the snapshot fixture to replay.
 """
 
 import os

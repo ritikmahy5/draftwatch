@@ -1,4 +1,4 @@
-"""The vLLM side of the reference harness (contract "Reference backend"; D80, D82).
+"""The vLLM side of the reference harness (contract "Reference backend").
 
 This is the only module that imports vLLM, torch, transformers, or PEFT, and it imports them
 only when a backend is created, so the rest of the harness is testable without them.
@@ -12,12 +12,12 @@ from .counters import Snapshot
 from .errors import (EXIT_BACKEND_COUNTERS, EXIT_MODEL_LOAD, HarnessError, is_out_of_memory)
 
 # vLLM settings read from the environment that change what is measured, pinned so that a
-# measurement never depends on the caller's environment (DECISIONS.md D87). With FlashInfer's
+# measurement never depends on the caller's environment. With FlashInfer's
 # sampler, temperature > 0 draws a different random stream than vLLM's native sampler, and the
 # FlashInfer kernel is compiled at first use, which needs nvcc.
 PINNED_ENVIRONMENT = {"VLLM_USE_FLASHINFER_SAMPLER": "0"}
 
-# (attribute of vllm's SpeculativeConfig, the value it must have, why) - D80.
+# (attribute of vllm's SpeculativeConfig, the value it must have, why).
 REQUIRED_CONFIG = (
     ("method", "draft_model", "the draft must be the model at --draft-path"),
     ("rejection_sample_method", "standard", "only standard verification is per-token and prefix-based"),
@@ -29,13 +29,13 @@ REQUIRED_CONFIG = (
 
 
 def check_speculative_config(config, k):
-    """Exits 5 naming the first setting that would change what the counters count (D80)."""
+    """Exits 5 naming the first setting that would change what the counters count."""
     for name, want, why in REQUIRED_CONFIG + (("num_speculative_tokens", k, "k must be as asked"),):
         if not hasattr(config, name):
             raise HarnessError(
                 EXIT_BACKEND_COUNTERS,
                 "vLLM's SpeculativeConfig has no '%s'; this harness was checked against vLLM"
-                " v0.31.0 (DECISIONS.md D80)" % name)
+                " v0.31.0" % name)
         have = getattr(config, name)
         if have != want:
             raise HarnessError(
@@ -58,7 +58,7 @@ class VllmBackend:
             from vllm import LLM, SamplingParams
         except Exception as e:
             # Not only ImportError: a compiled library built for another CUDA version fails with
-            # OSError while vLLM imports. Retrying cannot fix the environment (D84).
+            # OSError while vLLM imports. Retrying cannot fix the environment.
             raise HarnessError(
                 EXIT_MODEL_LOAD, "cannot import vLLM: %s: %s" % (type(e).__name__, e))
         self._sampling_params = SamplingParams
@@ -88,7 +88,7 @@ class VllmBackend:
         return "merged" if self._merged_dir is not None else "none"
 
     def _merge(self, base_model, adapter, dtype):
-        """PEFT merge_and_unload into a temporary directory (DECISIONS.md D8)."""
+        """PEFT merge_and_unload into a temporary directory."""
         try:
             import torch
             from peft import PeftModel

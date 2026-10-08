@@ -1,4 +1,4 @@
-"""The report (contract "Report schema") built from per-prompt counts, and its validation (D85).
+"""The report (contract "Report schema") built from per-prompt counts, and its validation.
 
 Every total, ratio, and aggregate is derived from the per-prompt counts by one function, with
 plain left-to-right sums in the engine's order, so a report is consistent by construction.

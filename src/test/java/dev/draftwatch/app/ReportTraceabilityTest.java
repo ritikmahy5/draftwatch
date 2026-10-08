@@ -31,8 +31,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- * ROADMAP M6 "done when": the generated HTML is parsed, every displayed number is matched to the
- * value in the stored result file it links to, and no number lacks a link (DECISIONS.md D68). The
+ * The generated HTML is parsed, every displayed number is matched to the
+ * value in the stored result file it links to, and no number lacks a link. The
  * results come from the fake harness and synthetic fixtures: a baseline, a later OK checkpoint, a
  * regression, a two-seed series, and an incomparable (ERROR) series.
  */
@@ -181,7 +181,7 @@ public class ReportTraceabilityTest {
 
   private int numbers;
 
-  /** Every text with a digit that is not a link to an equal stored value (D68). */
+  /** Every text with a digit that is not a link to an equal stored value. */
   private List<String> untraced(Document doc) {
     List<Node> texts = new ArrayList<>();
     textNodes(doc.getDocumentElement(), texts);

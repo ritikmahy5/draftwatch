@@ -2,7 +2,7 @@ package dev.draftwatch.config;
 
 import dev.draftwatch.domain.WireNamed;
 
-/** {@code on_regression} actions (SPEC.md F6; DECISIONS.md D75). */
+/** {@code on_regression} actions (SPEC.md F6). */
 public enum ActionKind implements WireNamed {
   NOTIFY("notify"),
   RETRAIN_DRAFT("retrain_draft");

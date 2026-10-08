@@ -25,8 +25,8 @@ import org.junit.rules.TemporaryFolder;
 
 /**
  * The generated schedule script, run with {@code /bin/sh}: a stub {@code sbatch} on the PATH
- * records its arguments and environment, and the launcher is a stub {@code watch} that crashes
- * (ROADMAP M5 "done when"; DECISIONS.md D63).
+ * records its arguments and environment, and the launcher is a stub {@code watch} that
+ * crashes.
  */
 public class ScheduleScriptTest {
   @Rule public TemporaryFolder tmp = new TemporaryFolder();

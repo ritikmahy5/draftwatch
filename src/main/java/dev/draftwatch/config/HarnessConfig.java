@@ -6,8 +6,7 @@ import java.util.Objects;
 /**
  * {@code harness}: the command that runs the measurement harness. The engine appends the
  * contract's arguments (MEASUREMENT_CONTRACT.md, "Invocation"). The command is used verbatim;
- * relative elements are interpreted by the executor relative to the config file's directory
- * (DECISIONS.md D21).
+ * relative elements are interpreted by the executor relative to the config file's directory.
  */
 public final class HarnessConfig {
   private final List<String> command;

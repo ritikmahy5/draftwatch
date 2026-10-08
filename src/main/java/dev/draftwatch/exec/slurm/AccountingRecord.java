@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 
-/** One job as sacct reports it with D58's format {@code JobIDRaw,State,ExitCode,Start,End}. */
+/** One job as sacct reports it with the format {@code JobIDRaw,State,ExitCode,Start,End}. */
 public final class AccountingRecord {
   private final String jobId;
   private final String stateText;

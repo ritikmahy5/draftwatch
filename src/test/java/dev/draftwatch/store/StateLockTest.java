@@ -136,7 +136,7 @@ public class StateLockTest {
     assertRefused(lockFor("node1", 200), state, "which is still running");
   }
 
-  // --- ROADMAP M2 "done when" ----------------------------------------------------------------
+  // --- takeover on this host and refusal across hosts -----------------------------------------
 
   @Test
   public void lockHeldByDeadPidOnThisHostIsTakenOver() throws IOException {
@@ -158,7 +158,7 @@ public class StateLockTest {
 
   // --- other holders ---------------------------------------------------------------------------
 
-  // --- ROADMAP M5 "done when": a holder whose Slurm job is gone from squeue ------------------
+  // --- a holder whose Slurm job is gone from squeue ------------------
 
   @Test
   public void lockWhoseSlurmJobIsGoneFromSqueueIsTakenOverFromAnyHost() {
@@ -189,7 +189,7 @@ public class StateLockTest {
         "cannot tell whether Slurm job 4242 has ended, so it is not taken over: squeue: Unable");
   }
 
-  // --- D74: the lock appears with its contents ------------------------------------------------
+  // --- the lock appears with its contents ------------------------------------------------
 
   @Test
   public void racingAcquirersSeeOneHolderAndNeverAPartialLock() throws Exception {

@@ -11,7 +11,7 @@ import java.util.OptionalDouble;
  * {@code observed < threshold}; the bootstrap compares its interval's upper bound instead.
  */
 public final class DetectorVerdict {
-  /** The outcomes of a detector (DECISIONS.md D43). */
+  /** The outcomes of a detector. */
   public enum Kind {
     /** Evaluated; no regression. */
     OK,

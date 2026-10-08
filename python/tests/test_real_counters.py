@@ -15,12 +15,12 @@ NAME = re.compile(r"real_(\d+)_counters(_[a-z]+)?\.json$")
 
 class RealCountersTest(unittest.TestCase):
     """Counters recorded on the GPU run, replayed through the harness, give the report that run
-    wrote (D86): the report depends on nothing but the counter deltas."""
+    wrote: the report depends on nothing but the counter deltas."""
 
     def test_replaying_recorded_counters_reproduces_the_real_report(self):
         names = [n for n in sorted(os.listdir(_paths.FIXTURES)) if NAME.match(n)]
         if not names:
-            self.skipTest("no real_<job>_counters.json from a GPU run yet (DECISIONS.md D86)")
+            self.skipTest("no real_<job>_counters.json from a GPU run yet")
         for name in names:
             job, suffix = NAME.match(name).groups()
             suffix = suffix or ""

@@ -20,9 +20,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * {@code draftwatch status}: the state lock's holder, the schedule (D63), active jobs, jobs that
- * failed in the last seven days, as of their last recorded state (DECISIONS.md D39), and retrain
- * requests (D77). It only reads state, so it does not take the lock or ask Slurm.
+ * {@code draftwatch status}: the state lock's holder, the schedule, active jobs, jobs that
+ * failed in the last seven days, as of their last recorded state, and retrain
+ * requests. It only reads state, so it does not take the lock or ask Slurm.
  */
 public final class StatusCommand implements CliCommand {
   static final Duration RECENT = Duration.ofDays(7);

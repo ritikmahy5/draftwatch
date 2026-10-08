@@ -15,7 +15,7 @@ import java.util.Optional;
 /**
  * Turns a directory into a {@link Checkpoint} of a target: checks completion, extracts the step,
  * fingerprints the weights, and detects the final marker (SPEC.md F1). An adapter checkpoint's
- * fingerprint also covers its base model's weights (DECISIONS.md D42). Manual {@code submit} and
+ * fingerprint also covers its base model's weights. Manual {@code submit} and
  * {@code watch} share it, so both apply the same rules.
  */
 public final class CheckpointInspector {

@@ -4,7 +4,7 @@ import dev.draftwatch.events.DetectionEvent;
 
 /**
  * Delivers an alert about a detection outcome (Strategy: console and log file in v1; network
- * notifiers are out of scope, DECISIONS.md D12).
+ * notifiers are out of scope).
  */
 public interface Notifier {
   String name();

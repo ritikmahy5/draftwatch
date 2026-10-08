@@ -52,7 +52,7 @@ with a draft model, and who train on a shared cluster (Slurm) or a single GPU ma
   `fingerprint: full` hashes entire files instead. Metadata files (index JSON, config JSON)
   are never sufficient on their own: they are identical across checkpoints of one run.
   For an adapter checkpoint, the fingerprint also covers the base model's weights, so the same
-  adapter on a different base model is a different checkpoint (DECISIONS.md D42).
+  adapter on a different base model is a different checkpoint.
 - Manual submission: `draftwatch submit <target> <checkpoint-path>` runs the same
   completion, step, and fingerprint logic.
 
@@ -78,24 +78,23 @@ re-measures final checkpoints forever.
   `MEASUREMENT_CONTRACT.md`.
 - Executors: `local` (subprocess on this machine) and `slurm` (`sbatch`, then `squeue` while
   queued/running and `sacct` after the job leaves the queue).
-- **Where `watch` runs:** with `executor.type: local`, `watch` may loop. With
-  `executor.type: slurm`, looping `watch` is refused, because cluster login nodes are not for
-  long-running processes (Explorer's policy: do not run jobs on login nodes). Instead,
-  `draftwatch schedule` submits a small CPU-only Slurm job that runs `watch --once` and then
-  resubmits itself with `--begin=now+<interval>` (default 15 minutes). A one-off
-  `watch --once` from a login node is allowed because it only fingerprints sampled blocks and
-  submits jobs (DECISIONS.md D9). On Explorer, processes on login nodes have been killed (D66,
-  D88), so `schedule` is the way to run there, and one-off commands run best in a job
-  (`sbatch --wrap`).
+- **Where `watch` runs:** with `executor.type: local`, `watch` may loop. With `executor.type:
+  slurm`, looping `watch` is refused, because cluster login nodes are not for long-running processes
+  (Explorer's policy: do not run jobs on login nodes). Instead, `draftwatch schedule` submits a
+  small CPU-only Slurm job that runs `watch --once` and then resubmits itself with
+  `--begin=now+<interval>` (default 15 minutes). A one-off `watch --once` from a login node is
+  allowed because it only fingerprints sampled blocks and submits jobs. On Explorer, processes on
+  login nodes have been killed, so `schedule` is the way to run there, and one-off commands run best
+  in a job (`sbatch --wrap`).
 - With `executor.type: slurm`, `submit` returns once sbatch has accepted its jobs, and
-  `watch --once` or the schedule collects the results (DECISIONS.md D61).
+  `watch --once` or the schedule collects the results.
 - Lifecycle and retry policy: see ARCHITECTURE.md, "Job state machine".
 
 ### F4 — Result store with provenance
-Every result records: target; checkpoint path, step, fingerprint, type, and base model and
-its weight fingerprint (if adapter); probe id and probe hash; draft id and draft fingerprint; harness version; backend;
-dtype; estimator; seeds; prompt-set SHA-256; executor; job id and attempt; start/end time;
-raw report path. Results are append-only.
+Every result records: target; checkpoint path, step, fingerprint, type, and base model and its
+weight fingerprint (if adapter); probe id and probe hash; draft id and draft fingerprint; harness
+version; backend; dtype; estimator; seeds; prompt-set SHA-256; executor; job id and attempt;
+start/end time; raw report path. Results are append-only.
 
 ### F5 — Regression detection
 Detectors run after each successful measurement. Every detector first calls the
@@ -128,17 +127,16 @@ checkpoint that is comparable with the current measurement. So after a GPU chang
 old GPU stay stored. Until then, each new measurement is `ERROR(incomparable: hardware)`. The
 re-measured baseline is too, because it is compared with the baseline's earlier result. On a
 partition with several GPU models, name the model in the job's resources (for example
-`gres: "gpu:h200:1"`), so a series is not interrupted by whichever GPU is free (DECISIONS.md
-D92).
+`gres: "gpu:h200:1"`), so a series is not interrupted by whichever GPU is free.
 
 ### F6 — Alerts and actions
-- Notifiers: console and append-only `alerts.log`. No network notifiers in v1 (DECISIONS.md D12).
+- Notifiers: console and append-only `alerts.log`. No network notifiers in v1.
 - Actions on regression (optional, per target): `notify`; `retrain_draft` submits a
   user-configured training command through the same executor abstraction, at most once per
   target and draft version, with the regression's context in `DRAFTWATCH_*` environment
-  variables (DECISIONS.md D75–D77). draftwatch does not deploy the new draft: pointing the
+  variables. draftwatch does not deploy the new draft: pointing the
   probe's `draft.path` at it gives it a new fingerprint and probe hash, so its results are never
-  compared with the old draft's (D78).
+  compared with the old draft's.
 
 ### F7 — Reports
 - `draftwatch report` generates a static HTML file: acceptance vs. training step per target
@@ -172,7 +170,7 @@ executor:
   type: slurm            # local | slurm
   slurm:
     partition: gpu
-    gres: "gpu:a100:1"                          # name the GPU model (D92)
+    gres: "gpu:a100:1"                          # name the GPU model
     time: "00:45:00"
     requeue_on_preempt: true
     extra_sbatch_args: []                       # may not set options draftwatch sets

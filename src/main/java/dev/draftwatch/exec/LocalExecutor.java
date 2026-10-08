@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Runs attempts as child processes of this machine (DECISIONS.md D33).
+ * Runs attempts as child processes of this machine.
  *
  * <p>The command runs under a {@code /bin/sh} wrapper that, when the command ends, writes its
  * exit status to {@code exit_code} in the run directory (to a temporary file, then renamed), so

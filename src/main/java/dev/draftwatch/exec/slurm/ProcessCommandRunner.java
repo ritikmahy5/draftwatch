@@ -15,11 +15,10 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Runs commands as child processes, with stdin from {@code /dev/null} and output captured in
- * temporary files, which are deleted afterwards. A command that runs past the timeout is killed
- * (DECISIONS.md D58).
+ * temporary files, which are deleted afterwards. A command that runs past the timeout is killed.
  */
 public final class ProcessCommandRunner implements CommandRunner {
-  /** How long a Slurm command may take before it is killed (D58). */
+  /** How long a Slurm command may take before it is killed. */
   public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(120);
 
   private final Duration timeout;

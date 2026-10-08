@@ -3,8 +3,7 @@ package dev.draftwatch.fingerprint;
 import java.nio.file.Path;
 
 /**
- * Fingerprints weight files from sampled blocks ({@code fingerprint: sampled}, the default;
- * DECISIONS.md D11 and D23).
+ * Fingerprints weight files from sampled blocks ({@code fingerprint: sampled}, the default).
  *
  * <p>A file of at most {@code BLOCK_COUNT × BLOCK_BYTES} bytes is hashed whole. A larger file
  * of size {@code S} contributes {@code BLOCK_COUNT} blocks of {@code BLOCK_BYTES} bytes, block

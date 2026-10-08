@@ -29,17 +29,17 @@ import java.util.regex.PatternSyntaxException;
  * Turns a parsed config document into a {@link DraftwatchConfig}, or throws a
  * {@link ConfigException} listing every problem with its field path.
  *
- * <p>Schema rules (DECISIONS.md D20): unknown keys are errors; a key with no value is an error;
+ * <p>Schema rules: unknown keys are errors; a key with no value is an error;
  * defaults exist only where the docs define one. Paths are resolved against the config file's
- * directory (D21). Cross-field rules:
+ * directory. Cross-field rules:
  *
  * <ul>
  *   <li>{@code temperature: 0} allows exactly one seed (SPEC.md F5);
  *   <li>{@code base_model} is required for, and only valid for, {@code checkpoint_type: adapter};
  *   <li>a trigger chain contains {@code not_already_measured}, and {@code always_final} comes
- *       after it (SPEC.md F2, D22);
+ *       after it (SPEC.md F2);
  *   <li>{@code noise_floor} requires {@code sigma}; {@code draft.structure} must be
- *       {@code chain} (D5);
+ *       {@code chain};
  *   <li>target probe references name declared probes; ids and names are unique.
  * </ul>
  */
@@ -47,7 +47,7 @@ public final class ConfigValidator {
   /** SPEC.md F1 forbids this file as a completion marker. */
   static final String INDEX_FILE = "model.safetensors.index.json";
 
-  /** The six formats {@code sbatch --time} accepts (DECISIONS.md D28). */
+  /** The six formats {@code sbatch --time} accepts. */
   private static final Pattern SLURM_TIME =
       Pattern.compile("\\d+(?::\\d+){0,2}|\\d+-\\d+(?::\\d+){0,2}");
 
@@ -169,7 +169,7 @@ public final class ConfigValidator {
       return build(n, () -> SlurmConfig.of(partition, gres, time, requeue, extra, schedule));
     }
 
-    /** A list of sbatch arguments, each checked against {@code refusal} (DECISIONS.md D65). */
+    /** A list of sbatch arguments, each checked against {@code refusal}. */
     private List<String> sbatchArgs(
         ConfigNode n, Function<String, Optional<String>> refusal) {
       List<String> args = new ArrayList<>();
@@ -291,7 +291,7 @@ public final class ConfigValidator {
           n.required("structure")
               .asEnum(
                   DraftStructure.class,
-                  "tree drafting is not supported in v1 (DECISIONS.md D5)");
+                  "tree drafting is not supported in v1");
       if (errors.size() > mark) {
         return null;
       }
@@ -549,7 +549,7 @@ public final class ConfigValidator {
       if (notMeasured < 0) {
         n.error(
             "must include not_already_measured; without it every poll re-submits checkpoints"
-                + " that were already measured (DECISIONS.md D22)");
+                + " that were already measured");
         return null;
       }
       if (alwaysFinal >= 0 && alwaysFinal < notMeasured) {
@@ -721,7 +721,7 @@ public final class ConfigValidator {
       }
     }
 
-    /** {@code notify}, or {@code retrain_draft: { command: [...] }} (DECISIONS.md D75). */
+    /** {@code notify}, or {@code retrain_draft: { command: [...] }}. */
     private List<ActionSpec> actions(ConfigNode n) {
       List<ActionSpec> actions = new ArrayList<>();
       Set<ActionKind> seen = new HashSet<>();

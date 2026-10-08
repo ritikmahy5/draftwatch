@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Records real Slurm output for draftwatch's fixtures, and runs D9's check (DECISIONS.md D64).
+"""Records real Slurm output for draftwatch's fixtures, and checks sbatch inside a job.
 
 Run it once on the target cluster, as a small CPU-only job of its own: Explorer kills
 long-running processes on login nodes (a first attempt there was killed within a minute):
@@ -14,7 +14,7 @@ It submits a few tiny CPU-only jobs (1 CPU, at most 100 MB, at most a few minute
 polls each one with exactly the squeue and sacct arguments draftwatch uses, and writes one
 file per job, real_<job-id>_<scenario>.json, in the format of
 src/test/resources/fixtures/slurm/. It also:
-- asks a job to call sbatch, which answers DECISIONS.md D9 (d9_sbatch_inside_job.json);
+- asks a job to call sbatch, to check that a job may submit jobs (sbatch_inside_job.json);
 - reads your own sacct history for states a user cannot cause, such as NODE_FAIL and PREEMPTED
   (real_<job-id>_history_<state>.json);
 - records the Slurm settings the decisions depend on (recording.json).
@@ -42,7 +42,7 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 
-# --- the queries, exactly as DECISIONS.md D58 and SlurmCli define them ---------------------
+# --- the queries, exactly as SlurmCli defines them ---------------------------------------
 
 SQUEUE_FORMAT = "%i|%T|%S"
 SACCT_FORMAT = "JobIDRaw,State,ExitCode,Start,End"
@@ -115,7 +115,7 @@ def sbatch_options(options, extra):
 
 
 def d9_script(args):
-    """A job that submits a held child job from inside itself (DECISIONS.md D9)."""
+    """A job that submits a held child job from inside itself."""
     child_options = ["--parsable", "--begin=now+3600", "--time=1", "--mem=10M",
                      "--job-name=" + D9_CHILD, "--output=/dev/null"]
     if args.partition:
@@ -295,7 +295,7 @@ def main():
 
     d9 = d9_answer(jobs, out, source)
     if d9:
-        write(os.path.join(out, "d9_sbatch_inside_job.json"), d9)
+        write(os.path.join(out, "sbatch_inside_job.json"), d9)
 
     start = (datetime.now(timezone.utc) - timedelta(days=args.history_days)).strftime(
         "%Y-%m-%d")
@@ -322,7 +322,7 @@ def main():
            "history_query": history, "files": [os.path.basename(p) for p in written]})
     print("\nwrote %d fixture files to %s" % (len(written), out))
     if d9:
-        print("D9: sbatch inside a job:", d9["answer"])
+        print("sbatch inside a job:", d9["answer"])
     return 0
 
 
@@ -342,7 +342,7 @@ def d9_answer(jobs, out, source):
         child_record["scancel"] = run(["scancel", child.group(1)])
     works = bool(status and status.group(1) == "0" and child)
     return {"source": source,
-            "question": "Does sbatch work from inside a running job? (DECISIONS.md D9)",
+            "question": "Does sbatch work from inside a running job?",
             "answer": "yes" if works else "no",
             "parent_job": job["id"], "parent_stdout": text, "parent_stderr": errors,
             "child": child_record}

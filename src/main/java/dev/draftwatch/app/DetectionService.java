@@ -31,7 +31,7 @@ import java.util.function.Function;
 
 /**
  * Runs regression detection when a measurement is stored (subscriber of
- * {@link MeasurementStored}) and publishes one event per outcome (DECISIONS.md D44, D50).
+ * {@link MeasurementStored}) and publishes one event per outcome.
  *
  * <ul>
  *   <li>The target's baseline comes from the baseline repository; a target without one gets its

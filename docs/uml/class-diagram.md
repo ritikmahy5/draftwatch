@@ -1,12 +1,8 @@
 # Class diagram
 
-Updated at the end of every milestone (DECISIONS.md D1). Shows the classes that exist in
-`src/main/java` now, not the planned design; for the planned design see `ARCHITECTURE.md`.
-Accessors that only return a field are omitted; every domain and config class is immutable
-(private final fields, static factory or builder, no setters).
-
-**As of:** after M8. The Java changes since M7 are `hardware` in `Comparability` and the
-report's series key (DECISIONS.md D89), and the design audit (D94).
+Shows the classes that exist in `src/main/java`, not the planned design; for the planned design
+see `ARCHITECTURE.md`. Accessors that only return a field are omitted; every domain and config
+class is immutable (private final fields, static factory or builder, no setters).
 
 ## app: entry point, CLI commands, orchestration
 
@@ -937,7 +933,7 @@ classDiagram
 ```
 
 `ExecutorStatus.Kind` is `QUEUED`, `RUNNING`, `EXITED`, `LOST`, `FAILED` (with a reason),
-`CANCELLED`, or `UNRESOLVED` (the poll changes nothing; DECISIONS.md D60).
+`CANCELLED`, or `UNRESOLVED` (the poll changes nothing).
 
 ## exec.slurm: the Slurm executor
 
@@ -1429,8 +1425,8 @@ classDiagram
   DiffRenderer ..> MeasurementDiff : renders
 ```
 
-Each output is a model and a renderer, not a Strategy: there is one format each (DECISIONS.md
-D72). Every `Traced` value is rendered as a link to its file and JSON Pointer (D68).
+Each output is a model and a renderer, not a Strategy: there is one format each. Every `Traced`
+value is rendered as a link to its file and JSON Pointer.
 
 ## notify and action: alerts
 
@@ -1501,15 +1497,3 @@ classDiagram
 
 `RetrainRequestRepository` and its file implementation live in `store`; they are drawn here
 next to the action that uses them. The in-memory fake is `InMemoryRetrainRequestRepository`.
-
-## Packages
-
-| Package | Populated in |
-|---|---|
-| `app`, `config`, `domain`, `fingerprint` | M0–M2 |
-| `discovery` | M1 (step extraction), M2 (completion policies, inspector), M4 (checkpoint sources) |
-| `harness`, `exec`, `store`, `stats` | M1–M2 |
-| `detect`, `events`, `notify`, `action` | M3 |
-| `trigger` | M4 |
-| `exec.slurm` | M5 |
-| `report` | M6 |

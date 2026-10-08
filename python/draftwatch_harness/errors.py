@@ -1,4 +1,4 @@
-"""Exit codes of MEASUREMENT_CONTRACT.md "Invocation" and the error that carries one (D84)."""
+"""Exit codes of MEASUREMENT_CONTRACT.md "Invocation" and the error that carries one."""
 
 EXIT_OK = 0
 EXIT_UNEXPECTED = 1

@@ -60,7 +60,7 @@ public class ConfigLoaderTest {
     }
   }
 
-  // --- ROADMAP M1 "done when": probe hash identical across key order and 0 vs 0.0 ---------
+  // --- probe hash identical across key order and 0 vs 0.0 ---------
 
   @Test
   public void probeHashIgnoresKeyOrderAndZeroSpelling() throws IOException {

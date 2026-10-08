@@ -25,7 +25,7 @@ public final class ExecutorStatus {
     FAILED,
     /** Cancelled outside draftwatch. */
     CANCELLED,
-    /** Not known yet; this poll changes nothing (DECISIONS.md D60). */
+    /** Not known yet; this poll changes nothing. */
     UNRESOLVED
   }
 

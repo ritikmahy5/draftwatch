@@ -7,7 +7,7 @@ import java.util.Set;
 
 /**
  * Runs one command to completion and captures its output (Strategy: the real implementation
- * starts a process; tests replay recorded output, DECISIONS.md D64).
+ * starts a process; tests replay recorded output).
  */
 public interface CommandRunner {
   /**

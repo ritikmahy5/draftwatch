@@ -12,10 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * One job's Slurm output over time, read from {@code fixtures/slurm/<name>.json} (DECISIONS.md
- * D64). Each observation holds the squeue and sacct results of one poll, with the time it was
- * made. {@code synthetic_} files were written by hand from the formats in D58; {@code real_}
- * files were recorded by {@code scripts/record_slurm_fixtures.py}.
+ * One job's Slurm output over time, read from {@code fixtures/slurm/<name>.json}. Each observation
+ * holds the squeue and sacct results of one poll, with the time it was made. {@code synthetic_}
+ * files were written by hand from the documented formats; {@code real_} files were recorded by
+ * {@code scripts/record_slurm_fixtures.py}.
  */
 public final class SlurmScenario {
   /** One poll's recorded results. */

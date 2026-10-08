@@ -14,7 +14,7 @@ public final class Comparability {
   /**
    * The first field, in the contract's order, on which {@code a} and {@code b} differ: one of
    * {@code probe_hash}, {@code harness_version}, {@code backend}, {@code draft_structure},
-   * {@code hardware} (the GPU model and count; DECISIONS.md D89).
+   * {@code hardware} (the GPU model and count).
    * Empty if they are comparable.
    */
   public static Optional<String> mismatch(Measurement a, Measurement b) {

@@ -32,9 +32,9 @@ import java.util.stream.Stream;
 import org.junit.Test;
 
 /**
- * ROADMAP M8 "done when": a report the reference harness wrote on a real GPU run passes
+ * A report the reference harness wrote on a real GPU run passes
  * {@link ReportParser}, checked against the arguments that run was given (recorded beside it as
- * {@code real_<job>_run*.json}). Skipped until such a run has been committed (DECISIONS.md D86).
+ * {@code real_<job>_run*.json}). Skipped until such a run has been committed.
  */
 public class RealReferenceReportTest {
   private static final Path FIXTURES = Paths.get("src/test/resources/fixtures");
@@ -85,7 +85,7 @@ public class RealReferenceReportTest {
   @Test
   public void everyRealReportPassesReportParser() throws IOException {
     List<Path> reports = reports();
-    assumeFalse("no real_<job>_report.json from a GPU run yet (DECISIONS.md D86)",
+    assumeFalse("no real_<job>_report.json from a GPU run yet",
         reports.isEmpty());
     for (Path report : reports) {
       Matcher m = REPORT.matcher(report.getFileName().toString());

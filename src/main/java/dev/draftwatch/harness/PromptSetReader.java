@@ -16,8 +16,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 /**
- * Reads a prompt file and checks it against MEASUREMENT_CONTRACT.md, "Prompt file"
- * (DECISIONS.md D26).
+ * Reads a prompt file and checks it against MEASUREMENT_CONTRACT.md, "Prompt file".
  *
  * <ul>
  *   <li>The file is UTF-8 without a byte-order mark. Lines are separated by LF; a trailing CR

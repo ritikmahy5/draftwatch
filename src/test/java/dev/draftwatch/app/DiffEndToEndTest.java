@@ -17,7 +17,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /**
- * {@code diff} on results from the fake harness and synthetic fixtures (DECISIONS.md D71): every
+ * {@code diff} on results from the fake harness and synthetic fixtures: every
  * metric it prints equals the value in the result file it names.
  */
 public class DiffEndToEndTest {

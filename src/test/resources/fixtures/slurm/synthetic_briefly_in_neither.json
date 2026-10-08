@@ -1,6 +1,6 @@
 {
-  "source": "synthetic: written by hand from the output formats in DECISIONS.md D58 (slurm.schedmd.com squeue/sacct pages and SchedMD/slurm master source); not recorded on a cluster. Replace with real_<job-id>_*.json from scripts/record_slurm_fixtures.py.",
-  "note": "gone from squeue before sacct has it, for two polls, then COMPLETED (D60)",
+  "source": "synthetic: written by hand from the documented output formats (slurm.schedmd.com squeue/sacct pages and SchedMD/slurm master source); not recorded on a cluster. Replace with real_<job-id>_*.json from scripts/record_slurm_fixtures.py.",
+  "note": "gone from squeue before sacct has it, for two polls, then COMPLETED",
   "job_id": "4242016",
   "observations": [
     {

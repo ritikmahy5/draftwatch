@@ -16,7 +16,7 @@ import java.util.stream.Stream;
  * Complete when no file under the directory has changed for at least the settle time
  * (SPEC.md F1, {@code settle_seconds}).
  *
- * <p>Stateless (DECISIONS.md D35): instead of comparing sizes and modification times across two
+ * <p>Stateless: instead of comparing sizes and modification times across two
  * polls, it requires the newest modification time of every file to be at least the settle time in
  * the past. Writing to a file updates its modification time, so a file still being written is
  * always recent; and copy tools that restore original times ({@code cp -p}, {@code rsync -t}) set

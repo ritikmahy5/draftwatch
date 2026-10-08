@@ -7,7 +7,7 @@ from draftwatch_harness.vllm_backend import check_speculative_config
 
 
 def config(**changes):
-    """vLLM v0.31.0's SpeculativeConfig as the harness asks for it (D80)."""
+    """vLLM v0.31.0's SpeculativeConfig as the harness asks for it."""
     fields = dict(method="draft_model", num_speculative_tokens=3,
                   rejection_sample_method="standard", synthetic_acceptance_rates=None,
                   synthetic_acceptance_length=None, enable_adaptive_verification=False,

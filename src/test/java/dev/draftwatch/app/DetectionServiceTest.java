@@ -117,7 +117,7 @@ public class DetectionServiceTest {
     assertEquals("old", r.baselineJobId().get());
   }
 
-  /** DECISIONS.md D89, D92: measuring the baseline checkpoint again on the new GPU suffices. */
+  /** After a GPU change, measuring the baseline checkpoint again on the new GPU suffices. */
   @Test
   public void anotherGpuIsAnErrorUntilTheBaselineIsMeasuredOnIt() {
     CountsMeasurements a100 = new CountsMeasurements(4).hardware("NVIDIA A100-SXM4-80GB", 1);

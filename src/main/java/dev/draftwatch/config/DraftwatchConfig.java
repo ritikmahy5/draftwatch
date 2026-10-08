@@ -9,10 +9,10 @@ import java.util.Optional;
 
 /**
  * A validated {@code draftwatch.yaml}. Every path is absolute and normalized; relative paths in
- * the file were resolved against {@link #baseDir()} (DECISIONS.md D21).
+ * the file were resolved against {@link #baseDir()}.
  */
 public final class DraftwatchConfig {
-  /** D3: the state directory used when {@code state_dir} is omitted. */
+  /** The state directory used when {@code state_dir} is omitted. */
   public static final String DEFAULT_STATE_DIR = ".draftwatch";
 
   private final Path configFile;
@@ -73,7 +73,7 @@ public final class DraftwatchConfig {
     return stateDir;
   }
 
-  /** {@code fingerprint}; applies to checkpoints and drafts alike (DECISIONS.md D23). */
+  /** {@code fingerprint}; applies to checkpoints and drafts alike. */
   public FingerprintMethod fingerprintMethod() {
     return fingerprintMethod;
   }

@@ -156,7 +156,7 @@ public class CliTest {
         new Cli(
             List.of(
                 CommandUsage.of("status", "", "show status"),
-                CommandUsage.of("later", "", "arrives in a later milestone")),
+                CommandUsage.of("later", "", "not built yet")),
             Map.of("status", new Recorder()),
             outStream,
             errStream);

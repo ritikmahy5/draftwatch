@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 /**
  * Rules for user-chosen identifiers (target names, probe ids, draft ids). Target names become
  * directory names under the state directory, so identifiers are restricted to characters that
- * are safe in a single path segment on every filesystem (DECISIONS.md D20).
+ * are safe in a single path segment on every filesystem.
  */
 public final class Names {
   private static final Pattern VALID = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]*");

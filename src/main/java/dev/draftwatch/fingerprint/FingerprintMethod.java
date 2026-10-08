@@ -4,7 +4,7 @@ import dev.draftwatch.domain.WireNamed;
 
 /** The config values of {@code fingerprint:}; each is also the prefix of its fingerprints. */
 public enum FingerprintMethod implements WireNamed {
-  /** 8 × 1 MiB blocks per weight file, including the final MiB (default, DECISIONS.md D11). */
+  /** 8 × 1 MiB blocks per weight file, including the final MiB (default). */
   SAMPLED("sampled"),
   /** Every byte of every weight file. */
   FULL("full");

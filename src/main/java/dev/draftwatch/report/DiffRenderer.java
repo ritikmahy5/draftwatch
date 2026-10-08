@@ -4,7 +4,7 @@ import dev.draftwatch.domain.Provenance;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Renders a {@link MeasurementDiff} as aligned text for the terminal (DECISIONS.md D71). */
+/** Renders a {@link MeasurementDiff} as aligned text for the terminal. */
 public final class DiffRenderer {
   private DiffRenderer() {}
 

@@ -17,9 +17,9 @@ import java.util.regex.Pattern;
 
 /**
  * The Slurm commands draftwatch runs and the parsing of their output (Adapter over the
- * {@code sbatch}/{@code squeue}/{@code sacct}/{@code scancel} text interface). The exact
- * arguments are fixed by DECISIONS.md D58, and {@code scripts/record_slurm_fixtures.py} records
- * real output with the same ones (D64). Output that does not match the expected format fails
+ * {@code sbatch}/{@code squeue}/{@code sacct}/{@code scancel} text interface). The arguments
+ * are fixed here, and {@code scripts/record_slurm_fixtures.py} records real output with the
+ * same ones. Output that does not match the expected format fails
  * loudly with {@link ExecutorException}.
  */
 public final class SlurmCli {
@@ -52,7 +52,7 @@ public final class SlurmCli {
     this.runner = Objects.requireNonNull(runner, "runner");
   }
 
-  // --- the exact argv of each command (D58) --------------------------------------------------
+  // --- the exact argv of each command --------------------------------------------------
 
   /** {@code sbatch --parsable <options> <script> <args...>}. */
   public static List<String> sbatchArgv(List<String> options, Path script, List<String> args) {

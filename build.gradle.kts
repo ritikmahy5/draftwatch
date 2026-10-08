@@ -9,7 +9,7 @@ repositories {
   mavenCentral()
 }
 
-// Jackson 2.x: Jackson 3.x requires Java 17 (DECISIONS.md D17).
+// Jackson 2.x: Jackson 3.x requires Java 17.
 val jacksonVersion = "2.22.3"
 
 dependencies {
@@ -18,7 +18,7 @@ dependencies {
   testImplementation("junit:junit:4.13.2")
 }
 
-// Compile and test with a locally installed JDK 11; no auto-provisioning (DECISIONS.md D18).
+// Compile and test with a locally installed JDK 11; no auto-provisioning.
 java {
   toolchain {
     languageVersion.set(JavaLanguageVersion.of(11))
@@ -42,7 +42,7 @@ tasks.test {
   }
 }
 
-// The reference harness's unit tests: standard library only, no vLLM, no GPU (DECISIONS.md D86).
+// The reference harness's unit tests: standard library only, no vLLM, no GPU.
 val pythonTest by tasks.registering(Exec::class) {
   description = "Runs the reference harness's Python unit tests."
   group = "verification"

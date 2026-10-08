@@ -4,7 +4,7 @@ import dev.draftwatch.domain.Baseline;
 import java.time.Instant;
 import java.util.Objects;
 
-/** A target had no baseline, so its first measured checkpoint became it (DECISIONS.md D44). */
+/** A target had no baseline, so its first measured checkpoint became it. */
 public final class BaselinePinned implements Event {
   private final Instant at;
   private final Baseline baseline;

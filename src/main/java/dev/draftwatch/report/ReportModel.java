@@ -20,12 +20,12 @@ import java.util.TreeSet;
 import java.util.function.Function;
 
 /**
- * What {@code draftwatch report} shows (DECISIONS.md D69), built from stored results and
+ * What {@code draftwatch report} shows, built from stored results and
  * detection records alone. Every value it holds is a {@link Traced} value of a result file, so the
- * renderer can link each one to where it is stored (D68).
+ * renderer can link each one to where it is stored.
  */
 public final class ReportModel {
-  /** One detection outcome of a result, without the detector's numbers (D68). */
+  /** One detection outcome of a result, without the detector's numbers. */
   public static final class Outcome {
     private final String kind;
     private final Optional<String> detector;
@@ -239,7 +239,7 @@ public final class ReportModel {
     }
   }
 
-  /** Results with one comparability key (D69), in step order. */
+  /** Results with one comparability key, in step order. */
   public static final class Series {
     private final Traced probeId;
     private final Traced probeHash;
@@ -292,7 +292,7 @@ public final class ReportModel {
       return draftStructure;
     }
 
-    /** {@code hardware.gpu}: part of the comparability key (DECISIONS.md D89). */
+    /** {@code hardware.gpu}: part of the comparability key. */
     public Traced gpu() {
       return gpu;
     }

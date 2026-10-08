@@ -1,8 +1,8 @@
 package dev.draftwatch.store;
 
 /**
- * Whether a Slurm job is still alive, for taking over a lock held from inside one (DECISIONS.md
- * D62). An interface so tests can fake squeue, as {@link ProcessTable} fakes PIDs.
+ * Whether a Slurm job is still alive, for taking over a lock held from inside one. An interface so
+ * tests can fake squeue, as {@link ProcessTable} fakes PIDs.
  */
 public interface SlurmJobTable {
   /**

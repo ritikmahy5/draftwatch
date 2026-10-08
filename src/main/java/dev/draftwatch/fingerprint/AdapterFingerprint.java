@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * The identity of an adapter checkpoint: its adapter weights together with the base model they
- * are merged into (DECISIONS.md D42). The same adapter on a different base model is a different
+ * are merged into. The same adapter on a different base model is a different
  * model, so it must get a different fingerprint.
  */
 public final class AdapterFingerprint {

@@ -84,7 +84,7 @@ public class SubmitCommandTest {
     return m.group(1);
   }
 
-  // --- ROADMAP M2 "done when": every SPEC F4 provenance field is populated ---------------
+  // --- every SPEC F4 provenance field is populated ---------------
 
   @Test
   public void submitStoresAMeasurementWithEveryProvenanceFieldPopulated() throws IOException {

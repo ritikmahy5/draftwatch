@@ -8,8 +8,8 @@ import java.util.Objects;
  * What an executor runs for one attempt: a command, the directory to run it in, and the run
  * directory that receives its output files. Executors know nothing about checkpoints or probes.
  *
- * <p>Built with a {@link Builder} because Slurm resources join these fields in M5 and invalid
- * combinations are rejected at {@code build()}.
+ * <p>Built with a {@link Builder} because it has several fields and invalid combinations are
+ * rejected at {@code build()}.
  */
 public final class JobSpec {
   private final String jobId;
@@ -42,7 +42,7 @@ public final class JobSpec {
     return command;
   }
 
-  /** The harness's working directory: the config file's directory (DECISIONS.md D21). */
+  /** The harness's working directory: the config file's directory. */
   public Path workingDir() {
     return workingDir;
   }

@@ -29,7 +29,7 @@ import java.util.function.Function;
  * {@code draftwatch baseline <target> [<checkpoint>]}: shows the target's baseline and, per probe,
  * whether the baseline checkpoint has a result; with a checkpoint, sets the baseline to it first
  * (under the state lock, after the same inspection as {@code submit}). Changing the baseline does
- * not re-run detections already recorded (DECISIONS.md D51).
+ * not re-run detections already recorded.
  */
 public final class BaselineCommand implements CliCommand {
   private final ConfigLoader loader;

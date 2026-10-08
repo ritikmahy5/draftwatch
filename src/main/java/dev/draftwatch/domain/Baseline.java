@@ -9,7 +9,7 @@ import java.util.Objects;
  * (SPEC.md, "Core concepts"). Identified by fingerprint; path and step are kept for display.
  */
 public final class Baseline {
-  /** How the baseline was chosen (DECISIONS.md D44). */
+  /** How the baseline was chosen. */
   public enum Source implements WireNamed {
     /** Set with {@code draftwatch baseline <target> <checkpoint>}. */
     MANUAL("manual"),

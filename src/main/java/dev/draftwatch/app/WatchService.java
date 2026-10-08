@@ -31,7 +31,7 @@ import java.util.TreeMap;
 import java.util.function.Function;
 
 /**
- * One {@code watch} pass (ARCHITECTURE.md, "Concurrency"; DECISIONS.md D55), run under the state
+ * One {@code watch} pass (ARCHITECTURE.md, "Concurrency"), run under the state
  * lock by the caller:
  *
  * <ol>
@@ -40,8 +40,7 @@ import java.util.function.Function;
  *   <li>Each target's checkpoint source is polled; every complete checkpoint, in step order, goes
  *       through the target's trigger chain once per probe, and accepted ones are submitted.
  *   <li>Every unfinished job is advanced once: polled, its result stored and detected, or
- *       retried. A job the executor cannot be asked about is reported and left as it was
- *       (DECISIONS.md D61).
+ *       retried. A job the executor cannot be asked about is reported and left as it was.
  * </ol>
  */
 public final class WatchService {

@@ -22,9 +22,9 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /**
- * ROADMAP M7 through the real wiring (local executor, fake harness, synthetic fixtures): a
+ * The retrain action through the real wiring (local executor, fake harness, synthetic fixtures): a
  * regression submits the training command once per draft, and after the retrained draft is
- * deployed its results are never compared with the old draft's (DECISIONS.md D77–D79).
+ * deployed its results are never compared with the old draft's.
  */
 public class RetrainEndToEndTest {
   @Rule public TemporaryFolder tmp = new TemporaryFolder();

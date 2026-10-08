@@ -65,7 +65,7 @@ public class FingerprinterTest {
     }
   }
 
-  // --- ROADMAP M1 "done when" -----------------------------------------------------------------
+  // --- identity: weights, not metadata, decide the fingerprint --------------------------------
 
   @Test
   public void identicalMetadataButDifferentWeightsGiveDifferentFingerprints() throws IOException {

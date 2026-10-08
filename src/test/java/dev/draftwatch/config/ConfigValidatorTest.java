@@ -165,7 +165,7 @@ public class ConfigValidatorTest {
     assertEquals("FINAL", lora.target().finalMarker());
     assertEquals(TriggerSpec.defaultChain(), lora.triggers());
     assertEquals(List.of(PairedBootstrapSpec.withDefaults(Metric.ALPHA)), lora.detectors());
-    assertEquals("regressions are alerted unless on_regression says otherwise (D49)",
+    assertEquals("regressions are alerted unless on_regression says otherwise",
         List.of(ActionSpec.notifyAction()), lora.onRegression());
   }
 
@@ -184,7 +184,7 @@ public class ConfigValidatorTest {
     assertEquals(Optional.empty(), valid().executor().slurm());
   }
 
-  // --- ROADMAP M1 rules ----------------------------------------------------------------------
+  // --- validation rules -----------------------------------------------------------------------
 
   @Test
   public void unknownEstimatorIsRejected() {

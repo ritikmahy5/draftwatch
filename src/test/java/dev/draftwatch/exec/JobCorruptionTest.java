@@ -24,7 +24,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 /**
- * ROADMAP M2: "each corrupted report yields FAILED naming the violated rule". The fake harness
+ * Each corrupted report yields FAILED naming the violated rule. The fake harness
  * runs through an executor and the poller; each corruption must leave the job FAILED with
  * {@code INVALID_REPORT}, its cause naming exactly that rule, and must not be retried.
  */

@@ -1,4 +1,4 @@
-"""Counter snapshots and per-prompt deltas (contract "Reference backend"; D80, D82, D83).
+"""Counter snapshots and per-prompt deltas (contract "Reference backend").
 
 The four engine counters are cumulative and engine-wide. A prompt's counts are the difference
 between snapshots taken just before and just after its own ``generate()`` call.
@@ -69,7 +69,7 @@ class PromptCounts:
 
 
 def delta(before, after, k, what):
-    """The counts between two snapshots, checked (D82).
+    """The counts between two snapshots, checked.
 
     :raises HarnessError: exit 5 if a counter decreased, the per-position counts are not
         non-increasing (acceptance is not prefix-based), or the counts contradict each other
@@ -104,7 +104,7 @@ def delta(before, after, k, what):
 
 
 def check_warm_up(before, after):
-    """All four counters exist (checked when they were read) and drafting happened (D83)."""
+    """All four counters exist (checked when they were read) and drafting happened."""
     if after.drafts <= before.drafts or after.draft_tokens <= before.draft_tokens:
         raise HarnessError(
             EXIT_BACKEND_COUNTERS,

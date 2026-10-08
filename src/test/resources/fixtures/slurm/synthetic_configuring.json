@@ -1,5 +1,5 @@
 {
-  "source": "synthetic: written by hand from the output formats in DECISIONS.md D58 (slurm.schedmd.com squeue/sacct pages and SchedMD/slurm master source); not recorded on a cluster. Replace with real_<job-id>_*.json from scripts/record_slurm_fixtures.py.",
+  "source": "synthetic: written by hand from the documented output formats (slurm.schedmd.com squeue/sacct pages and SchedMD/slurm master source); not recorded on a cluster. Replace with real_<job-id>_*.json from scripts/record_slurm_fixtures.py.",
   "note": "CONFIGURING maps to SUBMITTED",
   "job_id": "4242002",
   "observations": [

@@ -17,10 +17,10 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * {@code draftwatch watch [--once] [--interval <duration>]}: runs watch passes (DECISIONS.md D55).
+ * {@code draftwatch watch [--once] [--interval <duration>]}: runs watch passes.
  * Each pass holds the state lock and releases it before waiting, so other commands can run in
  * between. Looping is refused with the slurm executor: login nodes are not for long-running
- * processes (SPEC.md F3, DECISIONS.md D9).
+ * processes (SPEC.md F3).
  */
 public final class WatchCommand implements CliCommand {
   static final Duration DEFAULT_INTERVAL = Duration.ofSeconds(60);

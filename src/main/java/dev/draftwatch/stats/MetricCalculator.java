@@ -17,7 +17,7 @@ import java.util.OptionalDouble;
  *
  * <p>It registers the package-private {@link EstimatorStrategy} implementations itself rather than
  * receiving them from {@code Bootstrap}: the set is closed by the contract's {@link Estimator}
- * enum, and the constructor fails if an estimator has no strategy (DECISIONS.md D94).
+ * enum, and the constructor fails if an estimator has no strategy.
  */
 public final class MetricCalculator {
   private final Map<Estimator, EstimatorStrategy> strategies = new EnumMap<>(Estimator.class);

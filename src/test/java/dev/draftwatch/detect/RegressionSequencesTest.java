@@ -24,7 +24,7 @@ import java.util.TreeMap;
 import org.junit.Test;
 
 /**
- * ROADMAP M3: "synthetic sequences trigger exactly the expected detectors". Each scenario in
+ * Synthetic sequences trigger exactly the expected detectors. Each scenario in
  * {@code fixtures/synthetic_regression_sequences.json} (invented counts) is four checkpoints;
  * the first is the baseline, the last is evaluated, and the set of detectors reporting
  * REGRESSION must equal the scenario's {@code expected} list.

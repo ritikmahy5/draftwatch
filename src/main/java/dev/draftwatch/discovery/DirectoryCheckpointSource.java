@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * A target's checkpoints in its {@code checkpoint_dirs} (SPEC.md F1; DECISIONS.md D54): every
+ * A target's checkpoints in its {@code checkpoint_dirs} (SPEC.md F1): every
  * immediate subdirectory not starting with {@code .} is inspected with the target's completion
  * policy, step extraction, and fingerprinting. A missing checkpoint directory or an incomplete
  * checkpoint is reported, not an error; a complete directory that is not a valid checkpoint is

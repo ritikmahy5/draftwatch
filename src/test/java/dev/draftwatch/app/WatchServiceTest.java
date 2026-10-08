@@ -39,7 +39,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /**
- * One {@code watch} pass over a scripted checkpoint source and executor (DECISIONS.md D55), so
+ * One {@code watch} pass over a scripted checkpoint source and executor, so
  * what the source reports is chosen exactly, with no checkpoint directories or timing.
  */
 public class WatchServiceTest {

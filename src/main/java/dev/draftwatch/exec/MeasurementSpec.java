@@ -11,7 +11,7 @@ import java.util.Objects;
 /**
  * What a job measures: one resolved probe on one checkpoint, run by a given harness command and
  * executor. Fixed for the life of the job; each attempt gets its own {@link JobSpec} and run
- * directory {@code <rawDir>/attempt-<n>} (DECISIONS.md D32).
+ * directory {@code <rawDir>/attempt-<n>}.
  */
 public final class MeasurementSpec {
   public static final String REPORT_FILE = "report.json";

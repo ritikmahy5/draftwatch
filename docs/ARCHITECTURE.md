@@ -24,17 +24,17 @@ src/main/java/dev/draftwatch/
   report/       ReportModel + HtmlReportRenderer, MeasurementDiff + DiffRenderer, Traced
 ```
 
-The reference harness is Python, in `python/` (MEASUREMENT_CONTRACT.md, "Reference backend";
-DECISIONS.md D80–D86). `measure_acceptance.py` is the entry point. In `draftwatch_harness/`,
-`inputs`, `counters`, `report`, and `measure` are standard-library only and unit-tested without
-vLLM; `vllm_backend` is the only module that imports vLLM. Java never imports it: the engine runs
-it as `harness.command`, and `ReportParser` validates what it writes.
+The reference harness is Python, in `python/` (MEASUREMENT_CONTRACT.md, "Reference backend").
+`measure_acceptance.py` is the entry point. In `draftwatch_harness/`, `inputs`, `counters`,
+`report`, and `measure` are standard-library only and unit-tested without vLLM; `vllm_backend` is
+the only module that imports vLLM. Java never imports it: the engine runs it as `harness.command`,
+and `ReportParser` validates what it writes.
 
 `MetricCalculator` is shared by `ReportParser` (to verify the harness's numbers) and by the
 detectors (to recompute metrics on bootstrap resamples), so there is one implementation of
 each estimator.
 
-Dependencies run one way (DECISIONS.md D40): `domain` ← `fingerprint` ← `config` ← `stats`,
+Dependencies run one way: `domain` ← `fingerprint` ← `config` ← `stats`,
 `harness` ← `exec` ← `store` ← `discovery`, `app`. Executors see only a `JobSpec` (command,
 working directory, run directory); what is being measured lives in `MeasurementSpec`.
 
@@ -53,10 +53,10 @@ CheckpointSource ─discovers─▶ CheckpointDiscovered
 ```
 
 `MeasurementStored` onward runs on the bus: `MeasurementRunner` publishes it and
-`DetectionService` subscribes (DECISIONS.md D44, D50). Discovery, triggering, and submission are
+`DetectionService` subscribes. Discovery, triggering, and submission are
 direct calls from `WatchService` through injected interfaces (`CheckpointSource`,
 `TriggerChain`, `MeasurementRunner`); their events are not published until something consumes
-them (D56).
+them.
 
 Each arrow is an event on the `EventBus`. Components subscribe; none call each other
 directly across package boundaries except through interfaces injected by `Bootstrap`.
@@ -66,13 +66,13 @@ An exception thrown by a subscriber is caught by the bus, logged, and published 
 ## Key interfaces
 
 ```java
-interface CheckpointSource { Discovery poll(); }   // complete checkpoints + skipped paths (D54)
+interface CheckpointSource { Discovery poll(); }   // complete checkpoints + skipped paths
 interface Fingerprinter { String fingerprint(Path checkpointDir); }
 
 final class TriggerDecision { enum Kind { ACCEPT, REJECT, ABSTAIN } Kind kind(); Optional<String> reason(); }
 interface TriggerRule { TriggerDecision evaluate(Checkpoint ckpt, ResolvedProbe probe, History history); }
 interface History { boolean hasResult(String fp, String probeHash); List<Job> jobs(String fp, String probeHash);
-                    int activeJobs(String target); }                              // D57
+                    int activeJobs(String target); }
 
 interface Executor {
   String name();                              // recorded in provenance, e.g. "local"
@@ -81,22 +81,22 @@ interface Executor {
   void cancel(JobHandle handle);
 }
 // ExecutorStatus.Kind: QUEUED, RUNNING, EXITED, LOST, FAILED (with a reason), CANCELLED,
-// UNRESOLVED (this poll changes nothing; D60)
+// UNRESOLVED (this poll changes nothing)
 interface CommandRunner { CommandResult run(List<String> argv, Map<String, String> set,
                                             Set<String> unset); }      // sbatch, squeue, ...
-interface SlurmJobTable { boolean isAlive(String slurmJobId); }        // StateLock takeover, D62
+interface SlurmJobTable { boolean isAlive(String slurmJobId); }        // StateLock takeover
 
 interface ResultRepository {
   void append(Measurement m);
   List<Measurement> history(String target, String probeHash);          // step order
   List<Measurement> find(String fingerprint, String probeHash);        // all attempts, oldest first
   Optional<Measurement> latest(String fingerprint, String probeHash);
-  List<Measurement> all();                                             // by target, then step (D72)
+  List<Measurement> all();                                             // by target, then step
   Path locate(Measurement m);                                          // the result file
 }
 
 final class DetectorVerdict {
-  enum Kind { OK, REGRESSION, ERROR, INSUFFICIENT_DATA }      // DECISIONS.md D43
+  enum Kind { OK, REGRESSION, ERROR, INSUFFICIENT_DATA }
   Kind kind(); Metric metric(); /* observed, threshold, interval, baseline job, explanation */
 }
 interface RegressionDetector {
@@ -115,16 +115,16 @@ interface RegressionAction { void execute(RegressionDetected event) throws Excep
 
 | Pattern | Where | Justification |
 |---|---|---|
-| Strategy | `Executor`, `Fingerprinter`, `EstimatorStrategy`, `CompletionPolicy`, `CheckpointSource`, `RegressionDetector`, `Notifier`, `CommandRunner` | Behavior varies by environment or policy and is selected by config; `CommandRunner` lets tests replay recorded Slurm output. The report renderers are not a Strategy: each output has one format (DECISIONS.md D72). |
+| Strategy | `Executor`, `Fingerprinter`, `EstimatorStrategy`, `CompletionPolicy`, `CheckpointSource`, `RegressionDetector`, `Notifier`, `CommandRunner` | Behavior varies by environment or policy and is selected by config; `CommandRunner` lets tests replay recorded Slurm output. The report renderers are not a Strategy: each output has one format. |
 | Chain of Responsibility | `TriggerChain` over `TriggerRule`s | Ordered rules; first non-abstaining rule decides, with a reason. |
 | Observer | `EventBus` + subscribers | Decouples stages; notifiers and actions plug in without touching producers. |
 | State | `JobState` + transition table | Lifecycle has legal and illegal transitions; illegal ones throw. |
 | Command | `RegressionAction`; `CliCommand` | Actions are configured data, executed later, and logged; CLI subcommands are looked up by name, so adding one never changes the dispatcher. |
 | Builder | `JobSpec`, `HarnessInvocation`; domain `Target`, `Checkpoint`, `Provenance`, `AcceptanceReport`, `SeedReport` | Many fields; invalid combinations rejected at `build()`. |
-| Template Method | `WeightFileFingerprinter` (base of both fingerprinters); `BaselineDetector` (base of the baseline-relative detectors) | The file walk, ordering, and encoding are shared, so the fingerprint methods cannot drift apart (DECISIONS.md D23); the Comparability guard runs before every baseline comparison, so no detector can skip it (D47). |
+| Template Method | `WeightFileFingerprinter` (base of both fingerprinters); `BaselineDetector` (base of the baseline-relative detectors) | The file walk, ordering, and encoding are shared, so the fingerprint methods cannot drift apart; the Comparability guard runs before every baseline comparison, so no detector can skip it. |
 | Repository | `ResultRepository`, `JobRepository`, `BaselineRepository`, `RetrainRequestRepository` | Storage swappable (files now) and testable with in-memory fakes. |
-| Adapter | `SlurmCli` over `sbatch`/`squeue`/`sacct`/`scancel` text output, used by `SlurmExecutor` | Isolates cluster CLI arguments and parsing behind `Executor` (DECISIONS.md D58). |
-| Decorator | `CachingFingerprinter` over any `Fingerprinter` | Adds caching by file signature without changing the fingerprinters (D53). |
+| Adapter | `SlurmCli` over `sbatch`/`squeue`/`sacct`/`scancel` text output, used by `SlurmExecutor` | Isolates cluster CLI arguments and parsing behind `Executor`. |
+| Decorator | `CachingFingerprinter` over any `Fingerprinter` | Adds caching by file signature without changing the fingerprinters. |
 | Factory | `Bootstrap` | The single place where config type names become objects. |
 
 `EventBus` is created once in `Bootstrap` and injected; it is never accessed statically.
@@ -151,8 +151,8 @@ Every other transition throws `IllegalJobTransitionException`. Each FAILED state
 `FailureReason`; `RetryPolicy` retries only `NODE_FAILURE`, `PREEMPTED_NO_REQUEUE`, and
 `UNEXPECTED_EXIT`. It never retries `BAD_ARGUMENTS`, `MODEL_LOAD`, `OUT_OF_MEMORY`,
 `BACKEND_COUNTERS` (exit 5), `TIMEOUT`, `INVALID_REPORT`, or `SUBMISSION_FAILED`, since the same
-inputs would fail the same way (DECISIONS.md D30). A job is attempted at most
-`1 + max_retries` times (D31); every attempt keeps its own run directory (D32).
+inputs would fail the same way. A job is attempted at most
+`1 + max_retries` times; every attempt keeps its own run directory.
 
 ### Slurm state mapping
 
@@ -170,10 +170,10 @@ inputs would fail the same way (DECISIONS.md D30). A job is attempted at most
 
 Unknown Slurm states are logged and treated as "no change" for one poll, then FAILED
 (`UNEXPECTED_EXIT`) if still unknown. `sacct` can lag after a job leaves `squeue`; a job
-missing from both is re-polled before being declared failed. DECISIONS.md D59 makes the table
-precise (exit codes come only from sacct; when `PREEMPTED` means "not requeued"; the documented
-states the table omits). D60 defines "one poll" as a later poll at least 5 minutes after the first
-unresolved observation, recorded in the run directory.
+missing from both is re-polled before being declared failed. Exit codes come only from sacct,
+`PREEMPTED` without a requeue means the job ended, and the documented states the table omits
+are mapped by their group. "One poll" means a later poll at least 5 minutes after the first
+unresolved observation, which is recorded in the run directory.
 
 ## Reports
 
@@ -181,9 +181,9 @@ unresolved observation, recorded in the run directory.
 renders it with `HtmlReportRenderer` as one static page. Every value in the model is `Traced`:
 its text, its result file, and its JSON Pointer in that file (`store.ResultPointers`). The
 renderer links each one to `file#pointer` and refuses any other text that contains a digit, so
-the page cannot show an untraced number (DECISIONS.md D68). One series per comparability key
-(D69). `draftwatch diff` builds a `MeasurementDiff` from two result files and renders it with
-`DiffRenderer`; it prints stored values only (D71).
+the page cannot show an untraced number. One series per comparability key.
+`draftwatch diff` builds a `MeasurementDiff` from two result files and renders it with
+`DiffRenderer`; it prints stored values only.
 
 ## Statistics
 
@@ -204,18 +204,18 @@ the page cannot show an untraced number (DECISIONS.md D68). One series per compa
   raw/<job-id>/attempt-<n>/report.json     harness output exactly as written
   raw/<job-id>/attempt-<n>/stdout.log, stderr.log, exit_code
   raw/<job-id>/attempt-<n>/job.sbatch, sbatch.json  slurm: the batch script and exact sbatch argv
-  raw/<job-id>/attempt-<n>/slurm_unresolved.json    slurm: first unresolved observation (D60)
+  raw/<job-id>/attempt-<n>/slurm_unresolved.json    slurm: first unresolved observation
   baselines.json                           target → baseline checkpoint (fingerprint, path, step,
                                            set_at, source manual|auto)
   detections.log                           every detection outcome, one JSON object per line
   alerts.log                               one human-readable line per alert
   fingerprints.json                        fingerprint cache: directory → signature, fingerprint
   retrain/<retrain-id>/                    a retrain job's run directory: invocation.json, logs,
-                                           exit_code (D76)
+                                           exit_code
   retrain/requests/<target>__<draft-id>__<draft-fingerprint>.json
-                                           one submitted retrain per draft version (D77)
+                                           one submitted retrain per draft version
   schedule/watch.sbatch, active, job_id,   the self-resubmitting watch job: its script, token,
-           watch.log, stopped              latest job id, log, and a failed resubmission (D63)
+           watch.log, stopped              latest job id, log, and a failed resubmission
 ```
 
 Writes are atomic: write a temp file in the same directory, then rename. Results are
@@ -224,7 +224,7 @@ append-only and keyed by job id, so re-measurements never overwrite.
 **StateLock:** every command that writes state acquires `.draftwatch/lock`, containing host,
 PID, timestamp, and `SLURM_JOB_ID` when set. The record is written in full to a unique file that
 is then hard-linked to `lock`, which fails if `lock` exists, so no reader sees a partial lock
-(DECISIONS.md D74; the link(2) recipe of open(2) for lock files on NFS). A lock may be taken
+(the link(2) recipe of open(2) for lock files on NFS). A lock may be taken
 over only when its holder is provably gone:
 - holder ran inside a Slurm job: that job id no longer appears in `squeue`;
 - holder ran outside Slurm on this host: its PID is not alive;
@@ -247,4 +247,4 @@ v1 is single-process per state directory (enforced by StateLock). One `watch` pa
 poll sources → evaluate triggers → submit → poll jobs → handle completions. The local
 executor may repeat passes in a loop; the slurm executor runs one pass per scheduled job
 (SPEC.md F3). The scheduled job's script resubmits itself before it runs `watch --once`, so a
-failed pass never ends the schedule (DECISIONS.md D63).
+failed pass never ends the schedule.

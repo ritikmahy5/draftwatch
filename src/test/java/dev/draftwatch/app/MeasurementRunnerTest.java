@@ -116,7 +116,7 @@ public class MeasurementRunnerTest {
     assertTrue(invocation, invocation.contains("attempt-1/report.json"));
   }
 
-  // --- ROADMAP M2: exit codes 2-5 are not retried; an unexpected code is, up to max_retries ---
+  // --- exit codes 2-5 are not retried; an unexpected code is, up to max_retries ---
 
   @Test
   public void contractExitCodesAreNotRetried() throws Exception {

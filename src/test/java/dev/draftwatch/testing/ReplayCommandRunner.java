@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A {@link CommandRunner} that answers with recorded results (DECISIONS.md D64). A command is
+ * A {@link CommandRunner} that answers with recorded results. A command is
  * answered only by a result recorded for exactly its argv, so the fixtures also pin the
  * arguments the code builds. Results come from the current {@link #observe observation}, which
  * each poll replaces, or from {@link #always standing} ones such as a successful scancel.

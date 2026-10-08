@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 /**
  * {@code draftwatch report [--out report.html]}: writes the static HTML report of every stored
- * result (SPEC.md F7; DECISIONS.md D68–D70, D73). It only reads state, so it takes no lock.
+ * result (SPEC.md F7). It only reads state, so it takes no lock.
  */
 public final class ReportCommand implements CliCommand {
   static final String DEFAULT_OUT = "report.html";

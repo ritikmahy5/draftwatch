@@ -41,7 +41,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** The training job, its environment, and the one-retrain-per-draft rule (D76, D77). */
+/** The training job, its environment, and the one-retrain-per-draft rule. */
 public class RetrainDraftActionTest {
   @Rule public TemporaryFolder tmp = new TemporaryFolder();
 

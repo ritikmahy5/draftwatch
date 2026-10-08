@@ -14,16 +14,16 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * The single-writer lock {@code <state>/lock} (ARCHITECTURE.md, "StateLock"; DECISIONS.md D34).
+ * The single-writer lock {@code <state>/lock} (ARCHITECTURE.md, "StateLock").
  *
  * <p>The lock is acquired the way open(2) recommends for lock files on NFS: the holder's record is
  * written in full to a unique file, which is then hard-linked to {@code lock}. link(2) never
  * replaces an existing name, so exactly one process wins, and no reader ever sees a partly
- * written lock (DECISIONS.md D74). {@code flock} is not used: it is unreliable on network
+ * written lock. {@code flock} is not used: it is unreliable on network
  * filesystems. A lock may be taken over only when its holder is provably gone:
  *
  * <ul>
- *   <li>it ran inside a Slurm job that squeue no longer lists alive, on any host (D62);
+ *   <li>it ran inside a Slurm job that squeue no longer lists alive, on any host;
  *   <li>it ran outside Slurm on this host, and its PID is not alive (or is now a different
  *       process, by start time).
  * </ul>
@@ -142,7 +142,7 @@ public final class StateLock {
       } catch (UnsupportedOperationException e) {
         throw new StateLockException(
             "cannot lock " + lock + ": this filesystem does not support hard links, which the"
-                + " state lock needs (DECISIONS.md D74)",
+                + " state lock needs",
             e);
       } catch (IOException e) {
         if (linkCount(unique) == 2) {

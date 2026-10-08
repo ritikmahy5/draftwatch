@@ -38,7 +38,7 @@ import java.util.Optional;
  * Runs measurement jobs through their lifecycle: create, submit, poll, store the result, retry.
  * Every state change is saved before the next step, and a result is stored, and
  * {@link MeasurementStored} published, before its job is marked SUCCEEDED, so a crash at any point
- * loses nothing and duplicates nothing (DECISIONS.md D37).
+ * loses nothing and duplicates nothing.
  */
 public final class MeasurementRunner {
   public static final String INVOCATION_FILE = "invocation.json";

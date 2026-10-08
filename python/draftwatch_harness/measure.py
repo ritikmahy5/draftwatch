@@ -1,4 +1,4 @@
-"""One measurement: warm-up, one call per prompt per seed, deltas, report (D82-D85)."""
+"""One measurement: warm-up, one call per prompt per seed, deltas, report."""
 
 import json
 import os

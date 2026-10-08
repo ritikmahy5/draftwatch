@@ -29,8 +29,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 /**
- * Runs attempts as Slurm batch jobs (ARCHITECTURE.md, "Slurm state mapping"; DECISIONS.md
- * D58–D60).
+ * Runs attempts as Slurm batch jobs (ARCHITECTURE.md, "Slurm state mapping").
  *
  * <p>Each attempt's run directory receives {@code job.sbatch}, a {@code /bin/sh} script that runs
  * the harness command given as its arguments and records its exit status in {@code exit_code},
@@ -45,7 +44,7 @@ public final class SlurmExecutor implements Executor {
   public static final String SBATCH_FILE = "sbatch.json";
   public static final String UNRESOLVED_FILE = "slurm_unresolved.json";
 
-  /** How long an observation may stay unresolved before the attempt fails (D60). */
+  /** How long an observation may stay unresolved before the attempt fails. */
   public static final Duration UNRESOLVED_GRACE = Duration.ofMinutes(5);
 
   private final SlurmConfig config;
@@ -54,7 +53,7 @@ public final class SlurmExecutor implements Executor {
   private final Consumer<String> warnings;
   private final ObjectMapper json = new ObjectMapper();
 
-  /** @param warnings receives one line per unresolved observation (D60) */
+  /** @param warnings receives one line per unresolved observation */
   public SlurmExecutor(
       SlurmConfig config, SlurmCli cli, Clock clock, Consumer<String> warnings) {
     this.config = Objects.requireNonNull(config, "config");
@@ -96,7 +95,7 @@ public final class SlurmExecutor implements Executor {
     return JobHandle.of(NAME, id.toString(), runDir, clock.instant(), Optional.empty());
   }
 
-  /** The sbatch options of one attempt, in a fixed order (D58, D65). */
+  /** The sbatch options of one attempt, in a fixed order. */
   List<String> options(JobSpec spec) {
     Path runDir = spec.runDir();
     List<String> options = new ArrayList<>();
@@ -121,7 +120,7 @@ public final class SlurmExecutor implements Executor {
     return "#!/bin/sh\n"
         + "# draftwatch job " + spec.jobId() + ", attempt " + spec.attempt()
         + ": runs the harness command given as\n"
-        + "# arguments and records its exit status (DECISIONS.md D59). A requeued run starts"
+        + "# arguments and records its exit status. A requeued run starts"
         + " over.\n"
         + "rm -f " + exit + " " + tmp + "\n"
         + "\"$@\"\n"
@@ -218,7 +217,7 @@ public final class SlurmExecutor implements Executor {
     }
   }
 
-  /** The outcome of a job sacct reports as finished (D59). */
+  /** The outcome of a job sacct reports as finished. */
   private ExecutorStatus terminal(JobHandle handle, SlurmJobId id, AccountingRecord r) {
     Optional<Instant> start = r.start();
     Optional<Instant> end = r.end();
@@ -259,7 +258,7 @@ public final class SlurmExecutor implements Executor {
     }
   }
 
-  /** EXITED with sacct's exit code, once the batch script's {@code exit_code} agrees (D59). */
+  /** EXITED with sacct's exit code, once the batch script's {@code exit_code} agrees. */
   private ExecutorStatus exited(JobHandle handle, SlurmJobId id, int code, AccountingRecord r) {
     Path file = handle.runDir().resolve(LocalExecutor.EXIT_FILE);
     String text;
@@ -284,7 +283,7 @@ public final class SlurmExecutor implements Executor {
     return ExecutorStatus.exited(code, r.start(), r.end());
   }
 
-  // --- unresolved observations (D60) -------------------------------------------------------
+  // --- unresolved observations -------------------------------------------------------
 
   /**
    * Records one unresolved observation. Within the grace period nothing changes; after it, the

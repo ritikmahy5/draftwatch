@@ -16,9 +16,9 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 
 /**
- * {@code <state>/detections.log}: one JSON object per line, append-only (DECISIONS.md D49). Each
+ * {@code <state>/detections.log}: one JSON object per line, append-only. Each
  * record is written with a single {@code O_APPEND} write. JSON lines rather than prose, because
- * the log is read back: for deferred detections now, for report markers in M6.
+ * the log is read back: for deferred detections and for report markers.
  */
 public final class FileDetectionLog implements DetectionLog {
   public static final String FILE = "detections.log";

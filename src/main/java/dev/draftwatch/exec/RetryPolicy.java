@@ -5,8 +5,7 @@ import java.util.Set;
 
 /**
  * Decides whether a FAILED job may go back to CREATED. Only failures that a second attempt could
- * survive are retried; a job is attempted at most {@code 1 + max_retries} times (DECISIONS.md
- * D31).
+ * survive are retried; a job is attempted at most {@code 1 + max_retries} times.
  */
 public final class RetryPolicy {
   private static final Set<FailureReason> RETRYABLE =

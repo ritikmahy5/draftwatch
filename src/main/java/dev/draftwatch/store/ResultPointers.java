@@ -3,7 +3,7 @@ package dev.draftwatch.store;
 /**
  * JSON Pointers (RFC 6901) to the values of a stored result file, as {@link JsonCodec} writes it:
  * {@code {"provenance": {...}, "report": {...}}}. The report links each number it shows to its
- * pointer (DECISIONS.md D68, D72); {@code ResultPointersTest} checks each against a written file.
+ * pointer; {@code ResultPointersTest} checks each against a written file.
  */
 public final class ResultPointers {
   public static final String TARGET = "/provenance/target";

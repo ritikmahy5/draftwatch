@@ -31,11 +31,11 @@ import java.util.stream.Collectors;
 
 /**
  * {@code draftwatch submit <target> <checkpoint>}: measures one checkpoint with every probe of
- * its target, under the state lock (DECISIONS.md D36). The checkpoint goes through the same
+ * its target, under the state lock. The checkpoint goes through the same
  * completion, step, and fingerprint logic as {@code watch}; trigger rules do not apply to an
  * explicit request. With the local executor the command waits until its jobs are done; with the
  * slurm executor it returns once sbatch has accepted them, and {@code watch --once} or the
- * schedule collects the results (DECISIONS.md D61).
+ * schedule collects the results.
  */
 public final class SubmitCommand implements CliCommand {
   private final ConfigLoader loader;
@@ -141,7 +141,7 @@ public final class SubmitCommand implements CliCommand {
     return allSucceeded ? Cli.EXIT_OK : Cli.EXIT_FAILURE;
   }
 
-  /** Reports the Slurm submissions; succeeds if sbatch accepted every job (D61). */
+  /** Reports the Slurm submissions; succeeds if sbatch accepted every job. */
   private static int submittedToSlurm(PrintStream out, MeasurementRunner runner, List<Job> jobs) {
     boolean allSubmitted = true;
     for (Job job : jobs) {

@@ -34,10 +34,10 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /**
- * Every row of ARCHITECTURE.md's Slurm state mapping, and D59/D60's additions, replayed from a
- * fixture through {@link SlurmExecutor} and the real {@link JobPoller}. The fixtures named
- * {@code synthetic_} were written by hand from D58's formats; recorded {@code real_} ones replace
- * them once {@code scripts/record_slurm_fixtures.py} has run on the cluster (DECISIONS.md D64).
+ * Every row of ARCHITECTURE.md's Slurm state mapping, and its additions, replayed from a fixture
+ * through {@link SlurmExecutor} and the real {@link JobPoller}. The fixtures named {@code
+ * synthetic_} were written by hand from the documented formats; recorded {@code real_} ones replace
+ * them once {@code scripts/record_slurm_fixtures.py} has run on the cluster.
  */
 public class SlurmStateMappingTest {
   @Rule public TemporaryFolder tmp = new TemporaryFolder();
@@ -260,7 +260,7 @@ public class SlurmStateMappingTest {
     assertEquals(Optional.of(FailureReason.PREEMPTED_NO_REQUEUE), jobs.get(1).failureReason());
   }
 
-  // --- recorded on Explorer, Slurm 23.11.6 (DECISIONS.md D66, D67) ---------------------------
+  // --- recorded on Explorer, Slurm 23.11.6 ---------------------------
 
   @Test
   public void recordedCompletedJobSucceedsWithSlurmsTimes() throws IOException {
@@ -325,12 +325,12 @@ public class SlurmStateMappingTest {
 
   @Test
   public void recordedMemoryOverrunWasNotEnforcedAndCompleted() throws IOException {
-    harnessExited(0); // Explorer let a --mem=64M job allocate 1 GiB (D67)
+    harnessExited(0); // Explorer let a --mem=64M job allocate 1 GiB
     assertEquals(
         JobState.SUCCEEDED, last(replay("real_10756838_out_of_memory", true)).state());
   }
 
-  // --- D59's other documented states ---------------------------------------------------------
+  // --- the other documented states ---------------------------------------------------------
 
   @Test
   public void heldStatesStaySubmitted() {
@@ -339,7 +339,7 @@ public class SlurmStateMappingTest {
     }
   }
 
-  // --- D60: unresolved observations ----------------------------------------------------------
+  // --- unresolved observations ----------------------------------------------------------
 
   @Test
   public void jobBrieflyInNeitherSqueueNorSacctIsWaitedFor() throws IOException {
@@ -394,7 +394,7 @@ public class SlurmStateMappingTest {
     harnessExited(0);
     Path exitFile = runDir().resolve(LocalExecutor.EXIT_FILE);
     Path hidden = runDir().resolve("exit_code.hidden");
-    Files.move(exitFile, hidden); // as a stale NFS lookup cache would show it (D60)
+    Files.move(exitFile, hidden); // as a stale NFS lookup cache would show it
     SlurmScenario scenario = SlurmScenario.load("synthetic_completed");
     JobPoller poller =
         new JobPoller(executor(true), new ReportParser(new MetricCalculator()), clock);

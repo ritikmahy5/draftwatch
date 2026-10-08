@@ -25,7 +25,7 @@ import java.util.function.Function;
 
 /**
  * {@code draftwatch schedule [--interval 15m]}: submits the CPU-only, self-resubmitting job that
- * runs {@code watch --once} on the cluster (SPEC.md F3; DECISIONS.md D9, D63). Refused unless
+ * runs {@code watch --once} on the cluster (SPEC.md F3). Refused unless
  * {@code executor.type} is slurm, and while an earlier schedule's job is still queued or running.
  */
 public final class ScheduleCommand implements CliCommand {

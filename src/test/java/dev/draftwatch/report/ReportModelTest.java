@@ -30,7 +30,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** The report's content, built from synthetic stored results (DECISIONS.md D69). */
+/** The report's content, built from synthetic stored results. */
 public class ReportModelTest {
   @Rule public TemporaryFolder tmp = new TemporaryFolder();
 

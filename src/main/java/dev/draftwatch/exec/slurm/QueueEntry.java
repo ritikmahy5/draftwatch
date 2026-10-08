@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
-/** One job as squeue lists it with D58's format {@code %i|%T|%S}. */
+/** One job as squeue lists it with the format {@code %i|%T|%S}. */
 public final class QueueEntry {
   private final String jobId;
   private final String stateText;

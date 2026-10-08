@@ -4,8 +4,8 @@ import java.util.Optional;
 
 /**
  * Slurm's job state names (squeue.html and sacct.html, "JOB STATE CODES"), each with the group
- * that decides its engine mapping (ARCHITECTURE.md, "Slurm state mapping"; DECISIONS.md D59).
- * A name not listed here is unknown and handled by D60.
+ * that decides its engine mapping (ARCHITECTURE.md, "Slurm state mapping").
+ * A name not listed here is unknown, and the executor treats it as unresolved.
  */
 public enum SlurmState {
   PENDING(Group.WAITING),
@@ -44,7 +44,7 @@ public enum SlurmState {
     REQUEUING,
     /** Finished; the outcome is read from sacct. */
     TERMINAL,
-    /** Not mapped; unresolved (D60). */
+    /** Not mapped; unresolved. */
     UNMAPPED
   }
 

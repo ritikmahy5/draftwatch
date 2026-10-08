@@ -7,8 +7,8 @@ import java.util.List;
 
 /**
  * {@code not_already_measured}: Reject if a result exists for (fingerprint, probe hash); else
- * Abstain (SPEC.md F2). It also rejects when any job for that pair exists, in any state
- * (DECISIONS.md D52): a running job would otherwise be submitted again on every pass, and a job
+ * Abstain (SPEC.md F2). It also rejects when any job for that pair exists, in any state:
+ * a running job would otherwise be submitted again on every pass, and a job
  * that failed for a reason a retry cannot fix would be resubmitted forever. {@code draftwatch
  * submit} still measures again on request.
  */

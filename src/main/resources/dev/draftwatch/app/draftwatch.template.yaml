@@ -11,7 +11,7 @@ executor:
   # slurm:                   # required when type is slurm
   #   partition: gpu         # optional; omitted means the site default
   #   gres: "gpu:a100:1"     # optional; name the GPU model: results from different models are
-  #                          # never compared (DECISIONS.md D89, D92)
+  #                          # never compared
   #   time: "00:45:00"       # optional; any sbatch --time format, quoted
   #   requeue_on_preempt: true
   #   extra_sbatch_args: []                       # may not set options draftwatch sets
@@ -47,7 +47,7 @@ targets:
     # detectors:
     #   - paired_bootstrap: { metric: alpha, confidence: 0.95, min_effect: 0.0 }
     on_regression: [notify]
-    # To also start a training job once per draft version (DECISIONS.md D75-D77):
+    # To also start a training job once per draft version:
     # on_regression:
     #   - notify
     #   - retrain_draft: { command: ["python", "train_draft.py"] }

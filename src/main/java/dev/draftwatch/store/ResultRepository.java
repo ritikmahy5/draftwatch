@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface ResultRepository {
   /**
    * Stores {@code m}. Storing the identical measurement again is a no-op, which makes a retried
-   * write after a crash safe (DECISIONS.md D37).
+   * write after a crash safe.
    *
    * @throws StoreException if a different measurement is already stored under its job id
    */
@@ -26,7 +26,7 @@ public interface ResultRepository {
 
   Optional<Measurement> latest(String fingerprint, String probeHash);
 
-  /** Every result, by target name, then in {@link #history} order (DECISIONS.md D72). */
+  /** Every result, by target name, then in {@link #history} order. */
   List<Measurement> all();
 
   /** Where {@code m} is stored, so every reported number can be traced to its file. */

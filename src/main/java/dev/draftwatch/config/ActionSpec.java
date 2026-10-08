@@ -3,7 +3,7 @@ package dev.draftwatch.config;
 import java.util.Objects;
 import java.util.Optional;
 
-/** One {@code on_regression} entry: its kind, and its settings if it has any (D75). */
+/** One {@code on_regression} entry: its kind, and its settings if it has any. */
 public final class ActionSpec {
   private final ActionKind kind;
   private final Optional<RetrainSpec> retrain;

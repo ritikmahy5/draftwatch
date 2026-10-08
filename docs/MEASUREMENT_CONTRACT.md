@@ -23,8 +23,7 @@ The harness must write exactly one JSON file at `--out` and exit.
 
 ### Prompt file
 
-Both sides must read `--prompts` identically, or `num_prompts` and `prompt_index` disagree
-(DECISIONS.md D26):
+Both sides must read `--prompts` identically, or `num_prompts` and `prompt_index` disagree:
 - The file is UTF-8 without a byte-order mark. Lines are separated by LF (`\n`).
 - A line is **empty** if it contains only space, tab, and CR characters (in Python:
   `line.strip(" \t\r") == ""`). Empty lines are skipped and are not prompts.
@@ -47,7 +46,7 @@ Both sides must read `--prompts` identically, or `num_prompts` and `prompt_index
 
 v1 supports chain drafting only: each verification step proposes a linear sequence of up to
 `num_speculative_tokens` draft tokens. Tree drafting changes what "proposed" and "position"
-mean, so it is out of scope (DECISIONS.md D5). The report must declare
+mean, so it is out of scope. The report must declare
 `"draft_structure": "chain"`; any other value is rejected. The reference harness must not set
 vLLM's speculative token tree option.
 
@@ -61,7 +60,7 @@ For one prompt, verification step i:
 
 Counting rule: metrics count **verifier decisions**, not tokens kept in the final output.
 Accepted tokens later discarded because of EOS or the length limit still count as accepted.
-This is what the reference backend's counters measure (DECISIONS.md D6).
+This is what the reference backend's counters measure.
 
 Positions within a step are **1-indexed**: position 1 is the first draft token of the step.
 
@@ -84,7 +83,7 @@ it as such in reports. `alpha_by_position[1]` is the closest empirical analogue 
   Prompts with `steps_p = 0` are excluded from `tau` (a prompt with no steps proposed nothing,
   so it is already among the excluded prompts).
 - `excluded_prompts` is the number of prompts with `proposed_p = 0` under `simple_mean`, and
-  `0` under `token_weighted`, which excludes no prompt (DECISIONS.md D29).
+  `0` under `token_weighted`, which excludes no prompt.
 - A metric with nothing to average is **undefined**: `token_weighted` alpha when no draft token
   was proposed, `token_weighted` tau when there were no steps, `simple_mean` alpha or tau when
   every prompt is excluded. A report whose recomputed `alpha` or `tau` is undefined is
@@ -102,7 +101,7 @@ metrics; `aggregate` holds the seed mean and the sample standard deviation (`nul
 seed). Uncertainty for regression detection comes from **resampling prompts** in the engine,
 using `per_prompt` counts — the harness does not compute confidence intervals.
 
-## Reference backend: vLLM (DECISIONS.md D4)
+## Reference backend: vLLM
 
 The reference harness (`python/measure_acceptance.py`) uses vLLM's offline `LLM` API with
 `speculative_config = {"method": "draft_model", "model": <--draft-path>,
@@ -117,17 +116,17 @@ The reference harness (`python/measure_acceptance.py`) uses vLLM's offline `LLM`
 | `vllm:spec_decode_num_accepted_tokens` | accepted |
 | `vllm:spec_decode_num_accepted_tokens_per_pos` (vector) | accepted at each position |
 
-These counters are engine-wide and cumulative, not per request. To obtain `per_prompt`
-counts, the harness generates **one prompt per `generate()` call, sequentially**, and records
-the counter deltas between calls. `position_counts.eligible` is derived as: eligible at
-position 1 = steps; eligible at position k > 1 = accepted at position k − 1. That derivation
-is valid only if acceptance is prefix-based; the harness verifies it per prompt
-(accepted at position k ≤ accepted at position k − 1) and exits with code 5 if it fails.
-It is also exact only if every step proposed all `num_speculative_tokens` positions. vLLM
-0.31.0 did not shorten drafts in the acceptance run (DECISIONS.md D87), but that is not
-guaranteed in general. So the harness sets `position_counts_exact` to `true` only when
-`proposed == steps · num_speculative_tokens` for every prompt, and `false` otherwise. Detectors never use positional acceptance; reports show
-it with an "approximate" label when the flag is `false`.
+These counters are engine-wide and cumulative, not per request. To obtain `per_prompt` counts, the
+harness generates **one prompt per `generate()` call, sequentially**, and records the counter deltas
+between calls. `position_counts.eligible` is derived as: eligible at position 1 = steps; eligible at
+position k > 1 = accepted at position k − 1. That derivation is valid only if acceptance is
+prefix-based; the harness verifies it per prompt (accepted at position k ≤ accepted at position k −
+1) and exits with code 5 if it fails. It is also exact only if every step proposed all
+`num_speculative_tokens` positions. vLLM 0.31.0 did not shorten drafts in the acceptance run, but
+that is not guaranteed in general. So the harness sets `position_counts_exact` to `true` only when
+`proposed == steps · num_speculative_tokens` for every prompt, and `false` otherwise. Detectors
+never use positional acceptance; reports show it with an "approximate" label when the flag is
+`false`.
 
 At startup the harness runs one warm-up prompt and checks that all four counters exist and
 that the draft counters (`num_drafts`, `num_draft_tokens`) advanced. The accepted counts may
@@ -135,20 +134,20 @@ stay at zero for a draft that is always rejected. If not, it exits with code 5 a
 metric. It never substitutes estimated values. After loading, it also exits with code 5 if vLLM
 resolved any setting that changes what the counters count: a method other than `draft_model`,
 non-standard rejection sampling, synthetic acceptance, adaptive verification, or a
-per-batch-size k (DECISIONS.md D80).
+per-batch-size k.
 
-Each prompt line holds exactly one of `prompt` (a string, passed to `LLM.generate`) or
-`messages` (a list of chat messages, passed to `LLM.chat`), and nothing else (DECISIONS.md
-D81). Each call uses `SamplingParams(temperature, max_tokens=max_new_tokens, seed=<seed>)`. The
-harness pins vLLM's native sampler (`VLLM_USE_FLASHINFER_SAMPLER=0`), so a measurement never
-depends on the caller's environment (D87). The harness looks these exact names up in the `get_metrics()` output, so if
-a future vLLM version renames one, the lookup fails and the harness exits with code 5 instead
-of silently producing zeros.
+Each prompt line holds exactly one of `prompt` (a string, passed to `LLM.generate`) or `messages` (a
+list of chat messages, passed to `LLM.chat`), and nothing else. Each call uses
+`SamplingParams(temperature, max_tokens=max_new_tokens, seed=<seed>)`. The harness pins vLLM's
+native sampler (`VLLM_USE_FLASHINFER_SAMPLER=0`), so a measurement never depends on the caller's
+environment. The harness looks these exact names up in the `get_metrics()` output, so if a future
+vLLM version renames one, the lookup fails and the harness exits with code 5 instead of silently
+producing zeros.
 
 Adapter checkpoints are merged into the base model before measurement (PEFT
 `merge_and_unload`, saved to a temporary directory) rather than served as a vLLM LoRA
 adapter, because vLLM has an open report of outputs differing when LoRA and EAGLE-3 are
-combined (DECISIONS.md D8). The report records `"adapter_handling": "merged"` or `"none"`.
+combined. The report records `"adapter_handling": "merged"` or `"none"`.
 
 ## Report schema (`schema_version: 1`)
 
@@ -239,7 +238,7 @@ Then the aggregate:
 
 Rule 20 holds for the reference backend by construction: vLLM's `SpecDecodingStats.observe_draft`
 adds a draft's accepted count to `num_accepted_tokens` and increments
-`num_accepted_tokens_per_pos` at positions 1 … accepted (DECISIONS.md D29).
+`num_accepted_tokens_per_pos` at positions 1 … accepted.
 
 A report failing any rule makes the job FAILED with `INVALID_REPORT` and the rule id named in
 the error. The engine never repairs a report.
@@ -250,7 +249,7 @@ Two measurements are comparable only if all of these match: probe hash (which co
 fingerprint, prompt-set SHA-256, decoding including dtype, estimator, and seeds), harness
 version, backend, draft structure, and `hardware` (GPU model and count). The same probe on an
 A100 and on an H200 gave different counts, greedy and sampled, while repeats on one H200 gave
-identical counts (DECISIONS.md D89, D91).
+identical counts.
 `wall_clock_seconds` is recorded but never used by detectors.
 
 ## Fake harness
@@ -262,11 +261,12 @@ full pipeline can be tested without a GPU:
   `--draft-id`, `--decoding-json`, and the seeds into the report, and computes
   `prompt_set_sha256` and `num_prompts` from the `--prompts` file itself.
 - It reads synthetic `per_prompt` and `position_counts` from the fixture named by
-  `DRAFTWATCH_FAKE_FIXTURE` and derives every total, ratio, and aggregate from them, so its
-  output is internally consistent by construction. A fixture is
-  `{"source": "<where the numbers came from>", "per_seed": [{"per_prompt": [{"steps": .., "proposed": .., "accepted": ..}, ...], "position_counts": [{"eligible": .., "accepted": ..}, ...]}, ...]}`;
-  entry i is used for the i-th seed. A fixture whose entry count, prompt count, or position
-  count does not match the invocation makes it exit 2.
+  `DRAFTWATCH_FAKE_FIXTURE` and derives every total, ratio, and aggregate from them, so its output
+  is internally consistent by construction. A fixture is `{"source": "<where the numbers came
+  from>", "per_seed": [{"per_prompt": [{"steps": .., "proposed": .., "accepted": ..}, ...],
+  "position_counts": [{"eligible": .., "accepted": ..}, ...]}, ...]}`; entry i is used for the i-th
+  seed. A fixture whose entry count, prompt count, or position count does not match the invocation
+  makes it exit 2.
 - It reports `harness_version: "fake-<version>"`, `backend: "fake"`, and
   `hardware: {"gpu": "none", "count": 0}`. `DRAFTWATCH_FAKE_HARNESS_VERSION=<v>` reports `<v>`
   as the harness version instead, so tests can produce incomparable results on purpose.

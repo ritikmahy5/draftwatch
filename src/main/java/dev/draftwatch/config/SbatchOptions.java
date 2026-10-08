@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Which sbatch options a configured argument list may not set (DECISIONS.md D65). sbatch parses
+ * Which sbatch options a configured argument list may not set. sbatch parses
  * options with {@code getopt_long} ({@code src/sbatch/opt.c}), which also accepts a unique
  * abbreviation of a long option ({@code --out=x} for {@code --output=x}). So an argument names an
  * option when it is the option, or a prefix of it that is not itself an sbatch option. A short
@@ -44,7 +44,7 @@ public final class SbatchOptions {
   private static final List<Option> OWN_KEYS =
       List.of(option("partition", 'p'), option("gres"), option("time", 't'));
 
-  /** Options that request GPUs, which the schedule job must not (D63). */
+  /** Options that request GPUs, which the schedule job must not. */
   private static final List<Option> GPU =
       List.of(
           option("gres"),

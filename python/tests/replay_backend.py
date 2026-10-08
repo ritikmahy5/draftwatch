@@ -1,4 +1,4 @@
-"""A backend that replays recorded counter snapshots instead of running vLLM (D86).
+"""A backend that replays recorded counter snapshots instead of running vLLM.
 
 The fixture is what the harness writes with DRAFTWATCH_RECORD_COUNTERS: snapshots in the order
 they were taken. ``generate`` must come between each "before" and "after" snapshot, so a replay

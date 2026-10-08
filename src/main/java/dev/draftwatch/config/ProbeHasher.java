@@ -9,7 +9,7 @@ import dev.draftwatch.fingerprint.Sha256;
 
 /**
  * Computes the probe hash: SHA-256 of the canonical JSON of everything that determines whether
- * two measurements are comparable (MEASUREMENT_CONTRACT.md, "Comparability"; DECISIONS.md D24).
+ * two measurements are comparable (MEASUREMENT_CONTRACT.md, "Comparability").
  *
  * <p>The hashed object is:
  *

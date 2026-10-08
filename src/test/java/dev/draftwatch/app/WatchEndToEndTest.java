@@ -109,7 +109,7 @@ public class WatchEndToEndTest {
     Files.writeString(checkpoint.resolve("DONE"), "");
   }
 
-  // --- ROADMAP M4 "done when": checkpoints appearing over time, restarts ---------------------
+  // --- checkpoints appearing over time, restarts ---------------------
 
   @Test
   public void checkpointsAppearingOverTimeAreMeasuredExactlyAsTheRulesAllow()
@@ -158,7 +158,7 @@ public class WatchEndToEndTest {
     assertEquals(1, jobs(p).size());
   }
 
-  // --- ROADMAP M4 "done when": two concurrent watch --once never both submit ---------------
+  // --- two concurrent watch --once never both submit ---------------
 
   @Test
   public void concurrentWatchProcessesNeverBothSubmit() throws Exception {

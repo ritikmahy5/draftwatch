@@ -4,7 +4,7 @@ import java.util.Objects;
 
 /**
  * A probe together with the content-derived facts its identity depends on: the draft's
- * fingerprint, the prompt set, and the resulting probe hash (DECISIONS.md D24).
+ * fingerprint, the prompt set, and the resulting probe hash.
  */
 public final class ResolvedProbe {
   private final Probe probe;

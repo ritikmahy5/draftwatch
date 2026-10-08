@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 
 /**
  * Requests as {@code <state>/retrain/requests/<target>__<draft-id>__<draft-fingerprint>.json},
- * created exclusively so a second request for the same draft is refused (D77).
+ * created exclusively so a second request for the same draft is refused.
  */
 public final class FileRetrainRequestRepository implements RetrainRequestRepository {
   private final Path dir;

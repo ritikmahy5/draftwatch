@@ -6,7 +6,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * A retrain job draftwatch submitted, and the regression that caused it (DECISIONS.md D76, D77).
+ * A retrain job draftwatch submitted, and the regression that caused it.
  * There is at most one per target, draft id, and draft fingerprint.
  */
 public final class RetrainRequest {

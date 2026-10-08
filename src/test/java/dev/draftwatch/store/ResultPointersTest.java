@@ -18,7 +18,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** Every pointer resolves, in a file the codec really writes, to the value it names (D72). */
+/** Every pointer resolves, in a file the codec really writes, to the value it names. */
 public class ResultPointersTest {
   @Rule public TemporaryFolder tmp = new TemporaryFolder();
 

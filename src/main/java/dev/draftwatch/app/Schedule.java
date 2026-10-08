@@ -20,7 +20,7 @@ import java.util.Optional;
 import java.util.TreeSet;
 
 /**
- * The self-resubmitting watch job of one state directory (DECISIONS.md D63): the files under
+ * The self-resubmitting watch job of one state directory: the files under
  * {@code <state>/schedule/}, the job's sbatch options, and the generated script. The script
  * checks its token, resubmits itself, and only then runs {@code watch --once}, so a crash in
  * {@code watch} never stops the schedule.
@@ -144,7 +144,7 @@ final class Schedule {
         + " again instead.\n"
         + "# Each run resubmits itself, then runs one watch pass, so a failing pass never stops"
         + " the\n"
-        + "# schedule. 'draftwatch unschedule' ends it (DECISIONS.md D63).\n"
+        + "# schedule. 'draftwatch unschedule' ends it.\n"
         + "dir=" + d + "\n"
         + "token=" + ShellQuote.quote(token) + "\n"
         + "echo \"=== Slurm job ${SLURM_JOB_ID:-?} on $(hostname) at"

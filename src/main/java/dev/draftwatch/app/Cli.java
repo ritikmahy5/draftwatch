@@ -14,7 +14,7 @@ import java.util.Objects;
  * Parses the top-level command line and dispatches to a {@link CliCommand}.
  *
  * <p>The global option {@code --config <file>} (or {@code --config=<file>}) may appear anywhere;
- * it defaults to {@code ./draftwatch.yaml}. Exit codes (DECISIONS.md D19, D28):
+ * it defaults to {@code ./draftwatch.yaml}. Exit codes:
  * {@link #EXIT_OK} on success, {@link #EXIT_FAILURE} when a command fails (for example an
  * invalid config), {@link #EXIT_USAGE} for a bad command line.
  */
@@ -113,7 +113,7 @@ public final class Cli {
     }
     if (isListed(name)) {
       err.println(
-          PROGRAM + ": command '" + name + "' is not implemented yet (see docs/ROADMAP.md)");
+          PROGRAM + ": command '" + name + "' is not implemented yet");
       return EXIT_USAGE;
     }
     return usageError("unknown command '" + name + "'; run '" + PROGRAM + " --help'");

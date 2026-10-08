@@ -5,7 +5,7 @@ import dev.draftwatch.domain.WireNamed;
 /**
  * Why a job attempt FAILED (ARCHITECTURE.md, "Job state machine"). Whether a reason is retried is
  * {@link RetryPolicy}'s decision. {@code BACKEND_COUNTERS} and {@code SUBMISSION_FAILED} complete
- * the architecture's list (DECISIONS.md D30).
+ * the architecture's list.
  */
 public enum FailureReason implements WireNamed {
   /** The node running the job failed. */

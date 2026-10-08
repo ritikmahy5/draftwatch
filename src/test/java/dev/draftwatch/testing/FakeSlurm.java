@@ -19,11 +19,11 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A simulated Slurm cluster for end-to-end tests, answering the commands of DECISIONS.md D58 in
- * their documented formats. It is a simulation, not a recording: real output is pinned by the
- * fixtures under {@code fixtures/slurm/}. Submitted jobs stay PENDING until {@link #runQueued}
- * runs their batch scripts with {@code /bin/sh}, one at a time, in this process's environment.
- * A finished job leaves squeue at once and stays in sacct.
+ * A simulated Slurm cluster for end-to-end tests, answering the commands of {@link
+ * dev.draftwatch.exec.slurm.SlurmCli} in their documented formats. It is a simulation, not a
+ * recording: real output is pinned by the fixtures under {@code fixtures/slurm/}. Submitted jobs
+ * stay PENDING until {@link #runQueued} runs their batch scripts with {@code /bin/sh}, one at a
+ * time, in this process's environment. A finished job leaves squeue at once and stays in sacct.
  */
 public final class FakeSlurm implements CommandRunner {
   private static final DateTimeFormatter TIME =

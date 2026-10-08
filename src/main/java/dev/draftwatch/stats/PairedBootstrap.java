@@ -9,7 +9,7 @@ import java.util.Random;
 import java.util.function.Function;
 
 /**
- * Paired bootstrap over prompts (ARCHITECTURE.md, "Statistics"; DECISIONS.md D45). The algorithm
+ * Paired bootstrap over prompts (ARCHITECTURE.md, "Statistics"). The algorithm
  * is fixed exactly, so a seed reproduces an interval bit for bit on every JVM and can be checked
  * against an independent implementation ({@code scripts/bootstrap_reference.py}):
  *

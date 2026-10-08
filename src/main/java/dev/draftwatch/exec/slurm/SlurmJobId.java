@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 /**
  * A Slurm job id as {@code sbatch --parsable} prints it: "the job ID number and the cluster name
- * if present … separated by a semicolon" (sbatch.html; DECISIONS.md D58). The cluster, when
+ * if present … separated by a semicolon" (sbatch.html). The cluster, when
  * present, is passed to every later command as {@code --clusters}.
  */
 public final class SlurmJobId {

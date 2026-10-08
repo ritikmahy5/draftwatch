@@ -11,8 +11,8 @@ import java.util.function.Consumer;
  * directly). Created once by {@code Bootstrap} and injected; never accessed statically.
  *
  * <p>Delivery is synchronous, in subscription order, to every subscriber registered for the
- * event's class or a supertype. A subscriber that throws does not stop delivery to the others
- * (DECISIONS.md D48): the exception is written to {@code diagnostics} and published as
+ * event's class or a supertype. A subscriber that throws does not stop delivery to the others:
+ * the exception is written to {@code diagnostics} and published as
  * {@link SubscriberFailed}. A failure while delivering {@code SubscriberFailed} is only written
  * to {@code diagnostics}, so failures cannot recurse.
  */

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""draftwatch's reference measurement harness (MEASUREMENT_CONTRACT.md, ROADMAP M8).
+"""draftwatch's reference measurement harness (MEASUREMENT_CONTRACT.md).
 
 Measures draft-model acceptance against one target checkpoint with vLLM's offline API and
 writes one report at --out. Arguments, exit codes, and the report are defined by
-MEASUREMENT_CONTRACT.md; how vLLM is driven is DECISIONS.md D80-D85.
+MEASUREMENT_CONTRACT.md, "Reference backend" describes how vLLM is driven.
 
 Environment:
   DRAFTWATCH_RECORD_COUNTERS  if set, also write every counter snapshot taken to this file,
-                              for the harness's replay tests (DECISIONS.md D86)
+                              for the harness's replay tests
 """
 
 import os

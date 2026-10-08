@@ -15,7 +15,7 @@ import java.util.TreeMap;
  * per-file content digest (Template Method, so the walk, ordering, and encoding cannot drift
  * apart between methods).
  *
- * <p>Algorithm (DECISIONS.md D23):
+ * <p>Algorithm:
  *
  * <ol>
  *   <li>Find every regular file under the directory, recursively and following symbolic links,

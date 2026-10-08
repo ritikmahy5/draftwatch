@@ -5,7 +5,7 @@ import java.util.Objects;
 
 /**
  * A value the report shows, with where it is stored: a result file and the JSON Pointer of the
- * value in it. Rendered as a link to {@code file#pointer} (DECISIONS.md D68).
+ * value in it. Rendered as a link to {@code file#pointer}.
  */
 public final class Traced {
   private final String text;

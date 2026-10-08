@@ -17,7 +17,7 @@ import java.util.Optional;
  * (0 … window−1) over the last {@code window} comparable measurements is below
  * {@code max_slope} (SPEC.md F5).
  *
- * <p>The window (DECISIONS.md D46): measurements comparable with the current one (the
+ * <p>The window: measurements comparable with the current one (the
  * Comparability guard), one per checkpoint (the current measurement for its own checkpoint, the
  * latest result for any other), at steps up to the current one; the last {@code window} of them
  * in step order. With fewer, the verdict is INSUFFICIENT_DATA.

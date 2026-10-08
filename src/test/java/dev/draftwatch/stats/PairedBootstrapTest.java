@@ -89,7 +89,7 @@ public class PairedBootstrapTest {
         seed);
   }
 
-  // --- ROADMAP M3 "done when": identical intervals for identical inputs and seed -------------
+  // --- identical intervals for identical inputs and seed -------------
 
   @Test
   public void identicalInputsAndSeedGiveIdenticalIntervals() {

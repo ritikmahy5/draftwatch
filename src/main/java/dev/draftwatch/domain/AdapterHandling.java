@@ -4,7 +4,7 @@ package dev.draftwatch.domain;
 public enum AdapterHandling implements WireNamed {
   /** Full checkpoint; nothing was merged. */
   NONE("none"),
-  /** Adapter merged into the base model before measurement (DECISIONS.md D8). */
+  /** Adapter merged into the base model before measurement. */
   MERGED("merged");
 
   private final String wireName;

@@ -7,7 +7,7 @@ import java.util.Optional;
 
 /**
  * Detection for a measurement waits until the baseline checkpoint has a result for its probe
- * (SPEC.md F5, "Missing baseline measurement"; DECISIONS.md D50).
+ * (SPEC.md F5, "Missing baseline measurement").
  */
 public final class DetectionDeferred extends DetectionEvent {
   private final String reason;

@@ -3,7 +3,7 @@ package dev.draftwatch.store;
 import java.util.List;
 import java.util.Optional;
 
-/** Submitted retrain jobs, one per target, draft id, and draft fingerprint (Repository; D77). */
+/** Submitted retrain jobs, one per target, draft id, and draft fingerprint (Repository). */
 public interface RetrainRequestRepository {
   Optional<RetrainRequest> find(String target, String draftId, String draftFingerprint);
 

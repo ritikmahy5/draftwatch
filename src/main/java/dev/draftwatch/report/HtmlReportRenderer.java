@@ -22,9 +22,9 @@ import java.util.function.ToDoubleFunction;
 
 /**
  * Renders a {@link ReportModel} as one static HTML page: inline CSS and SVG, no scripts, no
- * external assets, well-formed XML (DECISIONS.md D70). Every value from a result file is a link
+ * external assets, well-formed XML. Every value from a result file is a link
  * to its file and JSON Pointer, and any other text that would contain a digit is refused while
- * rendering, so the page cannot show an untraced number (D68).
+ * rendering, so the page cannot show an untraced number.
  */
 public final class HtmlReportRenderer {
   private static final int CHART_WIDTH = 560;
@@ -241,7 +241,7 @@ public final class HtmlReportRenderer {
             + "\" /></a>\n");
       }
     }
-    // Axis labels are the extreme data values themselves, each linked (D68).
+    // Axis labels are the extreme data values themselves, each linked.
     svgLabel(traced.apply(high), LEFT - 8, y.applyAsDouble(maxV) + 4, "end");
     if (minV != maxV) {
       svgLabel(traced.apply(low), LEFT - 8, y.applyAsDouble(minV) + 4, "end");
@@ -437,12 +437,12 @@ public final class HtmlReportRenderer {
     html.append(markup);
   }
 
-  /** Escaped text that is not a traced value; it may not contain a digit (D68). */
+  /** Escaped text that is not a traced value; it may not contain a digit. */
   private void text(String s) {
     for (int i = 0; i < s.length(); i++) {
       if (Character.isDigit(s.charAt(i))) {
         throw new IllegalStateException(
-            "the report may not show an untraced number: '" + s + "' (DECISIONS.md D68)");
+            "the report may not show an untraced number: '" + s + "'");
       }
     }
     html.append(esc(s));

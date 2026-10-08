@@ -18,7 +18,7 @@ import org.junit.Test;
 
 /**
  * {@code scripts/record_slurm_fixtures.py} records with exactly the arguments and environment
- * {@link SlurmCli} uses, so its recordings test the real queries (DECISIONS.md D64).
+ * {@link SlurmCli} uses, so its recordings test the real queries.
  */
 public class RecordingScriptTest {
   private static JsonNode printArgv(String jobId) throws Exception {

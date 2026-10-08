@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 /**
  * {@code draftwatch diff <ckptA> <ckptB> --probe <id>}: two stored results side by side, and every
- * provenance field that differs (SPEC.md F7; DECISIONS.md D71). A checkpoint is named by its path
+ * provenance field that differs (SPEC.md F7). A checkpoint is named by its path
  * and matched against stored results, so it may have been deleted since. Read-only: no lock.
  */
 public final class DiffCommand implements CliCommand {
@@ -92,7 +92,7 @@ public final class DiffCommand implements CliCommand {
     }
   }
 
-  /** The latest result of probe {@code probe} at {@code path} (D71). */
+  /** The latest result of probe {@code probe} at {@code path}. */
   private MeasurementDiff.Side side(
       Services s, List<Measurement> all, Path path, String probe) {
     List<Measurement> atPath =

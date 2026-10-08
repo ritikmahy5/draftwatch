@@ -31,8 +31,8 @@ import java.util.function.Function;
 
 /**
  * {@code on_regression: [retrain_draft: { command: [...] }]}: submits the user's training command
- * through the configured Executor (DECISIONS.md D75–D77). At most one retrain is submitted per
- * target, draft id, and draft fingerprint. draftwatch never deploys the new draft (D76).
+ * through the configured Executor. At most one retrain is submitted per
+ * target, draft id, and draft fingerprint. draftwatch never deploys the new draft.
  */
 public final class RetrainDraftAction implements RegressionAction {
   /** The file in the run directory that holds the exact command. */
@@ -112,7 +112,7 @@ public final class RetrainDraftAction implements RegressionAction {
           "retrain_draft: draft " + p.draftId() + " (" + p.draftFingerprint() + ") of target "
               + p.targetName() + " was already sent for retraining as "
               + earlier.get().retrainId() + " after job " + earlier.get().triggeredByJob()
-              + "; not submitting again (DECISIONS.md D77)");
+              + "; not submitting again");
       return;
     }
     String id = "retrain-" + ids.next();
@@ -148,10 +148,10 @@ public final class RetrainDraftAction implements RegressionAction {
         "retrain_draft: submitted training job " + id + " as " + handle + " for draft "
             + p.draftId() + " after the regression of job " + m.jobId() + "; its output is in "
             + runDir + ". draftwatch does not deploy the new draft: point the probe's"
-            + " draft.path at it when it is ready (DECISIONS.md D76)");
+            + " draft.path at it when it is ready");
   }
 
-  /** {@code env DRAFTWATCH_...=... <command>}: the context of D76, never templated. */
+  /** {@code env DRAFTWATCH_...=... <command>}: the regression's context, never templated. */
   List<String> command(Provenance p, DetectionSubject s, Path runDir) {
     Map<String, String> env = new LinkedHashMap<>();
     env.put("DRAFTWATCH_TARGET", p.targetName());

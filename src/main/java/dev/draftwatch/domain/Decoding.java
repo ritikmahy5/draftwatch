@@ -5,7 +5,7 @@ import java.util.Objects;
 
 /**
  * Decoding settings of a probe, passed to the harness as {@code --decoding-json} and echoed
- * back in its report. Exactly the four keys of the report schema (DECISIONS.md D25).
+ * back in its report. Exactly the four keys of the report schema.
  *
  * <p>{@code temperature} is kept as a decimal with trailing zeros stripped, so {@code 0} and
  * {@code 0.0} are the same value here, as they are in the probe hash.

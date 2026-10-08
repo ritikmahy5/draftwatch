@@ -14,7 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Two stored results side by side (SPEC.md F7; DECISIONS.md D71). Every value is the text of the
+ * Two stored results side by side (SPEC.md F7). Every value is the text of the
  * stored JSON value, so nothing shown is computed; a value one side lacks is shown as {@code -}.
  */
 public final class MeasurementDiff {

@@ -41,7 +41,7 @@ public class EventBusTest {
     assertEquals(List.of("all:REGRESSION", "regression", "event", "all:OK", "event"), seen);
   }
 
-  // --- ROADMAP M3 "done when": a throwing subscriber does not stop delivery to the others ---
+  // --- a throwing subscriber does not stop delivery to the others ---
 
   @Test
   public void throwingSubscriberDoesNotStopDeliveryToTheOthers() {

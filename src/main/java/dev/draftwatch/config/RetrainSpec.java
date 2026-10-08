@@ -3,7 +3,7 @@ package dev.draftwatch.config;
 import java.util.List;
 import java.util.Objects;
 
-/** {@code retrain_draft: { command: [...] }}: the training command (DECISIONS.md D75). */
+/** {@code retrain_draft: { command: [...] }}: the training command. */
 public final class RetrainSpec {
   private final List<String> command;
 

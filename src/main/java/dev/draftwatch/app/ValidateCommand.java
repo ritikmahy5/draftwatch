@@ -31,8 +31,7 @@ import java.util.function.Function;
 /**
  * {@code draftwatch validate}: validates the config, resolves every probe (fingerprints its
  * draft, reads its prompt file, computes its probe hash), and prints the resolved probes and
- * trigger chains. Checkpoint directories may not exist yet; that is reported, not an error
- * (DECISIONS.md D28).
+ * trigger chains. Checkpoint directories may not exist yet; that is reported, not an error.
  */
 public final class ValidateCommand implements CliCommand {
   private final ConfigLoader loader;

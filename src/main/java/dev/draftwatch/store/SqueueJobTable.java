@@ -5,7 +5,7 @@ import dev.draftwatch.exec.slurm.SlurmCli;
 import dev.draftwatch.exec.slurm.SlurmJobId;
 import java.util.Objects;
 
-/** {@link SlurmJobTable} asking squeue with the executor's query (DECISIONS.md D58, D62). */
+/** {@link SlurmJobTable} asking squeue with the executor's query. */
 public final class SqueueJobTable implements SlurmJobTable {
   private final SlurmCli cli;
 

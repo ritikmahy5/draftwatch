@@ -11,7 +11,7 @@ import java.util.Optional;
 
 /**
  * Reuses a directory's fingerprint while its weight files are unchanged (Decorator: adds caching
- * to any fingerprinter without changing it; DECISIONS.md D53). A {@code watch} pass would
+ * to any fingerprinter without changing it). A {@code watch} pass would
  * otherwise re-read every checkpoint's sampled blocks, and every base model's, on every pass.
  *
  * <p>"Unchanged" means the same signature: the SHA-256 of every weight file's relative path,

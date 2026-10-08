@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  *       is the step. This is the file and field Hugging Face {@code Trainer} writes
  *       ({@code TRAINER_STATE_NAME}, {@code TrainerState.global_step}). If the file exists but
  *       is unreadable, malformed, or lacks a non-negative integer {@code global_step}, that is
- *       an error, not a reason to fall back (DECISIONS.md D27).
+ *       an error, not a reason to fall back.
  *   <li>Otherwise group 1 of the target's {@code step_regex}, searched for in the directory
  *       name, is the step.
  *   <li>Otherwise the checkpoint is rejected.

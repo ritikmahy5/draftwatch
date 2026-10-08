@@ -71,7 +71,7 @@ public final class Services {
     this.clock = Objects.requireNonNull(clock, "clock");
   }
 
-  /** Retrain jobs submitted by {@code retrain_draft} (DECISIONS.md D77). */
+  /** Retrain jobs submitted by {@code retrain_draft}. */
   public RetrainRequestRepository retrainRequests() {
     return retrainRequests;
   }

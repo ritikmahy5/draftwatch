@@ -18,7 +18,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * {@code draftwatch unschedule}: ends the schedule (DECISIONS.md D63). It removes the token
+ * {@code draftwatch unschedule}: ends the schedule. It removes the token
  * first, so no scheduled job resubmits after this, then cancels the queued ones. A job that is
  * already running finishes its pass.
  */
