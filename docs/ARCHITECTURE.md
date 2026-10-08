@@ -172,7 +172,9 @@ Unknown Slurm states are logged and treated as "no change" for one poll, then FA
 (`UNEXPECTED_EXIT`) if still unknown. `sacct` can lag after a job leaves `squeue`; a job
 missing from both is re-polled before being declared failed. Exit codes come only from sacct,
 `PREEMPTED` without a requeue means the job ended, and the documented states the table omits
-are mapped by their group. "One poll" means a later poll at least 5 minutes after the first
+are mapped like the table's states of the same kind (`SlurmState.Group`): held and queued
+states as SUBMITTED, `SUSPENDED`, `STOPPED` and the other allocation states as RUNNING, and
+`REVOKED` as unresolved. "One poll" means a later poll at least 5 minutes after the first
 unresolved observation, which is recorded in the run directory.
 
 ## Reports

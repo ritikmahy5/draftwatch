@@ -3,7 +3,7 @@
 
 Measures draft-model acceptance against one target checkpoint with vLLM's offline API and
 writes one report at --out. Arguments, exit codes, and the report are defined by
-MEASUREMENT_CONTRACT.md, "Reference backend" describes how vLLM is driven.
+MEASUREMENT_CONTRACT.md; its "Reference backend" section describes how vLLM is driven.
 
 Environment:
   DRAFTWATCH_RECORD_COUNTERS  if set, also write every counter snapshot taken to this file,

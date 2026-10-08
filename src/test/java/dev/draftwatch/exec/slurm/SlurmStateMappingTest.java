@@ -34,7 +34,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /**
- * Every row of ARCHITECTURE.md's Slurm state mapping, and its additions, replayed from a fixture
+ * Every row of ARCHITECTURE.md's Slurm state mapping, and the rules stated below the table, replayed from a fixture
  * through {@link SlurmExecutor} and the real {@link JobPoller}. The fixtures named {@code
  * synthetic_} were written by hand from the documented formats; recorded {@code real_} ones replace
  * them once {@code scripts/record_slurm_fixtures.py} has run on the cluster.
@@ -137,7 +137,7 @@ public class SlurmStateMappingTest {
     return java.time.OffsetDateTime.parse(isoWithOffset).toInstant();
   }
 
-  // --- ARCHITECTURE.md rows ------------------------------------------------------------------
+  // --- ARCHITECTURE.md rows ---------------------------------------------------------------------
 
   @Test
   public void pendingAndConfiguringAreSubmitted() {
@@ -260,7 +260,7 @@ public class SlurmStateMappingTest {
     assertEquals(Optional.of(FailureReason.PREEMPTED_NO_REQUEUE), jobs.get(1).failureReason());
   }
 
-  // --- recorded on Explorer, Slurm 23.11.6 ---------------------------
+  // --- recorded on Explorer, Slurm 23.11.6 ------------------------------------------------------
 
   @Test
   public void recordedCompletedJobSucceedsWithSlurmsTimes() throws IOException {
@@ -330,7 +330,7 @@ public class SlurmStateMappingTest {
         JobState.SUCCEEDED, last(replay("real_10756838_out_of_memory", true)).state());
   }
 
-  // --- the other documented states ---------------------------------------------------------
+  // --- the other documented states --------------------------------------------------------------
 
   @Test
   public void heldStatesStaySubmitted() {
@@ -339,7 +339,7 @@ public class SlurmStateMappingTest {
     }
   }
 
-  // --- unresolved observations ----------------------------------------------------------
+  // --- unresolved observations ------------------------------------------------------------------
 
   @Test
   public void jobBrieflyInNeitherSqueueNorSacctIsWaitedFor() throws IOException {

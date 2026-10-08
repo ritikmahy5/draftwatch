@@ -17,8 +17,8 @@ import org.junit.rules.TemporaryFolder;
 /**
  * The reference harness ({@code python/measure_acceptance.py}) with its vLLM backend replaced by
  * recorded counter snapshots, invoked with the exact arguments the engine passes: its report
- * must pass {@link ReportParser}, the contract's authority. The
- * snapshots are synthetic until the GPU run records real ones.
+ * must pass {@link ReportParser}, the contract's authority. The snapshots are synthetic;
+ * {@code RealReferenceReportTest} checks a real GPU run.
  */
 public class ReferenceHarnessReplayTest {
   @Rule public TemporaryFolder tmp = new TemporaryFolder();

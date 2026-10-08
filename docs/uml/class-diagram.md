@@ -1,7 +1,7 @@
 # Class diagram
 
 Shows the classes that exist in `src/main/java`, not the planned design; for the planned design
-see `ARCHITECTURE.md`. Accessors that only return a field are omitted; every domain and config
+see `../ARCHITECTURE.md`. Accessors that only return a field are omitted; every domain and config
 class is immutable (private final fields, static factory or builder, no setters).
 
 ## app: entry point, CLI commands, orchestration

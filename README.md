@@ -66,7 +66,7 @@ draftwatch report --out report.html
 
 `draftwatch --help` lists every command. `docs/SPEC.md` describes the configuration. For real
 measurements, set `harness.command` to `python/measure_acceptance.py`, run in a Python
-environment with vLLM 0.31.0 (MEASUREMENT_CONTRACT.md, "Reference backend").
+environment with vLLM 0.31.0 (docs/MEASUREMENT_CONTRACT.md, "Reference backend").
 
 ## On a Slurm cluster
 
@@ -94,6 +94,6 @@ scripts/demo.sh               the whole pipeline on this machine with the fake h
 scripts/fake_harness.py       stdlib-only fake harness for tests (synthetic numbers only)
 scripts/bootstrap_reference.py  independent reference for the paired bootstrap (used by tests)
 scripts/record_slurm_fixtures.py  records real Slurm output on the cluster for the tests
-python/measure_acceptance.py  the reference vLLM harness (MEASUREMENT_CONTRACT.md)
+python/measure_acceptance.py  the reference vLLM harness (docs/MEASUREMENT_CONTRACT.md)
 python/tests/                 its unit tests: standard library only, no vLLM or GPU
 ```

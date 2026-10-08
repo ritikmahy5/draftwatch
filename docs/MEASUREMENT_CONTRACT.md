@@ -120,10 +120,11 @@ These counters are engine-wide and cumulative, not per request. To obtain `per_p
 harness generates **one prompt per `generate()` call, sequentially**, and records the counter deltas
 between calls. `position_counts.eligible` is derived as: eligible at position 1 = steps; eligible at
 position k > 1 = accepted at position k − 1. That derivation is valid only if acceptance is
-prefix-based; the harness verifies it per prompt (accepted at position k ≤ accepted at position k −
-1) and exits with code 5 if it fails. It is also exact only if every step proposed all
-`num_speculative_tokens` positions. vLLM 0.31.0 did not shorten drafts in the acceptance run, but
-that is not guaranteed in general. So the harness sets `position_counts_exact` to `true` only when
+prefix-based; the harness verifies it per prompt (accepted at position k ≤ accepted at
+position k − 1) and exits with code 5 if it fails. It is also exact only if every step proposed
+all `num_speculative_tokens` positions. vLLM 0.31.0 did not shorten drafts in the committed A100
+run (`src/test/resources/fixtures/real_10859767_*`), but that is not guaranteed in general. So
+the harness sets `position_counts_exact` to `true` only when
 `proposed == steps · num_speculative_tokens` for every prompt, and `false` otherwise. Detectors
 never use positional acceptance; reports show it with an "approximate" label when the flag is
 `false`.
