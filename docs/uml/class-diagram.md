@@ -5,7 +5,8 @@ Updated at the end of every milestone (DECISIONS.md D1). Shows the classes that 
 Accessors that only return a field are omitted; every domain and config class is immutable
 (private final fields, static factory or builder, no setters).
 
-**As of:** M8: reference harness (Python; the Java classes are unchanged since M7).
+**As of:** after M8. The Java changes since M7 are `hardware` in `Comparability` and the
+report's series key (DECISIONS.md D89), and the design audit (D94).
 
 ## app: entry point, CLI commands, orchestration
 
@@ -686,6 +687,9 @@ classDiagram
   CheckpointInspector ..> CheckpointRejectedException : throws
   StepExtractor ..> StepExtractionException : throws
 ```
+
+`CheckpointSource`'s second implementation is the test double `ScriptedCheckpointSource`
+(`src/test`), which `WatchServiceTest` uses to choose exactly what a poll returns.
 
 ## harness: the measurement contract
 

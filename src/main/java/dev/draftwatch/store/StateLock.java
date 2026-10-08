@@ -53,7 +53,10 @@ public final class StateLock {
     this.clock = Objects.requireNonNull(clock, "clock");
   }
 
-  /** A held lock; closing it releases the lock if it is still ours. */
+  /**
+   * A held lock; closing it releases the lock if it is still ours. Its one mutable field makes
+   * {@code close} idempotent, as {@link AutoCloseable} encourages.
+   */
   public final class Held implements AutoCloseable {
     private final Path file;
     private final byte[] content;

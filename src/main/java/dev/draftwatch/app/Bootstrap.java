@@ -128,6 +128,7 @@ public final class Bootstrap {
   private final Clock clock;
   private final Sleeper sleeper;
   private final CommandRunner slurmCommands;
+  private final MetricCalculator calculator = new MetricCalculator();
 
   public Bootstrap(PrintStream out, PrintStream err) {
     this(out, err, System.getenv(), Clock.systemUTC(), Sleeper.system());
@@ -320,7 +321,6 @@ public final class Bootstrap {
             });
       }
     }
-    MetricCalculator calculator = new MetricCalculator();
     DetectionService detection =
         new DetectionService(
             config, t -> suite(t, calculator), results, baselines, detections, bus, clock);
@@ -385,7 +385,7 @@ public final class Bootstrap {
     Executor executor = executor(config.executor());
     return new MeasurementRunner(
         executor,
-        new JobPoller(executor, new ReportParser(new MetricCalculator()), clock),
+        new JobPoller(executor, new ReportParser(calculator), clock),
         new RetryPolicy(config.executor().maxRetries()),
         jobs,
         results,

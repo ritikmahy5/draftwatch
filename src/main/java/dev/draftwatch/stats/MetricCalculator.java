@@ -14,6 +14,10 @@ import java.util.OptionalDouble;
  * The one implementation of every metric in MEASUREMENT_CONTRACT.md, "Metric definitions". The
  * report parser uses it to check the harness's numbers; detectors use it to recompute metrics on
  * bootstrap resamples. It never rounds.
+ *
+ * <p>It registers the package-private {@link EstimatorStrategy} implementations itself rather than
+ * receiving them from {@code Bootstrap}: the set is closed by the contract's {@link Estimator}
+ * enum, and the constructor fails if an estimator has no strategy (DECISIONS.md D94).
  */
 public final class MetricCalculator {
   private final Map<Estimator, EstimatorStrategy> strategies = new EnumMap<>(Estimator.class);

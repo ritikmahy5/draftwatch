@@ -5,7 +5,7 @@ import java.security.NoSuchAlgorithmException;
 
 /** SHA-256 helpers. Every digest in draftwatch is SHA-256, written as lowercase hex. */
 public final class Sha256 {
-  private static final char[] HEX = "0123456789abcdef".toCharArray();
+  private static final String HEX = "0123456789abcdef";
 
   private Sha256() {}
 
@@ -27,8 +27,8 @@ public final class Sha256 {
   public static String toHex(byte[] bytes) {
     char[] out = new char[bytes.length * 2];
     for (int i = 0; i < bytes.length; i++) {
-      out[2 * i] = HEX[(bytes[i] >> 4) & 0xf];
-      out[2 * i + 1] = HEX[bytes[i] & 0xf];
+      out[2 * i] = HEX.charAt((bytes[i] >> 4) & 0xf);
+      out[2 * i + 1] = HEX.charAt(bytes[i] & 0xf);
     }
     return new String(out);
   }
