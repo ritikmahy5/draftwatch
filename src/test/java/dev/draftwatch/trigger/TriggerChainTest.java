@@ -116,7 +116,7 @@ public class TriggerChainTest {
     return new TriggerChain(rules);
   }
 
-  // --- rules -------------------------------------------------------------------------------
+  // --- rules ------------------------------------------------------------------------------------
 
   @Test
   public void notAlreadyMeasuredRejectsAResultOrAnyJob() {
@@ -167,7 +167,7 @@ public class TriggerChainTest {
         rule.evaluate(checkpoint(750, false), PROBE, history));
   }
 
-  // --- chain -------------------------------------------------------------------------------
+  // --- chain ------------------------------------------------------------------------------------
 
   @Test
   public void firstNonAbstainingRuleDecides() {

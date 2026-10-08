@@ -65,7 +65,7 @@ public class FingerprinterTest {
     }
   }
 
-  // --- identity: weights, not metadata, decide the fingerprint --------------------------------
+  // --- identity: weights, not metadata, decide the fingerprint ----------------------------------
 
   @Test
   public void identicalMetadataButDifferentWeightsGiveDifferentFingerprints() throws IOException {
@@ -85,7 +85,7 @@ public class FingerprinterTest {
     }
   }
 
-  // --- format and scope ------------------------------------------------------------------------
+  // --- format and scope -------------------------------------------------------------------------
 
   @Test
   public void fingerprintIsMethodPrefixPlusHex() throws IOException {
@@ -194,7 +194,7 @@ public class FingerprinterTest {
     }
   }
 
-  // --- sampling at the real geometry ---------------------------------------------------------
+  // --- sampling at the real geometry ------------------------------------------------------------
 
   /** A 9 MiB shard: larger than 8 × 1 MiB, so it is sampled rather than hashed whole. */
   private Path nineMebibyteCheckpoint() throws IOException {

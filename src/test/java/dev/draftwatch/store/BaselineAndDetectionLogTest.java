@@ -36,7 +36,7 @@ public class BaselineAndDetectionLogTest {
     state = tmp.getRoot().toPath().resolve("state");
   }
 
-  // --- baselines -----------------------------------------------------------------------------
+  // --- baselines --------------------------------------------------------------------------------
 
   @Test
   public void baselinesRoundTripPerTarget() {
@@ -77,7 +77,7 @@ public class BaselineAndDetectionLogTest {
     }
   }
 
-  // --- detection log -------------------------------------------------------------------------
+  // --- detection log ----------------------------------------------------------------------------
 
   private static final DetectionSubject SUBJECT =
       DetectionSubject.of(

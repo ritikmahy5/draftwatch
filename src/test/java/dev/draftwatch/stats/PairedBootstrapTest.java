@@ -89,7 +89,7 @@ public class PairedBootstrapTest {
         seed);
   }
 
-  // --- identical intervals for identical inputs and seed -------------
+  // --- identical intervals for identical inputs and seed ----------------------------------------
 
   @Test
   public void identicalInputsAndSeedGiveIdenticalIntervals() {

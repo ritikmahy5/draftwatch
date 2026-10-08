@@ -108,7 +108,7 @@ public class DetectionEndToEndTest {
     assertTrue(alerts, alerts.contains("; result " + resultFile));
   }
 
-  // --- an incomparable pair is ERROR, logged, alerted, not thrown ----
+  // --- an incomparable pair is ERROR, logged, alerted, not thrown -------------------------------
 
   @Test
   public void incomparablePairIsLoggedAndAlertedAndSubmitCarriesOn() throws IOException {
@@ -129,7 +129,7 @@ public class DetectionEndToEndTest {
     assertTrue(cli.out(), cli.out().contains("SUCCEEDED"));
   }
 
-  // --- deferred detection when the baseline has no measurement yet ------------
+  // --- deferred detection when the baseline has no measurement yet ------------------------------
 
   @Test
   public void detectionIsDeferredUntilTheBaselineIsMeasured() throws IOException {
@@ -170,7 +170,7 @@ public class DetectionEndToEndTest {
         Cli.EXIT_FAILURE, cli.run("baseline", "nope", "--config", p.config().toString()));
   }
 
-  // --- a failing subscriber does not stop the others -------------------------------------
+  // --- a failing subscriber does not stop the others --------------------------------------------
 
   @Test
   public void unwritableAlertsLogDoesNotStopConsoleAlertsOrTheDetectionLog() throws IOException {

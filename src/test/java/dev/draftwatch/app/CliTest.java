@@ -68,7 +68,7 @@ public class CliTest {
     return recorder;
   }
 
-  // --- help ----------------------------------------------------------------------------------
+  // --- help -------------------------------------------------------------------------------------
 
   @Test
   public void helpPrintsUsageToStdoutAndExitsZero() {
@@ -134,7 +134,7 @@ public class CliTest {
     assertTrue(out().matches(configLine));
   }
 
-  // --- errors --------------------------------------------------------------------------------
+  // --- errors -----------------------------------------------------------------------------------
 
   @Test
   public void noArgumentsPrintsUsageToStderrAndExitsUsage() {
@@ -179,7 +179,7 @@ public class CliTest {
     new Cli(List.of(), Map.of("status", new Recorder()), outStream, errStream);
   }
 
-  // --- dispatch and --config -----------------------------------------------------------------
+  // --- dispatch and --config --------------------------------------------------------------------
 
   @Test
   public void commandGetsDefaultConfigAndRemainingArguments() {

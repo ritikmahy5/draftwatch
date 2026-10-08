@@ -119,7 +119,7 @@ public class SlurmEndToEndTest {
     assertEquals("SUCCEEDED", state(jobs(p).get(0)));
   }
 
-  // --- a lock whose holder job is gone from squeue is taken over ------
+  // --- a lock whose holder job is gone from squeue is taken over --------------------------------
 
   @Test
   public void lockWhoseSlurmJobIsGoneIsTakenOver() throws IOException {

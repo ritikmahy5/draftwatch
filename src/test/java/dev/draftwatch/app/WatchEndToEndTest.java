@@ -109,7 +109,7 @@ public class WatchEndToEndTest {
     Files.writeString(checkpoint.resolve("DONE"), "");
   }
 
-  // --- checkpoints appearing over time, restarts ---------------------
+  // --- checkpoints appearing over time, restarts ------------------------------------------------
 
   @Test
   public void checkpointsAppearingOverTimeAreMeasuredExactlyAsTheRulesAllow()
@@ -158,7 +158,7 @@ public class WatchEndToEndTest {
     assertEquals(1, jobs(p).size());
   }
 
-  // --- two concurrent watch --once never both submit ---------------
+  // --- two concurrent watch --once never both submit --------------------------------------------
 
   @Test
   public void concurrentWatchProcessesNeverBothSubmit() throws Exception {
@@ -215,7 +215,7 @@ public class WatchEndToEndTest {
     assertEquals(0, jobs(p).size());
   }
 
-  // --- the loop and its limits ---------------------------------------------------------------
+  // --- the loop and its limits ------------------------------------------------------------------
 
   @Test
   public void loopRunsPassesUntilInterrupted() {

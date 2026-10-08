@@ -136,7 +136,7 @@ public class StateLockTest {
     assertRefused(lockFor("node1", 200), state, "which is still running");
   }
 
-  // --- takeover on this host and refusal across hosts -----------------------------------------
+  // --- takeover on this host and refusal across hosts -------------------------------------------
 
   @Test
   public void lockHeldByDeadPidOnThisHostIsTakenOver() throws IOException {
@@ -156,9 +156,9 @@ public class StateLockTest {
     assertEquals("node2", lockFor("node1", 200).holder(state).orElseThrow().host());
   }
 
-  // --- other holders ---------------------------------------------------------------------------
+  // --- other holders ----------------------------------------------------------------------------
 
-  // --- a holder whose Slurm job is gone from squeue ------------------
+  // --- a holder whose Slurm job is gone from squeue ---------------------------------------------
 
   @Test
   public void lockWhoseSlurmJobIsGoneFromSqueueIsTakenOverFromAnyHost() {
@@ -189,7 +189,7 @@ public class StateLockTest {
         "cannot tell whether Slurm job 4242 has ended, so it is not taken over: squeue: Unable");
   }
 
-  // --- the lock appears with its contents ------------------------------------------------
+  // --- the lock appears with its contents -------------------------------------------------------
 
   @Test
   public void racingAcquirersSeeOneHolderAndNeverAPartialLock() throws Exception {

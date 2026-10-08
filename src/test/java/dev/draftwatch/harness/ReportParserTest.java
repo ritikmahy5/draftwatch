@@ -62,7 +62,7 @@ public class ReportParserTest {
     }
   }
 
-  // --- valid reports -----------------------------------------------------------------------
+  // --- valid reports ----------------------------------------------------------------------------
 
   @Test
   public void greedyReportIsReturnedExactlyAsWritten() {
@@ -120,7 +120,7 @@ public class ReportParserTest {
     assertEquals(r, ReportJson.toReport(ReportJson.toJson(r)));
   }
 
-  // --- tolerance ---------------------------------------------------------------------------
+  // --- tolerance --------------------------------------------------------------------------------
 
   @Test
   public void differencesWithinToleranceAreAcceptedAndBeyondAreNot() throws IOException {
@@ -139,7 +139,7 @@ public class ReportParserTest {
     assertEquals(ReportRule.ALPHA, rejection(s).rule());
   }
 
-  // --- cases the fake cannot produce -------------------------------------------------------
+  // --- cases the fake cannot produce ------------------------------------------------------------
 
   @Test
   public void undefinedAlphaIsRejected() throws IOException {

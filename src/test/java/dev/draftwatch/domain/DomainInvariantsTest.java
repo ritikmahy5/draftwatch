@@ -31,7 +31,7 @@ public class DomainInvariantsTest {
     }
   }
 
-  // --- WireNamed ---------------------------------------------------------------------------
+  // --- WireNamed --------------------------------------------------------------------------------
 
   @Test
   public void wireNamesParseExactlyAndCaseSensitively() {
@@ -45,7 +45,7 @@ public class DomainInvariantsTest {
     assertEquals("none | merged", WireNamed.allNames(AdapterHandling.class));
   }
 
-  // --- Names -------------------------------------------------------------------------------
+  // --- Names ------------------------------------------------------------------------------------
 
   @Test
   public void namesAllowPathSafeIdentifiersOnly() {
@@ -58,7 +58,7 @@ public class DomainInvariantsTest {
     assertFalse(Names.isValid(null));
   }
 
-  // --- Decoding ----------------------------------------------------------------------------
+  // --- Decoding ---------------------------------------------------------------------------------
 
   @Test
   public void decodingTreatsZeroAndZeroPointZeroAsEqual() {
@@ -85,7 +85,7 @@ public class DomainInvariantsTest {
     assertRejected(() -> Decoding.of(BigDecimal.ONE, 8, 3, " "), "dtype");
   }
 
-  // --- Probe -------------------------------------------------------------------------------
+  // --- Probe ------------------------------------------------------------------------------------
 
   private static Probe probe(List<Integer> seeds) {
     return Probe.of(
@@ -132,7 +132,7 @@ public class DomainInvariantsTest {
         "probe id 'bad id'");
   }
 
-  // --- ResolvedProbe -----------------------------------------------------------------------
+  // --- ResolvedProbe ----------------------------------------------------------------------------
 
   @Test
   public void resolvedProbeRejectsPromptSetForAnotherFile() {
@@ -143,7 +143,7 @@ public class DomainInvariantsTest {
         "is not the probe's file");
   }
 
-  // --- Target ------------------------------------------------------------------------------
+  // --- Target -----------------------------------------------------------------------------------
 
   private static Target.Builder target(CheckpointType type) {
     return Target.builder().name("run").checkpointDirs(List.of(DIR)).checkpointType(type);
@@ -189,7 +189,7 @@ public class DomainInvariantsTest {
         target(CheckpointType.FULL).stepRegex(Pattern.compile("step(\\d+)")).build());
   }
 
-  // --- Checkpoint --------------------------------------------------------------------------
+  // --- Checkpoint -------------------------------------------------------------------------------
 
   @Test
   public void checkpointRequiresStepAndMatchingBaseModel() {
@@ -204,7 +204,7 @@ public class DomainInvariantsTest {
         () -> noStep.step(1).type(CheckpointType.ADAPTER).build(), "base model is required");
   }
 
-  // --- Provenance and Measurement -----------------------------------------------------------
+  // --- Provenance and Measurement ---------------------------------------------------------------
 
   @Test
   public void provenanceRejectsEndBeforeStart() {

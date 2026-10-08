@@ -90,7 +90,7 @@ public class ConfigValidatorTest {
     assertTrue(errors.get(0).toString(), errors.get(0).message().contains(fragment));
   }
 
-  // --- the valid config ---------------------------------------------------------------------
+  // --- the valid config -------------------------------------------------------------------------
 
   @Test
   public void validConfigResolvesPathsAgainstConfigDirectory() {
@@ -184,7 +184,7 @@ public class ConfigValidatorTest {
     assertEquals(Optional.empty(), valid().executor().slurm());
   }
 
-  // --- validation rules -----------------------------------------------------------------------
+  // --- validation rules -------------------------------------------------------------------------
 
   @Test
   public void unknownEstimatorIsRejected() {
@@ -237,7 +237,7 @@ public class ConfigValidatorTest {
         "must be one of chain, was 'tree'; tree drafting is not supported");
   }
 
-  // --- trigger chain -------------------------------------------------------------------------
+  // --- trigger chain ----------------------------------------------------------------------------
 
   @Test
   public void chainWithoutNotAlreadyMeasuredIsRejected() {
@@ -293,7 +293,7 @@ public class ConfigValidatorTest {
     assertOnlyError("targets[0].triggers", "omit the key to use the default chain");
   }
 
-  // --- detectors -----------------------------------------------------------------------------
+  // --- detectors --------------------------------------------------------------------------------
 
   @Test
   public void detectorParametersAreRangeChecked() {
@@ -359,7 +359,7 @@ public class ConfigValidatorTest {
     assertTrue(errors.get(1).message().contains("unknown key"));
   }
 
-  // --- targets -------------------------------------------------------------------------------
+  // --- targets ----------------------------------------------------------------------------------
 
   @Test
   public void fullCheckpointWithBaseModelIsRejected() {
@@ -478,7 +478,7 @@ public class ConfigValidatorTest {
     assertOnlyError("targets[0].checkpoint_dirs[0]", "'~' is not expanded");
   }
 
-  // --- probes --------------------------------------------------------------------------------
+  // --- probes -----------------------------------------------------------------------------------
 
   @Test
   public void decodingAcceptsOnlyTheContractKeys() {
@@ -518,7 +518,7 @@ public class ConfigValidatorTest {
     assertOnlyError("probes[1].seeds", "must not be empty");
   }
 
-  // --- executor and harness ------------------------------------------------------------------
+  // --- executor and harness ---------------------------------------------------------------------
 
   @Test
   public void slurmExecutorRequiresSlurmBlockAndRequeuePolicy() {
@@ -630,7 +630,7 @@ public class ConfigValidatorTest {
     assertOnlyError("harness.command", "must not be empty");
   }
 
-  // --- document shape ------------------------------------------------------------------------
+  // --- document shape ---------------------------------------------------------------------------
 
   @Test
   public void unknownKeysAreRejectedAtEveryLevel() {

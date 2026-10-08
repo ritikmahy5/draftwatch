@@ -43,7 +43,7 @@ public class DetectorTest {
         .evaluate(current, Optional.of(base), List.of(base, current));
   }
 
-  // --- threshold detectors -------------------------------------------------------------------
+  // --- threshold detectors ----------------------------------------------------------------------
 
   @Test
   public void absoluteDropComparesSeedMeans() {
@@ -76,7 +76,7 @@ public class DetectorTest {
         d.evaluate(at("c", 200, 25), Optional.of(base), List.of()).kind()); // drop 0.075
   }
 
-  // --- the guard and missing baselines ------------------------------------------------------
+  // --- the guard and missing baselines ----------------------------------------------------------
 
   @Test
   public void incomparablePairIsAnErrorNamingTheField() {
@@ -111,7 +111,7 @@ public class DetectorTest {
     assertEquals(DetectorVerdict.Kind.INSUFFICIENT_DATA, v.kind());
   }
 
-  // --- trend -------------------------------------------------------------------------------
+  // --- trend ------------------------------------------------------------------------------------
 
   private static TrendDetector trend(int window, double maxSlope) {
     return new TrendDetector(TrendSpec.of(Metric.ALPHA, window, maxSlope));
@@ -155,7 +155,7 @@ public class DetectorTest {
     assertTrue(v.explanation(), v.explanation().endsWith("; 1 incomparable excluded"));
   }
 
-  // --- bootstrap and suite -------------------------------------------------------------------
+  // --- bootstrap and suite ----------------------------------------------------------------------
 
   @Test
   public void bootstrapReportsItsInterval() {

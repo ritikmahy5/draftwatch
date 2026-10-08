@@ -84,7 +84,7 @@ public class SubmitCommandTest {
     return m.group(1);
   }
 
-  // --- every SPEC F4 provenance field is populated ---------------
+  // --- every SPEC F4 provenance field is populated ----------------------------------------------
 
   @Test
   public void submitStoresAMeasurementWithEveryProvenanceFieldPopulated() throws IOException {
@@ -161,7 +161,7 @@ public class SubmitCommandTest {
     assertEquals("results are append-only, keyed by job", 2, resultFiles(p).size());
   }
 
-  // --- failures ------------------------------------------------------------------------
+  // --- failures ---------------------------------------------------------------------------------
 
   @Test
   public void harnessOutOfMemoryFailsOnceAndShowsInStatus() throws IOException {
