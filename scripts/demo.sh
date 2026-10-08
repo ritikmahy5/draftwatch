@@ -72,6 +72,7 @@ YAML
 config synthetic_three_prompts.json
 run validate
 checkpoint 100
+settle
 checkpoint 200
 settle
 echo; echo "# the fake harness now reports lower synthetic counts"
