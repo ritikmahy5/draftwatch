@@ -52,7 +52,7 @@ public final class SlurmCli {
     this.runner = Objects.requireNonNull(runner, "runner");
   }
 
-  // --- the exact argv of each command --------------------------------------------------
+  // --- the exact argv of each command ------------------------------------------------------
 
   /** {@code sbatch --parsable <options> <script> <args...>}. */
   public static List<String> sbatchArgv(List<String> options, Path script, List<String> args) {

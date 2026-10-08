@@ -283,7 +283,7 @@ public final class SlurmExecutor implements Executor {
     return ExecutorStatus.exited(code, r.start(), r.end());
   }
 
-  // --- unresolved observations -------------------------------------------------------
+  // --- unresolved observations -------------------------------------------------------------
 
   /**
    * Records one unresolved observation. Within the grace period nothing changes; after it, the

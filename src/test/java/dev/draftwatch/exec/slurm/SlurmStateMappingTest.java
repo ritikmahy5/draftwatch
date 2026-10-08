@@ -34,10 +34,11 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /**
- * Every row of ARCHITECTURE.md's Slurm state mapping, and the rules stated below the table, replayed from a fixture
- * through {@link SlurmExecutor} and the real {@link JobPoller}. The fixtures named {@code
- * synthetic_} were written by hand from the documented formats; recorded {@code real_} ones replace
- * them once {@code scripts/record_slurm_fixtures.py} has run on the cluster.
+ * Every row of ARCHITECTURE.md's Slurm state mapping, and the rules stated below the table,
+ * replayed from a fixture through {@link SlurmExecutor} and the real {@link JobPoller}. The
+ * fixtures named {@code synthetic_} were written by hand from the documented formats; recorded
+ * {@code real_} ones replace them once {@code scripts/record_slurm_fixtures.py} has run on the
+ * cluster.
  */
 public class SlurmStateMappingTest {
   @Rule public TemporaryFolder tmp = new TemporaryFolder();
