@@ -6,7 +6,7 @@ import dev.draftwatch.domain.Metric;
 import java.util.Objects;
 
 /**
- * {@code noise_floor}: a regression when baseline − current > k · √2 · sigma (SPEC.md F5). √2
+ * {@code noise_floor}: a regression when baseline − current &gt; k · √2 · sigma (SPEC.md F5). √2
  * turns {@code sigma}, the standard deviation of one measurement, into that of a difference of
  * two.
  */

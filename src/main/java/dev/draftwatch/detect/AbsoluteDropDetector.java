@@ -5,7 +5,7 @@ import dev.draftwatch.domain.Measurement;
 import dev.draftwatch.domain.Metric;
 import java.util.Objects;
 
-/** {@code absolute_drop}: a regression when baseline − current > max_drop (SPEC.md F5). */
+/** {@code absolute_drop}: a regression when baseline − current &gt; max_drop (SPEC.md F5). */
 public final class AbsoluteDropDetector extends BaselineDetector {
   private final AbsoluteDropSpec spec;
 

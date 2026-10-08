@@ -4,7 +4,7 @@ import dev.draftwatch.domain.Metric;
 import java.util.Objects;
 
 /**
- * {@code noise_floor(metric, k, sigma)}: regression when baseline − current > k · √2 · sigma.
+ * {@code noise_floor(metric, k, sigma)}: regression when baseline − current &gt; k · √2 · sigma.
  * {@code sigma} is the standard deviation of a single measurement from an external source, such
  * as replicate training runs; it cannot be estimated from one run, so it has
  * no default.
@@ -20,7 +20,7 @@ public final class NoiseFloorSpec implements DetectorSpec {
     this.sigma = sigma;
   }
 
-  /** @throws IllegalArgumentException unless {@code k} and {@code sigma} are finite and > 0 */
+  /** @throws IllegalArgumentException unless {@code k} and {@code sigma} are finite and &gt; 0 */
   public static NoiseFloorSpec of(Metric metric, double k, double sigma) {
     Objects.requireNonNull(metric, "metric");
     if (!(k > 0) || Double.isInfinite(k)) {

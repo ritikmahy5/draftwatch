@@ -3,7 +3,7 @@ package dev.draftwatch.config;
 import dev.draftwatch.domain.Metric;
 import java.util.Objects;
 
-/** {@code absolute_drop(metric, max_drop)}: regression when baseline − current > max_drop. */
+/** {@code absolute_drop(metric, max_drop)}: regression when baseline − current &gt; max_drop. */
 public final class AbsoluteDropSpec implements DetectorSpec {
   private final Metric metric;
   private final double maxDrop;
