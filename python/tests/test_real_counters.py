@@ -9,7 +9,7 @@ from replay_backend import ReplayBackend
 
 import measure_acceptance
 
-PROMPTS = os.path.join(_paths.FIXTURES, "m8_acceptance_prompts.jsonl")
+PROMPTS = os.path.join(_paths.FIXTURES, "acceptance_prompts.jsonl")
 NAME = re.compile(r"real_(\d+)_counters(_[a-z]+)?\.json$")
 
 

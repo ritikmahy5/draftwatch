@@ -40,7 +40,7 @@ public class RealReferenceReportTest {
   private static final Path FIXTURES = Paths.get("src/test/resources/fixtures");
   private static final Pattern REPORT = Pattern.compile("real_(\\d+)_report(_[a-z]+)?\\.json");
   /** The prompt file of the acceptance run, committed byte for byte. */
-  static final Path PROMPTS = FIXTURES.resolve("m8_acceptance_prompts.jsonl");
+  static final Path PROMPTS = FIXTURES.resolve("acceptance_prompts.jsonl");
 
   private final ObjectMapper json = new ObjectMapper();
 
