@@ -34,7 +34,8 @@ import org.junit.Test;
 /**
  * A report the reference harness wrote on a real GPU run passes
  * {@link ReportParser}, checked against the arguments that run was given (recorded beside it as
- * {@code real_<job>_run*.json}). Skipped until such a run has been committed.
+ * {@code real_<job>_run*.json}, where the cluster username in paths is replaced by {@code user}).
+ * Skipped until such a run has been committed.
  */
 public class RealReferenceReportTest {
   private static final Path FIXTURES = Paths.get("src/test/resources/fixtures");
