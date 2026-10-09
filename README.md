@@ -97,3 +97,7 @@ scripts/record_slurm_fixtures.py  records real Slurm output on the cluster for t
 python/measure_acceptance.py  the reference vLLM harness (docs/MEASUREMENT_CONTRACT.md)
 python/tests/                 its unit tests: standard library only, no vLLM or GPU
 ```
+
+## License
+
+MIT; see [LICENSE](LICENSE).
