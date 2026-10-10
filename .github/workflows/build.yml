@@ -1,0 +1,23 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "11"
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Build and test (Java and Python)
+        run: ./gradlew build
+      - name: Run the demo with the fake harness
+        run: scripts/demo.sh
