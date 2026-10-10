@@ -16,7 +16,7 @@ import java.util.List;
  * holds the squeue and sacct results of one poll, with the time it was made. {@code synthetic_}
  * files were written by hand from the documented formats; {@code real_} files were recorded by
  * {@code scripts/record_slurm_fixtures.py}, with the cluster username in paths replaced by
- * {@code user}.
+ * {@code user} and the numeric user id in {@code CANCELLED by <uid>} replaced by {@code 1001}.
  */
 public final class SlurmScenario {
   /** One poll's recorded results. */
