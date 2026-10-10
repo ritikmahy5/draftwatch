@@ -185,7 +185,8 @@ public class SlurmStateMappingTest {
   public void failedBySignalIsAnUnexpectedExit() {
     Job job = last(replay("synthetic_failed_signal", true));
     assertEquals(Optional.of(FailureReason.UNEXPECTED_EXIT), job.failureReason());
-    assertTrue(job.lastChange().cause(), job.lastChange().cause().contains("FAILED, exit code 0:9"));
+    assertTrue(
+        job.lastChange().cause(), job.lastChange().cause().contains("FAILED, exit code 0:9"));
   }
 
   @Test

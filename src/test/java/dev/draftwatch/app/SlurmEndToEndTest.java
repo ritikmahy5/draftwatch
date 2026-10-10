@@ -138,7 +138,8 @@ public class SlurmEndToEndTest {
     run(p, "submit", "run", p.checkpoint(100, (byte) 1).toString()); // job 9001, PENDING
     writeLock(p, "compute-17", "9001");
     assertEquals(Cli.EXIT_FAILURE, run(p, "watch", "--once"));
-    assertTrue(cli.err(), cli.err().contains("which is still running (squeue lists Slurm job 9001)"));
+    assertTrue(
+        cli.err(), cli.err().contains("which is still running (squeue lists Slurm job 9001)"));
   }
 
   @Test

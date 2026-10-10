@@ -113,7 +113,8 @@ public class SlurmExecutorTest {
     assertTrue(options.contains("--no-requeue"));
     assertFalse(options.contains("--requeue"));
     for (String o : options) {
-      assertFalse(o, o.startsWith("--partition") || o.startsWith("--gres") || o.startsWith("--time"));
+      assertFalse(
+          o, o.startsWith("--partition") || o.startsWith("--gres") || o.startsWith("--time"));
     }
   }
 
