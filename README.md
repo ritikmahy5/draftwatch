@@ -1,5 +1,7 @@
 # draftwatch
 
+[![build](https://github.com/ritikmahy5/draftwatch/actions/workflows/build.yml/badge.svg)](https://github.com/ritikmahy5/draftwatch/actions/workflows/build.yml)
+
 Continuous integration for speculative decoding.
 
 Fine-tuning or RL post-training a target model can silently erode how often its draft model's
