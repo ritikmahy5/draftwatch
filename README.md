@@ -91,6 +91,7 @@ environment with vLLM 0.31.0 (docs/MEASUREMENT_CONTRACT.md, "Reference backend")
 docs/SPEC.md                  what draftwatch does (features, CLI, config)
 docs/ARCHITECTURE.md          Java design: modules, interfaces, patterns
 docs/MEASUREMENT_CONTRACT.md  Java ⇄ Python harness boundary and metric definitions
+docs/EVALUATION.md            plan for evaluating draftwatch on real fine-tuning runs
 docs/uml/class-diagram.md     Mermaid class diagram of the current code
 scripts/demo.sh               the whole pipeline on this machine with the fake harness
 scripts/fake_harness.py       stdlib-only fake harness for tests (synthetic numbers only)
