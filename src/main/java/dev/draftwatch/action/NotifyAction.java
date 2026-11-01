@@ -1,6 +1,7 @@
 package dev.draftwatch.action;
 
 import dev.draftwatch.events.RegressionDetected;
+import dev.draftwatch.notify.AlertFormat;
 import dev.draftwatch.notify.Notifier;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +29,7 @@ public final class NotifyAction implements RegressionAction {
     List<String> failures = new ArrayList<>();
     for (Notifier notifier : notifiers) {
       try {
-        notifier.notify(event);
+        notifier.notify(AlertFormat.line(event));
       } catch (Exception e) {
         failures.add(notifier.name() + ": " + e);
       }

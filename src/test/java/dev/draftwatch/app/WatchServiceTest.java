@@ -13,6 +13,7 @@ import dev.draftwatch.domain.Checkpoint;
 import dev.draftwatch.domain.CheckpointType;
 import dev.draftwatch.events.EventBus;
 import dev.draftwatch.exec.ExecutorStatus;
+import dev.draftwatch.exec.FailureReason;
 import dev.draftwatch.exec.JobPoller;
 import dev.draftwatch.exec.RetryPolicy;
 import dev.draftwatch.fingerprint.SampledBlockFingerprinter;
@@ -142,6 +143,19 @@ public class WatchServiceTest {
         Map.of("not_already_measured", 2, "max_pending(2)", 1), second.notMeasuredByRule());
     assertEquals(2, source.polls());
     assertEquals(2, executor.submitted().size());
+  }
+
+  @Test
+  public void aRefusedSubmissionIsReportedAsFinishedNotSubmitted() throws Exception {
+    WatchService watch = watch(probe("chat", "draft"), "chat");
+    executor.failSubmissions();
+    source.returns(List.of(checkpoint(100)), List.of());
+    PassReport report = watch.pass();
+    assertEquals(List.of(), steps(report));
+    assertEquals(1, report.finished().size());
+    assertEquals(
+        Optional.of(FailureReason.SUBMISSION_FAILED), report.finished().get(0).failureReason());
+    assertEquals(0, report.stillActive());
   }
 
   @Test

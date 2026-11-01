@@ -131,6 +131,9 @@ partition with several GPU models, name the model in the job's resources (for ex
 
 ### F6 — Alerts and actions
 - Notifiers: console and append-only `alerts.log`. No network notifiers in v1.
+- Besides detection errors and regressions, a measurement that fails for good is alerted: its
+  job is FAILED and no retry is left, including a submission the executor refused. Its
+  checkpoint has no result for that probe until `draftwatch submit` measures it again.
 - Actions on regression (optional, per target): `notify`; `retrain_draft` submits a
   user-configured training command through the same executor abstraction, at most once per
   target and draft version, with the regression's context in `DRAFTWATCH_*` environment

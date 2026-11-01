@@ -32,6 +32,7 @@ import dev.draftwatch.events.BaselinePinned;
 import dev.draftwatch.events.DetectionError;
 import dev.draftwatch.events.DetectionEvent;
 import dev.draftwatch.events.EventBus;
+import dev.draftwatch.events.MeasurementFailed;
 import dev.draftwatch.events.MeasurementStored;
 import dev.draftwatch.events.RegressionDetected;
 import dev.draftwatch.exec.Executor;
@@ -51,6 +52,7 @@ import dev.draftwatch.fingerprint.SampledBlockFingerprinter;
 import dev.draftwatch.harness.ProbeResolver;
 import dev.draftwatch.harness.PromptSetReader;
 import dev.draftwatch.harness.ReportParser;
+import dev.draftwatch.notify.AlertFormat;
 import dev.draftwatch.notify.ConsoleNotifier;
 import dev.draftwatch.notify.LogFileNotifier;
 import dev.draftwatch.notify.Notifier;
@@ -305,7 +307,14 @@ public final class Bootstrap {
             new ConsoleNotifier(err),
             new LogFileNotifier(config.stateDir().resolve(LogFileNotifier.FILE)));
     for (Notifier notifier : notifiers) {
-      bus.subscribe(DetectionError.class, "alert " + notifier.name(), notifier::notify);
+      bus.subscribe(
+          DetectionError.class,
+          "alert " + notifier.name(),
+          e -> notifier.notify(AlertFormat.line(e)));
+      bus.subscribe(
+          MeasurementFailed.class,
+          "alert " + notifier.name(),
+          e -> notifier.notify(AlertFormat.line(e)));
     }
     for (TargetConfig target : config.targets()) {
       for (ActionSpec spec : target.onRegression()) {

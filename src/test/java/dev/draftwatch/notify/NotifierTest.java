@@ -57,7 +57,7 @@ public class NotifierTest {
   public void consoleNotifierPrintsAnAlertLine() {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     PrintStream stream = new PrintStream(bytes, true, StandardCharsets.UTF_8);
-    new ConsoleNotifier(stream).notify(regression());
+    new ConsoleNotifier(stream).notify(LINE);
     assertEquals("ALERT " + LINE + "\n", bytes.toString(StandardCharsets.UTF_8));
   }
 
@@ -65,8 +65,8 @@ public class NotifierTest {
   public void logFileNotifierAppendsOneLinePerAlert() throws IOException {
     Path log = tmp.getRoot().toPath().resolve("state").resolve(LogFileNotifier.FILE);
     LogFileNotifier notifier = new LogFileNotifier(log);
-    notifier.notify(regression());
-    notifier.notify(regression());
+    notifier.notify(LINE);
+    notifier.notify(LINE);
     assertEquals(LINE + "\n" + LINE + "\n", Files.readString(log));
   }
 
@@ -81,7 +81,7 @@ public class NotifierTest {
           }
 
           @Override
-          public void notify(DetectionEvent event) throws IOException {
+          public void notify(String alertLine) throws IOException {
             throw new IOException("disk full");
           }
         };
@@ -93,8 +93,8 @@ public class NotifierTest {
           }
 
           @Override
-          public void notify(DetectionEvent event) {
-            delivered.add(event.kind());
+          public void notify(String alertLine) {
+            delivered.add(alertLine);
           }
         };
     try {
@@ -103,7 +103,7 @@ public class NotifierTest {
     } catch (ActionFailedException e) {
       assertEquals("notify failed for broken: java.io.IOException: disk full", e.getMessage());
     }
-    assertEquals(List.of("REGRESSION"), delivered);
+    assertEquals(List.of(LINE), delivered);
     assertTrue(new NotifyAction(List.of()).name().equals("notify"));
   }
 }

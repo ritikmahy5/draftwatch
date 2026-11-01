@@ -1,6 +1,5 @@
 package dev.draftwatch.notify;
 
-import dev.draftwatch.events.DetectionEvent;
 import java.io.PrintStream;
 import java.util.Objects;
 
@@ -18,7 +17,7 @@ public final class ConsoleNotifier implements Notifier {
   }
 
   @Override
-  public void notify(DetectionEvent event) {
-    stream.println("ALERT " + AlertFormat.line(event));
+  public void notify(String alertLine) {
+    stream.println("ALERT " + alertLine);
   }
 }

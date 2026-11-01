@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.draftwatch.fingerprint.SampledBlockFingerprinter;
+import dev.draftwatch.notify.LogFileNotifier;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Files;
@@ -172,6 +173,17 @@ public class SubmitCommandTest {
     cli.run("status", "--config", p.config().toString());
     assertTrue(cli.out(), cli.out().contains("failed in the last 7 days: 1"));
     assertTrue(cli.out(), cli.out().contains("out_of_memory: harness exited with code 4"));
+  }
+
+  @Test
+  public void aMeasurementThatFailsForGoodIsAlerted() throws IOException {
+    Project p = project().fakeEnv("DRAFTWATCH_FAKE_EXIT", "4").maxRetries(3).write();
+    assertEquals(Cli.EXIT_FAILURE, submit(p, p.checkpoint(100, (byte) 1)));
+    List<String> alerts = Files.readAllLines(p.state().resolve(LogFileNotifier.FILE));
+    assertEquals(1, alerts.size());
+    assertTrue(alerts.get(0), alerts.get(0).contains(" FAILED target "));
+    assertTrue(alerts.get(0), alerts.get(0).contains("out_of_memory: harness exited with code 4"));
+    assertTrue(cli.err(), cli.err().contains("ALERT "));
   }
 
   @Test

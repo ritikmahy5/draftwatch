@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import dev.draftwatch.domain.Measurement;
 import dev.draftwatch.domain.Provenance;
 import dev.draftwatch.events.EventBus;
+import dev.draftwatch.events.MeasurementFailed;
 import dev.draftwatch.events.MeasurementStored;
 import dev.draftwatch.exec.Executor;
 import dev.draftwatch.exec.FailureReason;
@@ -42,6 +43,7 @@ public class MeasurementRunnerTest {
   private final InMemoryJobRepository jobs = new InMemoryJobRepository();
   private final InMemoryResultRepository results = new InMemoryResultRepository();
   private final List<MeasurementStored> stored = new ArrayList<>();
+  private final List<MeasurementFailed> failed = new ArrayList<>();
   private final EventBus bus = new EventBus(message -> {}, Clock.systemUTC());
   private Path state;
   private ReportScenario scenario;
@@ -49,6 +51,7 @@ public class MeasurementRunnerTest {
   @Before
   public void setUp() {
     bus.subscribe(MeasurementStored.class, "recorder", stored::add);
+    bus.subscribe(MeasurementFailed.class, "failure recorder", failed::add);
     Path dir = tmp.getRoot().toPath();
     state = dir.resolve("state");
     scenario = ReportScenario.sampledAdapter(dir);
@@ -159,6 +162,35 @@ public class MeasurementRunnerTest {
     Job job = run(runner(new ScriptedExecutor().failSubmissions(), 5, Map.of()));
     assertEquals(Optional.of(FailureReason.SUBMISSION_FAILED), job.failureReason());
     assertEquals(1, job.attempt());
+  }
+
+  @Test
+  public void refusedSubmissionIsReportedAsAFailedMeasurement() throws Exception {
+    Job job = run(runner(new ScriptedExecutor().failSubmissions(), 5, Map.of()));
+    assertEquals(1, failed.size());
+    assertEquals(job, failed.get(0).job());
+    assertEquals(Optional.of(FailureReason.SUBMISSION_FAILED), failed.get(0).job().failureReason());
+  }
+
+  @Test
+  public void failureThatCannotBeRetriedIsReportedOnce() throws Exception {
+    Job job =
+        run(runner(new FakeExecutor(Clock.systemUTC()), 3, Map.of("DRAFTWATCH_FAKE_EXIT", "3")));
+    assertEquals(1, failed.size());
+    assertEquals(job, failed.get(0).job());
+  }
+
+  @Test
+  public void retryableFailureIsReportedOnlyWhenRetriesRunOut() throws Exception {
+    run(runner(new FakeExecutor(Clock.systemUTC()), 2, Map.of("DRAFTWATCH_FAKE_EXIT", "1")));
+    assertEquals(1, failed.size());
+    assertEquals(3, failed.get(0).job().attempt());
+  }
+
+  @Test
+  public void successfulJobReportsNoFailure() throws Exception {
+    run(runner(new FakeExecutor(Clock.systemUTC()), 0, Map.of()));
+    assertTrue(failed.isEmpty());
   }
 
   @Test

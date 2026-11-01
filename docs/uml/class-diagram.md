@@ -151,7 +151,7 @@ classDiagram
   DetectionService --> BaselineRepository
   DetectionService --> DetectionLog
   DetectionService --> EventBus
-  MeasurementRunner --> EventBus : publishes MeasurementStored
+  MeasurementRunner --> EventBus : publishes MeasurementStored and MeasurementFailed
   ValidateCommand ..> Services
   SubmitCommand ..> Services
   StatusCommand ..> Services
@@ -1304,6 +1304,10 @@ classDiagram
     -measurement Measurement
     -resultFile Path
   }
+  class MeasurementFailed {
+    <<final>>
+    -job Job
+  }
   class SubscriberFailed {
     <<final>>
     -subscriber String
@@ -1336,6 +1340,7 @@ classDiagram
   class DetectionDeferred { <<final>> }
 
   Event <|.. MeasurementStored
+  Event <|.. MeasurementFailed
   Event <|.. SubscriberFailed
   Event <|.. BaselinePinned
   Event <|.. DetectionEvent
@@ -1437,7 +1442,7 @@ classDiagram
   class Notifier {
     <<interface, Strategy>>
     +name() String
-    +notify(DetectionEvent) void
+    +notify(String alertLine) void
   }
   class ConsoleNotifier { <<final>> }
   class LogFileNotifier {
@@ -1447,6 +1452,7 @@ classDiagram
   class AlertFormat {
     <<final>>
     +line(DetectionEvent)$ String
+    +line(MeasurementFailed)$ String
   }
   class RegressionAction {
     <<interface, Command>>
@@ -1482,10 +1488,9 @@ classDiagram
 
   Notifier <|.. ConsoleNotifier
   Notifier <|.. LogFileNotifier
-  ConsoleNotifier ..> AlertFormat : uses
-  LogFileNotifier ..> AlertFormat : uses
   RegressionAction <|.. NotifyAction
   NotifyAction o-- "*" Notifier
+  NotifyAction ..> AlertFormat : formats the regression
   NotifyAction ..> ActionFailedException : throws
   RegressionAction <|.. RetrainDraftAction
   RetrainDraftAction --> Executor : submits the training job

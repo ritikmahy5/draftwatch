@@ -87,9 +87,10 @@ public final class WatchService {
     List<Job> baselineSubmitted = new ArrayList<>();
     List<Discovery.Skipped> skipped = new ArrayList<>();
     List<PassReport.Submitted> submitted = new ArrayList<>();
+    List<Job> finished = new ArrayList<>();
     Map<String, Integer> notMeasured = new TreeMap<>();
     for (TargetConfig target : config.targets()) {
-      measureBaseline(target, probes, baselineSubmitted, errors);
+      measureBaseline(target, probes, baselineSubmitted, finished, errors);
       Discovery discovery = sources.apply(target).poll();
       skipped.addAll(discovery.skipped());
       TriggerChain chain = chains.apply(target);
@@ -102,16 +103,19 @@ public final class WatchService {
           TriggerChain.Outcome outcome = chain.decide(checkpoint, probe, history);
           if (outcome.accepted()) {
             Job job = runner.submit(runner.create(checkpoint, probe));
-            submitted.add(
-                new PassReport.Submitted(
-                    job, outcome.rule().map(r -> r + ": ").orElse("") + outcome.reason()));
+            if (runner.isDone(job)) {
+              finished.add(job); // refused by the executor: it never ran
+            } else {
+              submitted.add(
+                  new PassReport.Submitted(
+                      job, outcome.rule().map(r -> r + ": ").orElse("") + outcome.reason()));
+            }
           } else {
             notMeasured.merge(outcome.rule().orElse("?"), 1, Integer::sum);
           }
         }
       }
     }
-    List<Job> finished = new ArrayList<>();
     int active = 0;
     for (Job job : jobs.all()) {
       if (runner.isDone(job)) {
@@ -158,6 +162,7 @@ public final class WatchService {
       TargetConfig target,
       Map<String, ResolvedProbe> probes,
       List<Job> submitted,
+      List<Job> finished,
       List<String> errors) {
     Baseline baseline = baselines.get(target.name()).orElse(null);
     if (baseline == null) {
@@ -189,7 +194,8 @@ public final class WatchService {
           return;
         }
       }
-      submitted.add(runner.submit(runner.create(checkpoint, probe)));
+      Job job = runner.submit(runner.create(checkpoint, probe));
+      (runner.isDone(job) ? finished : submitted).add(job);
     }
   }
 }

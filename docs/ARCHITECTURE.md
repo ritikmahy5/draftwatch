@@ -46,9 +46,11 @@ CheckpointSource ─discovers─▶ CheckpointDiscovered
   Executor.submit ───────────▶ JobStateChanged (CREATED → SUBMITTED)
   JobPoller ─────────────────▶ JobStateChanged … SUCCEEDED | FAILED | CANCELLED
   ReportParser ──────────────▶ MeasurementStored (Measurement + Provenance in ResultRepository)
+  MeasurementRunner ─────────▶ MeasurementFailed (a job FAILED with no retry left)
   DetectionService ──────────▶ RegressionDetected | DetectionOk | DetectionError
                                | DetectionInsufficientData | DetectionDeferred | BaselinePinned
-  detections.log subscribes to every DetectionEvent; notifiers to DetectionError;
+  detections.log subscribes to every DetectionEvent; notifiers to DetectionError and
+  MeasurementFailed;
   each target's on_regression actions to its RegressionDetected
 ```
 
@@ -107,7 +109,7 @@ interface RegressionDetector {
 interface BaselineRepository { Optional<Baseline> get(String target); void set(Baseline b); }
 interface DetectionLog { void append(DetectionRecord r); List<DetectionRecord> all(); }
 
-interface Notifier { void notify(DetectionEvent event) throws Exception; }
+interface Notifier { void notify(String alertLine) throws Exception; }  // line from AlertFormat
 interface RegressionAction { void execute(RegressionDetected event) throws Exception; }
 ```
 

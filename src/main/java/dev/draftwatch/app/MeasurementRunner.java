@@ -8,6 +8,7 @@ import dev.draftwatch.domain.Measurement;
 import dev.draftwatch.domain.Provenance;
 import dev.draftwatch.domain.ResolvedProbe;
 import dev.draftwatch.events.EventBus;
+import dev.draftwatch.events.MeasurementFailed;
 import dev.draftwatch.events.MeasurementStored;
 import dev.draftwatch.exec.Executor;
 import dev.draftwatch.exec.ExecutorException;
@@ -124,7 +125,15 @@ public final class MeasurementRunner {
       next = job.failed(FailureReason.SUBMISSION_FAILED, e.getMessage(), clock.instant());
     }
     jobs.save(next);
+    publishIfFailedForGood(next);
     return next;
+  }
+
+  /** Publishes {@link MeasurementFailed} when {@code job} is FAILED and no retry is left. */
+  private void publishIfFailedForGood(Job job) {
+    if (job.state() == JobState.FAILED && !retryPolicy.allowsRetry(job)) {
+      bus.publish(new MeasurementFailed(clock.instant(), job));
+    }
   }
 
   private void writeInvocation(JobSpec spec) {
@@ -160,6 +169,7 @@ public final class MeasurementRunner {
       }
       if (!next.equals(job)) {
         jobs.save(next);
+        publishIfFailedForGood(next);
       }
     }
     if (next.state() == JobState.FAILED && retryPolicy.allowsRetry(next)) {

@@ -1,6 +1,5 @@
 package dev.draftwatch.notify;
 
-import dev.draftwatch.events.DetectionEvent;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -27,11 +26,11 @@ public final class LogFileNotifier implements Notifier {
   }
 
   @Override
-  public void notify(DetectionEvent event) throws IOException {
+  public void notify(String alertLine) throws IOException {
     Files.createDirectories(file.toAbsolutePath().getParent());
     Files.write(
         file,
-        (AlertFormat.line(event) + "\n").getBytes(StandardCharsets.UTF_8),
+        (alertLine + "\n").getBytes(StandardCharsets.UTF_8),
         StandardOpenOption.CREATE,
         StandardOpenOption.APPEND,
         StandardOpenOption.WRITE);
