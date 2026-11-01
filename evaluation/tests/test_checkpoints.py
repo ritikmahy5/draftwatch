@@ -5,7 +5,7 @@ from pathlib import Path
 
 import _paths  # noqa: F401  (puts evaluation/ on sys.path)
 from draftwatch_eval.checkpoints import (
-    build_checkpoint0, check_output_dir, finalize, save_steps)
+    build_checkpoint0, check_output_dir, drop_steps_after, finalize, save_steps)
 
 
 class SaveStepsTest(unittest.TestCase):
@@ -92,6 +92,13 @@ class CheckpointDirTest(unittest.TestCase):
             check_output_dir(out, resuming=False)
         self.assertIn("checkpoint-100", str(ctx.exception))
         check_output_dir(out, resuming=True)
+
+    def test_drop_steps_after_keeps_steps_up_to_the_resume_point(self):
+        log = self.root / "examples_seen.txt"
+        log.write_text("299\ta\n300\tb\n301\tc\n1000\td\n", encoding="utf-8")
+        drop_steps_after(log, 300)
+        self.assertEqual("299\ta\n300\tb\n", log.read_text(encoding="utf-8"))
+        drop_steps_after(self.root / "missing.tsv", 300)  # nothing to trim
 
 
 if __name__ == "__main__":

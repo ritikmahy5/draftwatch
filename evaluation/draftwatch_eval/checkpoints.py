@@ -64,3 +64,13 @@ def check_output_dir(out, resuming):
     if existing and not resuming:
         raise ValueError("%s already has %s; pass --resume to continue that run"
                          % (out, ", ".join(existing)))
+
+
+def drop_steps_after(log, step):
+    """Keeps only the lines of a per-step log (first field: the step) up to ``step``, so a
+    resumed run's logs do not count the steps it trains again."""
+    log = Path(log)
+    if log.exists():
+        lines = log.read_text(encoding="utf-8").splitlines(keepends=True)
+        log.write_text("".join(line for line in lines if int(line.split("\t", 1)[0]) <= step),
+                       encoding="utf-8")
