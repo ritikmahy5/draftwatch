@@ -4,6 +4,7 @@ Run 1 (the trunk) and run 2 (the branch) draw disjoint UltraChat first turns, an
 prompt may equal a probe prompt after normalization.
 """
 
+import json
 import random
 from dataclasses import dataclass
 
@@ -78,3 +79,23 @@ def take(examples, needed, what):
         if len(out) == needed:
             return out
     raise TrainingDataError("only %d %s, %d needed" % (len(out), what, needed))
+
+
+def token_counts(tokenizer, prompt, response):
+    """(response tokens, whole-example tokens) under the tokenizer's chat template.
+
+    ``tokenizer.apply_chat_template`` is called with ``return_dict=False``, because transformers
+    v5.20.0 returns a dict by default (src/transformers/tokenization_utils_base.py).
+    """
+    user = [{"role": "user", "content": prompt}]
+    prompt_ids = tokenizer.apply_chat_template(
+        user, add_generation_prompt=True, tokenize=True, return_dict=False)
+    full_ids = tokenizer.apply_chat_template(
+        user + [{"role": "assistant", "content": response}], tokenize=True, return_dict=False)
+    return len(full_ids) - len(prompt_ids), len(full_ids)
+
+
+def prompt_lines(data):
+    """The user message of each line of a probe file (draftwatch_eval.probes.jsonl's format)."""
+    return [json.loads(line)["messages"][0]["content"]
+            for line in data.decode("utf-8").split("\n") if line.strip()]

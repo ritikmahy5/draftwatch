@@ -2,7 +2,8 @@ import unittest
 
 import _paths  # noqa: F401  (puts evaluation/ on sys.path)
 from draftwatch_eval.training_data import (
-    TrainingDataError, Turn, disjoint_split, first_turns, keep, take)
+    TrainingDataError, Turn, disjoint_split, first_turns, keep, prompt_lines, take,
+    token_counts)
 
 
 def chat(i, *roles):
@@ -64,6 +65,33 @@ class TakeTest(unittest.TestCase):
         self.assertIn("38399", str(ctx.exception))
         self.assertIn("38400", str(ctx.exception))
         self.assertIn("trunk examples", str(ctx.exception))
+
+
+class FakeTokenizer:
+    """Tokens are characters; the template wraps each message as <role>content</role>."""
+
+    def apply_chat_template(self, conversation, add_generation_prompt=False, tokenize=True,
+                            return_dict=True):
+        assert tokenize and not return_dict
+        text = "".join("<%s>%s</%s>" % (m["role"], m["content"], m["role"])
+                       for m in conversation)
+        if add_generation_prompt:
+            text += "<assistant>"
+        return [ord(c) for c in text]
+
+
+class TokenCountsTest(unittest.TestCase):
+    def test_counts_response_and_whole_example(self):
+        response, total = token_counts(FakeTokenizer(), "hi", "yo")
+        self.assertEqual(len("<user>hi</user><assistant>yo</assistant>"), total)
+        self.assertEqual(total - len("<user>hi</user><assistant>"), response)
+
+
+class PromptLinesTest(unittest.TestCase):
+    def test_reads_the_user_message_of_each_probe_line(self):
+        data = (b'{"messages": [{"role": "user", "content": "a\\nb"}]}\n'
+                b'{"messages": [{"role": "user", "content": "c"}]}\n')
+        self.assertEqual(["a\nb", "c"], prompt_lines(data))
 
 
 if __name__ == "__main__":
