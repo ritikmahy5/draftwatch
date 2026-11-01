@@ -1,0 +1,70 @@
+import unittest
+
+import _paths  # noqa: F401  (puts evaluation/ on sys.path)
+from draftwatch_eval.training_data import (
+    TrainingDataError, Turn, disjoint_split, first_turns, keep, take)
+
+
+def chat(i, *roles):
+    return {"prompt_id": "p%04d" % i,
+            "messages": [{"role": r, "content": "%s %d" % (r, i)} for r in roles]}
+
+
+class FirstTurnsTest(unittest.TestCase):
+    def test_takes_the_first_user_and_assistant_messages(self):
+        turns, skipped = first_turns([
+            chat(1, "user", "assistant", "user", "assistant"),
+            chat(2, "assistant", "user"),
+            chat(3, "user"),
+        ])
+        self.assertEqual([Turn("p0001", "user 1", "assistant 1")], turns)
+        self.assertEqual(2, skipped)
+
+
+class DisjointSplitTest(unittest.TestCase):
+    def setUp(self):
+        self.turns = [Turn("p%04d" % i, "prompt %d" % i, "reply %d" % i) for i in range(100)]
+
+    def test_trunk_and_branch_share_no_prompt_id(self):
+        trunk, branch = disjoint_split(self.turns, [], 60, 30, 0)
+        self.assertEqual((60, 30), (len(trunk), len(branch)))
+        self.assertEqual(set(), {t.prompt_id for t in trunk} & {t.prompt_id for t in branch})
+
+    def test_split_does_not_depend_on_input_order(self):
+        self.assertEqual(disjoint_split(self.turns, [], 60, 30, 0),
+                         disjoint_split(list(reversed(self.turns)), [], 60, 30, 0))
+
+    def test_a_turn_matching_a_probe_prompt_fails_loudly(self):
+        with self.assertRaises(TrainingDataError) as ctx:
+            disjoint_split(self.turns, ["  PROMPT 42 "], 60, 30, 0)
+        self.assertIn("p0042", str(ctx.exception))
+
+    def test_too_few_turns_reports_counts(self):
+        with self.assertRaises(TrainingDataError) as ctx:
+            disjoint_split(self.turns, [], 80, 30, 0)
+        self.assertIn("100", str(ctx.exception))
+        self.assertIn("110", str(ctx.exception))
+
+
+class KeepTest(unittest.TestCase):
+    def test_keep_applies_both_limits_and_requires_an_ending(self):
+        self.assertTrue(keep(768, 1024, True))
+        self.assertFalse(keep(769, 1000, True))
+        self.assertFalse(keep(10, 1025, True))
+        self.assertFalse(keep(10, 100, False))
+
+
+class TakeTest(unittest.TestCase):
+    def test_take_returns_the_first_needed(self):
+        self.assertEqual([0, 1, 2], take(iter(range(10)), 3, "trunk examples"))
+
+    def test_take_reports_counts_when_short(self):
+        with self.assertRaises(TrainingDataError) as ctx:
+            take(range(38399), 38400, "trunk examples")
+        self.assertIn("38399", str(ctx.exception))
+        self.assertIn("38400", str(ctx.exception))
+        self.assertIn("trunk examples", str(ctx.exception))
+
+
+if __name__ == "__main__":
+    unittest.main()
