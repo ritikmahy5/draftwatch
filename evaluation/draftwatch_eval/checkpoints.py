@@ -57,13 +57,40 @@ def build_checkpoint0(model_dir, trunk_dir):
     return out
 
 
-def check_output_dir(out, resuming):
-    """Raises ValueError if ``out`` already holds checkpoints and this is not a resume, so two
-    runs can never write into one directory."""
-    existing = sorted(p.name for p in Path(out).glob("checkpoint-*"))
-    if existing and not resuming:
-        raise ValueError("%s already has %s; pass --resume to continue that run"
-                         % (out, ", ".join(existing)))
+def _step(checkpoint):
+    return int(Path(checkpoint).name.split("-", 1)[1])
+
+
+def check_output_dir(out, resume):
+    """Raises ValueError unless training into ``out`` can neither interleave with nor overwrite
+    another run's checkpoints.
+
+    ``checkpoint-0`` (the released model) is allowed. Trained checkpoints are allowed only when
+    resuming from one of them, and none may come after the resume point.
+    """
+    out = Path(out)
+    trained = sorted((p for p in out.glob("checkpoint-*") if _step(p) > 0), key=_step)
+    if not trained:
+        return
+    names = ", ".join(p.name for p in trained)
+    if resume is None or Path(resume).resolve().parent != out.resolve():
+        raise ValueError("%s already has %s; resume from one of them or use a new directory"
+                         % (out, names))
+    after = [p.name for p in trained if _step(p) > _step(resume)]
+    if after:
+        raise ValueError("%s has %s after the resume point %s; draftwatch may already have"
+                         " measured them, so they are not overwritten"
+                         % (out, ", ".join(after), Path(resume).name))
+
+
+def check_resumable(checkpoint):
+    """Raises ValueError naming what is missing unless ``checkpoint`` has the trainer, optimizer,
+    and scheduler state a resume needs. (The Trainer skips missing optimizer files without an
+    error, which would silently restart AdamW and the warm-up.)"""
+    missing = [name for name in ("trainer_state.json", "optimizer.pt", "scheduler.pt")
+               if not (Path(checkpoint) / name).exists()]
+    if missing:
+        raise ValueError("%s cannot be resumed from: no %s" % (checkpoint, ", ".join(missing)))
 
 
 def drop_steps_after(log, step):
@@ -74,3 +101,4 @@ def drop_steps_after(log, step):
         lines = log.read_text(encoding="utf-8").splitlines(keepends=True)
         log.write_text("".join(line for line in lines if int(line.split("\t", 1)[0]) <= step),
                        encoding="utf-8")
+

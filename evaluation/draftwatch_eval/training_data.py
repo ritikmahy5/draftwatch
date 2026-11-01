@@ -44,22 +44,33 @@ def first_turns(rows):
 
 
 def disjoint_split(turns, probe_prompts, trunk_candidates, branch_candidates, seed):
-    """Trunk and branch candidates with no prompt id in common, drawn by a seeded shuffle of the
-    turns sorted by prompt id.
+    """Trunk and branch candidates with no prompt in common, drawn by a seeded shuffle of the
+    turns sorted by prompt id. Prompts that normalize alike are used once (the lowest prompt id).
 
-    Raises TrainingDataError naming the prompt id if any turn's prompt equals a probe prompt
-    after normalization, or with the counts if there are too few turns.
+    Raises TrainingDataError naming the prompt id if a prompt id repeats or any turn's prompt
+    equals a probe prompt after normalization, or with the counts if there are too few turns.
     """
+    ids = set()
+    for t in turns:
+        if t.prompt_id in ids:
+            raise TrainingDataError("prompt id %s appears more than once" % t.prompt_id)
+        ids.add(t.prompt_id)
     probes = {normalize(p) for p in probe_prompts}
     for t in turns:
         if normalize(t.prompt) in probes:
             raise TrainingDataError("training prompt %s is also a probe prompt" % t.prompt_id)
+    seen = set()
+    ordered = []
+    for t in sorted(turns, key=lambda t: t.prompt_id):
+        key = normalize(t.prompt)
+        if key not in seen:
+            seen.add(key)
+            ordered.append(t)
     needed = trunk_candidates + branch_candidates
-    if len(turns) < needed:
+    if len(ordered) < needed:
         raise TrainingDataError(
-            "%d turns available, %d needed (%d trunk + %d branch)"
-            % (len(turns), needed, trunk_candidates, branch_candidates))
-    ordered = sorted(turns, key=lambda t: t.prompt_id)
+            "%d distinct turns available, %d needed (%d trunk + %d branch)"
+            % (len(ordered), needed, trunk_candidates, branch_candidates))
     random.Random(seed).shuffle(ordered)
     return ordered[:trunk_candidates], ordered[trunk_candidates:needed]
 
@@ -82,7 +93,9 @@ def take(examples, needed, what):
 
 
 def token_counts(tokenizer, prompt, response):
-    """(response tokens, whole-example tokens) under the tokenizer's chat template.
+    """(response tokens, whole-example tokens) under the tokenizer's chat template, or None if
+    the prompt's tokens are not a prefix of the example's (the loss mask would then be wrong, and
+    train.py refuses such an example).
 
     ``tokenizer.apply_chat_template`` is called with ``return_dict=False``, because transformers
     v5.20.0 returns a dict by default (src/transformers/tokenization_utils_base.py).
@@ -92,6 +105,8 @@ def token_counts(tokenizer, prompt, response):
         user, add_generation_prompt=True, tokenize=True, return_dict=False)
     full_ids = tokenizer.apply_chat_template(
         user + [{"role": "assistant", "content": response}], tokenize=True, return_dict=False)
+    if list(full_ids[:len(prompt_ids)]) != list(prompt_ids):
+        return None
     return len(full_ids) - len(prompt_ids), len(full_ids)
 
 
@@ -99,3 +114,10 @@ def prompt_lines(data):
     """The user message of each line of a probe file (draftwatch_eval.probes.jsonl's format)."""
     return [json.loads(line)["messages"][0]["content"]
             for line in data.decode("utf-8").split("\n") if line.strip()]
+
+
+
+def read_jsonl(data):
+    """The records of a JSON Lines file's bytes. Lines are split on LF only: str.splitlines would
+    also split on U+2028 and U+0085, which json.dumps(ensure_ascii=False) leaves inside strings."""
+    return [json.loads(line) for line in data.decode("utf-8").split("\n") if line.strip()]

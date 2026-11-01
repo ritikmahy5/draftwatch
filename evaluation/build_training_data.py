@@ -27,15 +27,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from draftwatch_eval.manifest import write_files  # noqa: E402
 from draftwatch_eval.training_data import (  # noqa: E402
-    disjoint_split, first_turns, keep, prompt_lines, take, token_counts)
+    disjoint_split, first_turns, keep, prompt_lines, read_jsonl, take, token_counts)
 
 ULTRACHAT = ("HuggingFaceH4/ultrachat_200k", "8049631c405ae6576f93f445c6b8166f76f5505a",
              "train_sft")
 PROBE_FILES = ("chat.jsonl", "chat-live.jsonl", "code.jsonl", "code-live.jsonl")
 TRUNK_EXAMPLES = 1200 * 32
 BRANCH_EXAMPLES = 600 * 32
-TRUNK_CANDIDATES = 48000
-BRANCH_CANDIDATES = 24000
+TRUNK_CANDIDATES = 57600   # 1.5 x the examples needed, for those the filters drop
+BRANCH_CANDIDATES = 28800
 MAX_NEW_TOKENS = 768
 SEED = 0
 MANIFEST = "data.sha256.json"
@@ -45,8 +45,15 @@ def _lines(records):
     return "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records).encode("utf-8")
 
 
-def _read(path):
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+def _fits(tokenizer, prompt, response, ended):
+    counts = token_counts(tokenizer, prompt, response)
+    return counts is not None and keep(counts[0], counts[1], ended)
+
+
+def _taken(examples, needed, what, candidates):
+    out = take(examples, needed, what)
+    print("%s: needed %d of %d candidates" % (what, needed, candidates))
+    return out
 
 
 def _tokenizer(path):
@@ -66,11 +73,8 @@ def select(args):
     trunk, branch = disjoint_split(turns, probes, TRUNK_CANDIDATES, BRANCH_CANDIDATES, SEED)
     tokenizer = _tokenizer(args.model)
 
-    def fits(t):
-        response, total = token_counts(tokenizer, t.prompt, t.reply)
-        return keep(response, total, True)  # UltraChat replies are complete
-
-    branch_kept = take((t for t in branch if fits(t)), BRANCH_EXAMPLES, "branch examples")
+    branch_kept = _taken((t for t in branch if _fits(tokenizer, t.prompt, t.reply, True)),
+                         BRANCH_EXAMPLES, "branch examples", len(branch))  # replies are complete
     hashes = write_files(args.out, {
         "trunk-prompts.jsonl": _lines({"id": t.prompt_id, "prompt": t.prompt} for t in trunk),
         "branch-prompts.jsonl": _lines({"id": t.prompt_id, "prompt": t.prompt} for t in branch),
@@ -91,7 +95,7 @@ def generate(args):
         "trunk": ("trunk-prompts.jsonl", "trunk.jsonl", TRUNK_EXAMPLES),
         "branch": ("branch-prompts.jsonl", "branch-cross.jsonl", BRANCH_EXAMPLES),
     }[args.prompts]
-    candidates = _read(args.data / source)
+    candidates = read_jsonl((args.data / source).read_bytes())
     llm = LLM(model=str(args.model), dtype="bfloat16", seed=SEED)
     outputs = llm.chat(
         [[{"role": "user", "content": c["prompt"]}] for c in candidates],
@@ -102,11 +106,10 @@ def generate(args):
     def kept():
         for c, out in zip(candidates, outputs):
             completion = out.outputs[0]
-            response, total = token_counts(tokenizer, c["prompt"], completion.text)
-            if keep(response, total, completion.finish_reason == "stop"):
+            if _fits(tokenizer, c["prompt"], completion.text, completion.finish_reason == "stop"):
                 yield {"id": c["id"], "prompt": c["prompt"], "response": completion.text}
 
-    examples = take(kept(), needed, "%s examples" % args.prompts)
+    examples = _taken(kept(), needed, "%s examples" % args.prompts, len(candidates))
     return write_files(args.data, {out_name: _lines(examples)}, MANIFEST)
 
 

@@ -23,3 +23,13 @@ def check_first_batch(batch_ids, expected_first):
     if not batch_ids or batch_ids[0] != expected_first:
         raise ValueError("the first batch starts with %s, expected %s"
                          % (batch_ids[0] if batch_ids else "nothing", expected_first))
+
+
+
+def check_unique_ids(ids):
+    """Raises ValueError naming the first example id that appears twice."""
+    seen = set()
+    for example_id in ids:
+        if example_id in seen:
+            raise ValueError("example id %s appears more than once in the data" % example_id)
+        seen.add(example_id)

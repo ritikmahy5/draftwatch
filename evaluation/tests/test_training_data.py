@@ -2,8 +2,8 @@ import unittest
 
 import _paths  # noqa: F401  (puts evaluation/ on sys.path)
 from draftwatch_eval.training_data import (
-    TrainingDataError, Turn, disjoint_split, first_turns, keep, prompt_lines, take,
-    token_counts)
+    TrainingDataError, Turn, disjoint_split, first_turns, keep, prompt_lines, read_jsonl,
+    take, token_counts)
 
 
 def chat(i, *roles):
@@ -46,6 +46,19 @@ class DisjointSplitTest(unittest.TestCase):
         self.assertIn("100", str(ctx.exception))
         self.assertIn("110", str(ctx.exception))
 
+
+    def test_prompts_that_normalize_alike_are_used_once(self):
+        turns = self.turns + [Turn("p9999", "  PROMPT 5 ", "other reply")]
+        trunk, branch = disjoint_split(turns, [], 60, 40, 0)
+        prompts = [t.prompt.strip().lower() for t in trunk + branch]
+        self.assertEqual(1, prompts.count("prompt 5"))
+        self.assertNotIn("p9999", [t.prompt_id for t in trunk + branch])
+
+    def test_a_repeated_prompt_id_fails_loudly(self):
+        turns = self.turns + [Turn("p0007", "different prompt", "reply")]
+        with self.assertRaises(TrainingDataError) as ctx:
+            disjoint_split(turns, [], 60, 30, 0)
+        self.assertIn("p0007", str(ctx.exception))
 
 class KeepTest(unittest.TestCase):
     def test_keep_applies_both_limits_and_requires_an_ending(self):
@@ -92,6 +105,32 @@ class PromptLinesTest(unittest.TestCase):
         data = (b'{"messages": [{"role": "user", "content": "a\\nb"}]}\n'
                 b'{"messages": [{"role": "user", "content": "c"}]}\n')
         self.assertEqual(["a\nb", "c"], prompt_lines(data))
+
+
+class MergingTokenizer(FakeTokenizer):
+    """Like FakeTokenizer, but a response starting with a space merges with the prompt's end."""
+
+    def apply_chat_template(self, conversation, add_generation_prompt=False, tokenize=True,
+                            return_dict=True):
+        ids = super().apply_chat_template(conversation, add_generation_prompt, tokenize,
+                                          return_dict)
+        if len(conversation) == 2 and conversation[1]["content"].startswith(" "):
+            ids[len("<user>hi</user><assistant>") - 1] = -1
+        return ids
+
+
+class TokenCountsPrefixTest(unittest.TestCase):
+    def test_an_example_whose_prompt_is_not_a_token_prefix_has_no_counts(self):
+        self.assertIsNone(token_counts(MergingTokenizer(), "hi", " yo"))
+        self.assertIsNotNone(token_counts(MergingTokenizer(), "hi", "yo"))
+
+
+class ReadJsonlTest(unittest.TestCase):
+    def test_unicode_line_separators_inside_strings_stay_in_their_record(self):
+        data = ('{"id": "a", "prompt": "x\u2028y\u0085z"}\n{"id": "b", "prompt": "w"}\n'
+                .encode("utf-8"))
+        self.assertIn("\u2028".encode("utf-8"), data)
+        self.assertEqual(["a", "b"], [r["id"] for r in read_jsonl(data)])
 
 
 if __name__ == "__main__":

@@ -5,7 +5,8 @@ from pathlib import Path
 
 import _paths  # noqa: F401  (puts evaluation/ on sys.path)
 from draftwatch_eval.checkpoints import (
-    build_checkpoint0, check_output_dir, drop_steps_after, finalize, save_steps)
+    build_checkpoint0, check_output_dir, check_resumable, drop_steps_after, finalize,
+    save_steps)
 
 
 class SaveStepsTest(unittest.TestCase):
@@ -84,14 +85,41 @@ class CheckpointDirTest(unittest.TestCase):
         self.assertEqual(["COMPLETE", "FINAL", "model.safetensors", "optimizer.pt", "scheduler.pt"],
                          sorted(os.listdir(ckpt)))
 
-    def test_refuses_an_output_dir_with_checkpoints_unless_resuming(self):
-        out = self.root / "run"
-        check_output_dir(out, resuming=False)  # missing is fine
-        self._write(out / "checkpoint-100" / "COMPLETE")
+    def test_a_missing_or_empty_dir_is_a_fresh_start(self):
+        check_output_dir(self.root / "run", resume=None)
+        check_output_dir(self.root / "run", resume=self.root / "trunk" / "checkpoint-600")
+
+    def test_a_trunk_dir_with_only_checkpoint0_is_a_fresh_start(self):
+        out = self.root / "trunk"
+        self._write(out / "checkpoint-0" / "COMPLETE")
+        check_output_dir(out, resume=None)
+
+    def test_trained_checkpoints_need_a_resume_from_the_same_dir(self):
+        out = self.root / "branch"
+        self._write(out / "checkpoint-625" / "COMPLETE")
+        for resume in (None, self.root / "trunk" / "checkpoint-600"):
+            with self.assertRaises(ValueError) as ctx:
+                check_output_dir(out, resume=resume)
+            self.assertIn("checkpoint-625", str(ctx.exception))
+        check_output_dir(out, resume=out / "checkpoint-625")
+
+    def test_resume_refuses_checkpoints_after_the_resume_point(self):
+        out = self.root / "trunk"
+        for step in (0, 100, 200):
+            self._write(out / ("checkpoint-%d" % step) / "COMPLETE")
         with self.assertRaises(ValueError) as ctx:
-            check_output_dir(out, resuming=False)
-        self.assertIn("checkpoint-100", str(ctx.exception))
-        check_output_dir(out, resuming=True)
+            check_output_dir(out, resume=out / "checkpoint-100")
+        self.assertIn("checkpoint-200", str(ctx.exception))
+
+    def test_resumable_needs_optimizer_and_scheduler_state(self):
+        ckpt = self.root / "checkpoint-600"
+        self._write(ckpt / "trainer_state.json")
+        self._write(ckpt / "scheduler.pt")
+        with self.assertRaises(ValueError) as ctx:
+            check_resumable(ckpt)
+        self.assertIn("optimizer.pt", str(ctx.exception))
+        self._write(ckpt / "optimizer.pt")
+        check_resumable(ckpt)
 
     def test_drop_steps_after_keeps_steps_up_to_the_resume_point(self):
         log = self.root / "examples_seen.txt"

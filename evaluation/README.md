@@ -12,27 +12,30 @@ operations; the design explains why.
 | `train.py` | One fine-tuning run (trunk or branch) |
 | `pilot_check.py` | The pilot's checks P2–P4 |
 | `draftwatch.eval.yaml` | draftwatch's configuration for the runs |
-| `cluster/` | Job scripts and the environment they share (`env.sh`) |
+| `cluster/` | Job scripts (`cpu.sbatch`, `generate.sbatch`, `train.sbatch`, `harness_direct.sbatch`) and the environment they share (`env.sh`) |
 | `draftwatch_eval/`, `tests/` | The tested logic behind the scripts (standard library only) and its unit tests |
 
-Everything below runs on Explorer as jobs, not on a login node. `env.sh` puts the work in
-`/scratch/$USER/draftwatch-eval` (`$EVAL`) and expects this repository at
-`/scratch/$USER/draftwatch` (`$REPO`) and the vLLM 0.31.0 environment at
-`/scratch/$USER/draftwatch-gpu/venv-cu129`. In `draftwatch.eval.yaml`, replace `/scratch/user` with
-your own scratch directory. `$TRAIN` below stands for `$EVAL/venv-train/bin/python`.
+Everything below runs on Explorer as jobs, not on a login node. The job scripts source
+`cluster/env.sh`, which puts the work and every cache in `/scratch/$USER/draftwatch-eval` (`$EVAL`)
+and expects this repository at `/scratch/$USER/draftwatch` (`$REPO`) and the vLLM 0.31.0
+environment at `/scratch/$USER/draftwatch-gpu/venv-cu129`. Do not source `env.sh` in a login
+shell: it replaces `HOME` and `PATH`. CPU steps run as `sbatch $REPO/evaluation/cluster/cpu.sbatch
+python <script> <args>` (written `cpu: <script> <args>` below), with network access. In
+`draftwatch.eval.yaml`, replace `/scratch/user` with your own scratch directory.
 
 ## 1. Set up
 
 1. `sbatch $REPO/evaluation/cluster/setup_train_env.sh` creates `$EVAL/venv-train`.
 2. Download the four models at the revisions in the design's model table into
-   `$EVAL/models/<name>` (for example `Qwen2.5-1.5B-Instruct`), in a CPU job, with
-   `huggingface_hub.snapshot_download(repo_id, revision=..., local_dir=...)`.
-3. `$TRAIN $REPO/evaluation/build_probes.py --out $EVAL/probes`.
-4. For each family: `$TRAIN $REPO/evaluation/make_checkpoint0.py --model $EVAL/models/<target>
+   `$EVAL/models/<name>` (for example `Qwen2.5-1.5B-Instruct`): `cpu: -c "from huggingface_hub
+   import snapshot_download as d; d('<repo id>', revision='<sha>', local_dir='<dir>')"`.
+3. `cpu: $REPO/evaluation/build_probes.py --out $EVAL/probes`.
+4. For each family: `cpu: $REPO/evaluation/make_checkpoint0.py --model $EVAL/models/<target>
    --trunk $EVAL/runs/<family>-trunk`.
-5. For each family: `$TRAIN $REPO/evaluation/build_training_data.py select --model
+5. For each family: `cpu: $REPO/evaluation/build_training_data.py select --model
    $EVAL/models/<target> --probes $EVAL/probes --out $EVAL/data/<family>`, then
-   `sbatch generate.sbatch $EVAL/models/<target> $EVAL/data/<family> trunk`.
+   `sbatch $REPO/evaluation/cluster/generate.sbatch $EVAL/models/<target> $EVAL/data/<family>
+   trunk`. Each step prints how many candidates it needed.
 6. `draftwatch validate --config <your copy of draftwatch.eval.yaml>`.
 
 ## 2. Pilot (P1–P4)
@@ -51,9 +54,13 @@ your own scratch directory. `$TRAIN` below stands for `$EVAL/venv-train/bin/pyth
 4. **P4.** Train a 100-step trunk (`train.sbatch --run trunk ... --out $EVAL/pilot/<family>-trunk
    --max-steps 100 --save-steps 100 --keep-state-at 100`). Then branch from it for 300 steps
    (`--run branch --data $EVAL/data/<family>/branch.jsonl --resume .../checkpoint-100
-   --max-steps 400 --save-steps 125,150,200,300,400`). Measure the trunk checkpoint and branch
-   checkpoints 125 and 400 on the P2 subsets, list the reports in a `p4.json`, and run
-   `pilot_check.py p4`. If P4 fails, apply the design's fallbacks in their order.
+   --max-steps 400 --save-steps 125,150,200,300,400`). Measure the trunk checkpoint and all five
+   branch checkpoints on the P2 subsets. List checkpoint-0, the trunk checkpoint, and branch
+   checkpoints 125 and 400 in a `p4.json`, and run `pilot_check.py p4`; branch 150, 200, and 300
+   show how fast the drop develops (the design's dense-saves condition). From the two training
+   jobs' logs, record the steps per hour and check that 1,200 steps fit in the `gpu` partition's
+   8 hours. If P4 fails, apply the design's fallbacks in their order, each into a new
+   `$EVAL/pilot/` directory.
 
 The full runs need a separate go-ahead, with the pilot's measured rates.
 
@@ -68,7 +75,12 @@ The full runs need a separate go-ahead, with the pilot's measured rates.
 4. When the trunk's checkpoint 600 is complete, train the branch: `sbatch train.sbatch --run
    branch --model $EVAL/models/<target> --data $EVAL/data/<family>/branch.jsonl --out
    $EVAL/runs/<family>-branch --resume $EVAL/runs/<family>-trunk/checkpoint-600`.
-5. After each run, check `draftwatch status` and `alerts.log`. Copy the state directory and
-   `$EVAL/data` off `/scratch`, which is purged monthly.
-6. Delete a checkpoint only once it has results for all four probes. Keep trunk 600 and 1,200 and
-   branch 1,200 for the noise study.
+5. After each run, check `draftwatch status` and `alerts.log`. Copy the state directory,
+   `$EVAL/data` (with `data.sha256.json`), `$EVAL/probes/probes.sha256.json`, and the pilot's
+   reports off `/scratch`, which is purged monthly.
+6. Delete a checkpoint only once it has results for all four probes. Copy trunk 600 and 1,200 and
+   branch 1,200 of each family off `/scratch` for the noise study.
+7. `train.py` refuses to write into a directory that already has trained checkpoints unless it
+   resumes from one of them, and refuses a resume point without optimizer and scheduler state.
+   Only trunk checkpoint 600 keeps that state, so an interrupted trunk restarts from scratch in a
+   new directory, and an interrupted branch from trunk 600 in a new directory.

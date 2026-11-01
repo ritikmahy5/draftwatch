@@ -18,6 +18,8 @@ Checked against transformers v5.20.0 (src/transformers/):
   trainer.py:3325     checkpoints are written to <output_dir>/checkpoint-<global_step>
   trainer.py:1690     resuming skips seen batches unless ignore_data_skip is set; it is set
                       for the branch only, whose data is new at the resume point
+  trainer.py:2062     compute_loss runs once per micro-batch as it is trained on; example ids
+                      are logged there, not in the collator, which runs one batch ahead
   modeling_utils.py:1404  from_pretrained takes dtype (torch_dtype is deprecated)
   tokenization_utils_base.py:3003  apply_chat_template returns a dict unless return_dict=False
 """
@@ -30,8 +32,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from draftwatch_eval.checkpoints import (  # noqa: E402
-    check_output_dir, drop_steps_after, finalize, save_steps)
-from draftwatch_eval.labels import IGNORE, check_first_batch, mask_prompt  # noqa: E402
+    check_output_dir, check_resumable, drop_steps_after, finalize, save_steps)
+from draftwatch_eval.labels import (  # noqa: E402
+    IGNORE, check_first_batch, check_unique_ids, mask_prompt)
+from draftwatch_eval.training_data import read_jsonl  # noqa: E402
 
 MAX_STEPS = 1200
 BATCH = 32
@@ -54,22 +58,16 @@ def encode(tokenizer, example):
 
 
 class Collator:
-    """Pads a micro-batch, records its example ids, and checks the very first one."""
+    """Pads a micro-batch and carries each example's index, so the trainer can log which
+    examples it actually trained on. (The data loader runs one batch ahead of training, so
+    the collator itself cannot attribute examples to steps.)"""
 
-    def __init__(self, pad_id, expected_first):
+    def __init__(self, pad_id):
         self.pad_id = pad_id
-        self.expected_first = expected_first
-        self.pending_ids = []
-        self.loss_tokens = 0
 
     def __call__(self, features):
         import torch
 
-        ids = [f["id"] for f in features]
-        if self.expected_first is not None:
-            check_first_batch(ids, self.expected_first)
-            self.expected_first = None
-        self.pending_ids.extend(ids)
         width = max(len(f["input_ids"]) for f in features)
         input_ids, labels, mask = [], [], []
         for f in features:
@@ -77,9 +75,9 @@ class Collator:
             input_ids.append(f["input_ids"] + [self.pad_id] * pad)
             labels.append(f["labels"] + [IGNORE] * pad)
             mask.append([1] * len(f["input_ids"]) + [0] * pad)
-            self.loss_tokens += sum(1 for t in f["labels"] if t != IGNORE)
         return {"input_ids": torch.tensor(input_ids), "labels": torch.tensor(labels),
-                "attention_mask": torch.tensor(mask)}
+                "attention_mask": torch.tensor(mask),
+                "example_index": torch.tensor([f["index"] for f in features])}
 
 
 def main(argv=None):
@@ -100,7 +98,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.run == "branch" and args.resume is None:
         parser.error("the branch resumes from the trunk's checkpoint 600: pass --resume")
-    check_output_dir(args.out, resuming=args.resume is not None)
+    check_output_dir(args.out, args.resume)
+    if args.resume is not None:
+        check_resumable(args.resume)
     resumed_at = (json.loads((args.resume / "trainer_state.json").read_text())["global_step"]
                   if args.resume else 0)
 
@@ -110,8 +110,9 @@ def main(argv=None):
                               TrainingArguments)
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    examples = [encode(tokenizer, json.loads(line))
-                for line in args.data.read_text(encoding="utf-8").splitlines() if line]
+    records = read_jsonl(args.data.read_bytes())
+    check_unique_ids(r["id"] for r in records)
+    examples = [dict(encode(tokenizer, r), index=i) for i, r in enumerate(records)]
     start = resumed_at if args.run == "branch" else 0
     needed = (args.max_steps - start) * BATCH
     if len(examples) < needed:
@@ -130,7 +131,9 @@ def main(argv=None):
     # A trunk resumed after an interruption skips the batches it already trained on, so only a
     # fresh trunk and the branch (which starts its own data at step 601) begin at example 0.
     trunk_resume = args.run == "trunk" and args.resume is not None
-    collator = Collator(pad_id, None if trunk_resume else examples[0]["id"])
+    expected_first = [None if trunk_resume else examples[0]["id"]]
+    pending_ids = []
+    loss_tokens = [0]
     schedule = args.save_steps or save_steps(args.run)
     steps = set(s for s in schedule if s <= args.max_steps) | {args.max_steps}
     args.out.mkdir(parents=True, exist_ok=True)
@@ -142,13 +145,13 @@ def main(argv=None):
 
     class Schedule(TrainerCallback):
         def on_step_end(self, targs, state, control, **kwargs):
-            for example_id in collator.pending_ids:
+            for example_id in pending_ids:
                 seen_log.write("%d\t%s\n" % (state.global_step, example_id))
-            tokens_log.write("%d\t%d\n" % (state.global_step, collator.loss_tokens))
+            tokens_log.write("%d\t%d\n" % (state.global_step, loss_tokens[0]))
             seen_log.flush()
             tokens_log.flush()
-            collator.pending_ids = []
-            collator.loss_tokens = 0
+            pending_ids.clear()
+            loss_tokens[0] = 0
             control.should_save = state.global_step in steps
             return control
 
@@ -162,6 +165,17 @@ def main(argv=None):
         def _get_train_sampler(self, train_dataset=None):
             return SequentialSampler(train_dataset if train_dataset is not None
                                      else self.train_dataset)
+
+        def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+            # Called once per micro-batch as training consumes it (trainer.py:2062), so the ids
+            # logged here are exactly the examples each step trained on.
+            ids = [examples[i]["id"] for i in inputs.pop("example_index").tolist()]
+            if expected_first[0] is not None:
+                check_first_batch(ids, expected_first[0])
+                expected_first[0] = None
+            pending_ids.extend(ids)
+            loss_tokens[0] += int((inputs["labels"] != IGNORE).sum())
+            return super().compute_loss(model, inputs, return_outputs, num_items_in_batch)
 
     model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.float32)
     trainer = InOrder(
@@ -187,7 +201,7 @@ def main(argv=None):
             remove_unused_columns=False,
         ),
         train_dataset=Examples(),
-        data_collator=collator,
+        data_collator=Collator(pad_id),
         processing_class=tokenizer,
         callbacks=[Schedule()],
     )
@@ -196,7 +210,7 @@ def main(argv=None):
     tokens_log.close()
 
     used = [line.split("\t")[1] for line in
-            (args.out / "examples_seen.txt").read_text(encoding="utf-8").splitlines()]
+            (args.out / "examples_seen.txt").read_text(encoding="utf-8").split("\n") if line]
     if len(used) != needed or len(set(used)) != needed:
         raise SystemExit("used %d examples (%d distinct); expected each of %d exactly once"
                          % (len(used), len(set(used)), needed))

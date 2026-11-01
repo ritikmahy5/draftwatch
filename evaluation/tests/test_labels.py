@@ -1,7 +1,7 @@
 import unittest
 
 import _paths  # noqa: F401  (puts evaluation/ on sys.path)
-from draftwatch_eval.labels import IGNORE, check_first_batch, mask_prompt
+from draftwatch_eval.labels import IGNORE, check_first_batch, check_unique_ids, mask_prompt
 
 
 class MaskPromptTest(unittest.TestCase):
@@ -28,6 +28,14 @@ class FirstBatchTest(unittest.TestCase):
             check_first_batch(["p0009", "p0002"], "p0001")
         self.assertIn("p0009", str(ctx.exception))
         self.assertIn("p0001", str(ctx.exception))
+
+
+class UniqueIdsTest(unittest.TestCase):
+    def test_a_repeated_example_id_is_named(self):
+        check_unique_ids(["a", "b", "c"])
+        with self.assertRaises(ValueError) as ctx:
+            check_unique_ids(["a", "b", "a"])
+        self.assertIn("a", str(ctx.exception))
 
 
 if __name__ == "__main__":
