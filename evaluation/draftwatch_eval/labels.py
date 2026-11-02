@@ -1,4 +1,4 @@
-"""Loss masking and data-order checks for the training script (docs/EVALUATION.md)."""
+"""Loss masking, data-order, and divergence checks for the training script (docs/EVALUATION.md)."""
 
 IGNORE = -100  # the label value PyTorch's cross-entropy loss skips
 
@@ -24,6 +24,15 @@ def check_first_batch(batch_ids, expected_first):
         raise ValueError("the first batch starts with %s, expected %s"
                          % (batch_ids[0] if batch_ids else "nothing", expected_first))
 
+
+
+def check_finite_weights(step, nonfinite_names):
+    """Raises ValueError unless ``nonfinite_names`` (parameters with a NaN or infinite value after
+    ``step``) is empty. One non-finite gradient makes every weight non-finite after clipping, so
+    training stops at the first such step instead of saving checkpoints that cannot be measured."""
+    if nonfinite_names:
+        raise ValueError("training diverged at step %d: %d parameters are not finite, first %s"
+                         % (step, len(nonfinite_names), nonfinite_names[0]))
 
 
 def check_unique_ids(ids):

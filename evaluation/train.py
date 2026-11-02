@@ -5,7 +5,8 @@
   train.py --run branch --model <target> --data <data>/branch.jsonl --out <branch dir> \
            --resume <trunk dir>/checkpoint-600
 
-Full fine-tuning with weights and optimizer state in fp32 and bfloat16 autocast, AdamW, a constant
+Full fine-tuning with weights and optimizer state in fp32 and bfloat16 autocast, eager attention,
+AdamW, a constant
 learning rate after a 30-step warm-up, 32 sequences per step, loss on response tokens only, and
 seed 0. The data is pre-shuffled, so it is read in file order; every example is used once.
 Checkpoints are saved on the run's schedule (draftwatch_eval.checkpoints.save_steps), finished,
@@ -21,6 +22,10 @@ Checked against transformers v5.20.0 (src/transformers/):
   trainer.py:2062     compute_loss runs once per micro-batch as it is trained on; example ids
                       are logged there, not in the collator, which runs one batch ahead
   modeling_utils.py:1404  from_pretrained takes dtype (torch_dtype is deprecated)
+  modeling_utils.py:3918  from_pretrained takes attn_implementation; the default is "sdpa", whose
+                      backward pass gave NaN gradients on a padded Qwen2.5 micro-batch in the
+                      pilot, while "eager" on the same batch and each example alone did not
+  trainer_callback.py:549  callbacks receive the model as a keyword argument
   tokenization_utils_base.py:3003  apply_chat_template returns a dict unless return_dict=False
 """
 
@@ -34,7 +39,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from draftwatch_eval.checkpoints import (  # noqa: E402
     check_output_dir, check_resumable, drop_steps_after, finalize, save_steps)
 from draftwatch_eval.labels import (  # noqa: E402
-    IGNORE, check_first_batch, check_unique_ids, mask_prompt)
+    IGNORE, check_finite_weights, check_first_batch, check_unique_ids, mask_prompt)
 from draftwatch_eval.training_data import read_jsonl  # noqa: E402
 
 MAX_STEPS = 1200
@@ -153,6 +158,9 @@ def main(argv=None):
             pending_ids.clear()
             loss_tokens[0] = 0
             control.should_save = state.global_step in steps
+            model = kwargs["model"]
+            check_finite_weights(state.global_step, [
+                n for n, p in model.named_parameters() if not torch.isfinite(p).all()])
             return control
 
         def on_save(self, targs, state, control, **kwargs):
@@ -177,7 +185,11 @@ def main(argv=None):
             loss_tokens[0] += int((inputs["labels"] != IGNORE).sum())
             return super().compute_loss(model, inputs, return_outputs, num_items_in_batch)
 
-    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.float32)
+    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.float32,
+                                                 attn_implementation="eager")
+    if model.config._attn_implementation != "eager":
+        raise SystemExit("transformers loaded %s attention, not eager"
+                         % model.config._attn_implementation)
     trainer = InOrder(
         model=model,
         args=TrainingArguments(

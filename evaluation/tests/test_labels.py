@@ -1,7 +1,8 @@
 import unittest
 
 import _paths  # noqa: F401  (puts evaluation/ on sys.path)
-from draftwatch_eval.labels import IGNORE, check_first_batch, check_unique_ids, mask_prompt
+from draftwatch_eval.labels import (
+    IGNORE, check_first_batch, check_finite_weights, check_unique_ids, mask_prompt)
 
 
 class MaskPromptTest(unittest.TestCase):
@@ -28,6 +29,18 @@ class FirstBatchTest(unittest.TestCase):
             check_first_batch(["p0009", "p0002"], "p0001")
         self.assertIn("p0009", str(ctx.exception))
         self.assertIn("p0001", str(ctx.exception))
+
+
+class FiniteWeightsTest(unittest.TestCase):
+    def test_finite_weights_pass(self):
+        check_finite_weights(23, [])
+
+    def test_a_non_finite_weight_names_the_step_and_the_parameter(self):
+        with self.assertRaises(ValueError) as c:
+            check_finite_weights(23, ["model.embed_tokens.weight", "lm_head.weight"])
+        self.assertIn("step 23", str(c.exception))
+        self.assertIn("model.embed_tokens.weight", str(c.exception))
+        self.assertIn("2 parameters", str(c.exception))
 
 
 class UniqueIdsTest(unittest.TestCase):

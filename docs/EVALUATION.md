@@ -111,7 +111,8 @@ Settings shared by every run:
 | Setting | Value |
 |---|---|
 | Method | Full fine-tuning. Weights and optimizer state in fp32, forward and backward passes in bfloat16 autocast. (With bfloat16 weights, updates of this size are mostly rounded away.) |
-| Optimizer | AdamW, weight decay 0, gradient clipping 1.0 |
+| Attention | Eager (transformers' own implementation). In the pilot, PyTorch's SDPA kernel, the default, gave NaN gradients on a padded Qwen2.5 batch at step 23; eager attention on the same batch, and either kernel on each of its examples alone, did not. |
+| Optimizer | AdamW, weight decay 0, gradient clipping 1.0. The script stops at the first step after which any weight is not finite, so a diverged run never saves a checkpoint. |
 | Learning rate | 1e-5, constant after a 30-step linear warm-up; the pilot may change it, for both runs together |
 | Batch | 32 sequences per step, no packing |
 | Examples | Single-turn (prompt, response) pairs in the target's own chat template. The response is at most 768 tokens and the whole example at most 1,024; longer ones are dropped, not truncated. Every example is used exactly once, and the script logs example ids to prove it. |
