@@ -22,7 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from draftwatch_eval.pilot import (  # noqa: E402
-    count_mismatches, p4_verdict, paired_delta, subset_lines)
+    check_one_setup, count_mismatches, p4_verdict, paired_delta, subset_lines)
 
 
 def _load(path):
@@ -45,13 +45,16 @@ def subset(args):
 
 def p2(args):
     indices = _load(args.indices)
-    bad = count_mismatches(_load(args.full), _load(args.subset), indices)
+    full, part = _load(args.full), _load(args.subset)
+    check_one_setup({args.full: full, args.subset: part})
+    bad = count_mismatches(full, part, indices)
     return _report(not bad, "P2 order independence: %d of %d prompts differ%s"
                    % (len(bad), len(indices), (" (positions %s)" % bad) if bad else ""))
 
 
 def p3(args):
     reference = _load(args.reference)
+    check_one_setup({args.reference: reference, **{p: _load(p) for p in args.other}})
     n = len(reference["seeds"][0]["per_prompt"])
     ok = True
     for other in args.other:
@@ -66,6 +69,8 @@ def p4(args):
     paths = _load(args.reports)
     reports = {stage: {probe: _load(p) for probe, p in by_probe.items()}
                for stage, by_probe in paths.items()}
+    check_one_setup({p: reports[stage][probe] for stage, by_probe in paths.items()
+                     for probe, p in by_probe.items()})
     deltas = {}
     for stage in ("trunk", "branch25", "branch300"):
         deltas[stage] = {probe: paired_delta(report, reports["baseline"][probe], None)

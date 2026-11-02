@@ -35,6 +35,25 @@ def subset_lines(pool_lines, size, seed):
     return indices, b"".join(pool_lines[i] + b"\n" for i in indices)
 
 
+# Report fields that must agree for two measurements to be compared (MEASUREMENT_CONTRACT.md,
+# "Comparability"); the pilot reads report files directly, so draftwatch's own check never runs.
+SETUP_FIELDS = ("harness_version", "backend", "hardware")
+
+
+class MixedSetup(Exception):
+    """Reports to be compared were measured with different setups."""
+
+
+def check_one_setup(reports):
+    """Raises MixedSetup naming the first field and file that differs, given {path: report}."""
+    (first_path, first), *rest = reports.items()
+    for path, report in rest:
+        for field in SETUP_FIELDS:
+            if report.get(field) != first.get(field):
+                raise MixedSetup("%s: %s is %r, but %s has %r" % (
+                    path, field, report.get(field), first_path, first.get(field)))
+
+
 def _counts(report, i):
     p = report["seeds"][0]["per_prompt"][i]
     return p["steps"], p["proposed"], p["accepted"]

@@ -4,7 +4,8 @@ import os
 import unittest
 
 import _paths
-from draftwatch_eval.pilot import count_mismatches, p4_verdict, paired_delta, subset_lines
+from draftwatch_eval.pilot import (
+    MixedSetup, check_one_setup, count_mismatches, p4_verdict, paired_delta, subset_lines)
 
 # A real report (Slurm job 10859767, A100, 20 prompts), so the checks run on real per-prompt
 # counts; no number below is derived from it except by the functions under test.
@@ -54,6 +55,27 @@ class PairedDeltaTest(unittest.TestCase):
     def test_paired_delta_of_a_report_with_itself_is_zero(self):
         self.assertEqual((0.0, 0.0, 0.0), paired_delta(REAL, REAL, None))
         self.assertEqual((0.0, 0.0, 0.0), paired_delta(REAL, REAL, [1, 2, 3]))
+
+
+class OneSetupTest(unittest.TestCase):
+    def test_reports_from_one_setup_pass(self):
+        check_one_setup({"a.json": REAL, "b.json": copy.deepcopy(REAL)})
+
+    def test_reports_from_two_harness_versions_are_refused_by_name(self):
+        newer = copy.deepcopy(REAL)
+        newer["harness_version"] = "0.2.0"
+        with self.assertRaises(MixedSetup) as c:
+            check_one_setup({"old.json": REAL, "new.json": newer})
+        self.assertIn("harness_version", str(c.exception))
+        self.assertIn("new.json", str(c.exception))
+
+    def test_reports_from_two_backends_or_gpus_are_refused(self):
+        for field, value in (("backend", "vllm==0.32.0"), ("hardware", {"gpu": "X", "count": 1})):
+            other = copy.deepcopy(REAL)
+            other[field] = value
+            with self.assertRaises(MixedSetup) as c:
+                check_one_setup({"a.json": REAL, "b.json": other})
+            self.assertIn(field, str(c.exception))
 
 
 class P4VerdictTest(unittest.TestCase):
