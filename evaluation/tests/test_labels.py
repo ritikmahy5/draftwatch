@@ -1,0 +1,55 @@
+import unittest
+
+import _paths  # noqa: F401  (puts evaluation/ on sys.path)
+from draftwatch_eval.labels import (
+    IGNORE, check_first_batch, check_finite_weights, check_unique_ids, mask_prompt)
+
+
+class MaskPromptTest(unittest.TestCase):
+    def test_prompt_tokens_get_no_loss(self):
+        self.assertEqual([IGNORE, IGNORE, 7, 8], mask_prompt([1, 2], [1, 2, 7, 8]))
+        self.assertEqual(-100, IGNORE)
+
+    def test_non_prefix_prompt_raises(self):
+        with self.assertRaises(ValueError) as ctx:
+            mask_prompt([1, 3], [1, 2, 7, 8])
+        self.assertIn("prefix", str(ctx.exception))
+
+    def test_a_response_with_no_tokens_raises(self):
+        with self.assertRaises(ValueError):
+            mask_prompt([1, 2], [1, 2])
+
+
+class FirstBatchTest(unittest.TestCase):
+    def test_first_batch_matching_passes(self):
+        check_first_batch(["p0001", "p0002"], "p0001")
+
+    def test_first_batch_mismatch_names_both_ids(self):
+        with self.assertRaises(ValueError) as ctx:
+            check_first_batch(["p0009", "p0002"], "p0001")
+        self.assertIn("p0009", str(ctx.exception))
+        self.assertIn("p0001", str(ctx.exception))
+
+
+class FiniteWeightsTest(unittest.TestCase):
+    def test_finite_weights_pass(self):
+        check_finite_weights(23, [])
+
+    def test_a_non_finite_weight_names_the_step_and_the_parameter(self):
+        with self.assertRaises(ValueError) as c:
+            check_finite_weights(23, ["model.embed_tokens.weight", "lm_head.weight"])
+        self.assertIn("step 23", str(c.exception))
+        self.assertIn("model.embed_tokens.weight", str(c.exception))
+        self.assertIn("2 parameters", str(c.exception))
+
+
+class UniqueIdsTest(unittest.TestCase):
+    def test_a_repeated_example_id_is_named(self):
+        check_unique_ids(["a", "b", "c"])
+        with self.assertRaises(ValueError) as ctx:
+            check_unique_ids(["a", "b", "a"])
+        self.assertIn("a", str(ctx.exception))
+
+
+if __name__ == "__main__":
+    unittest.main()

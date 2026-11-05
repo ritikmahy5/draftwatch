@@ -50,6 +50,14 @@ val pythonTest by tasks.registering(Exec::class) {
   commandLine("python3", "-m", "unittest", "discover", "-s", "python/tests", "-q")
 }
 
+// The evaluation tooling's unit tests: standard library only (docs/EVALUATION.md).
+val evaluationTest by tasks.registering(Exec::class) {
+  description = "Runs the evaluation tooling's Python unit tests."
+  group = "verification"
+  workingDir = projectDir
+  commandLine("python3", "-m", "unittest", "discover", "-s", "evaluation/tests", "-q")
+}
+
 tasks.named("check") {
-  dependsOn(pythonTest)
+  dependsOn(pythonTest, evaluationTest)
 }
