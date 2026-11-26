@@ -18,6 +18,8 @@ new checkpoint ──▶ trigger rules ──▶ measurement job ──▶ resul
                                      (local or Slurm)    (provenance)      (noise-floor aware)
 ```
 
+draftwatch is a command-line tool; there is no hosted application.
+
 ## Team
 
 | Member | GitHub Username | Role |
@@ -54,13 +56,22 @@ draftwatch/
     notify/        alerts to the console and alerts.log
     action/        what happens on a regression: notify, or submit a draft-retraining command
     report/        the static HTML report and the two-result diff
-  src/test/java/dev/draftwatch/   JUnit tests, one package per main package
+  src/scoring/java/dev/draftwatch/scoring/
+                   the evaluation's scoring tool (its own Gradle source set, which depends on the
+                   engine and never the other way round): archive export, ground truth, probe
+                   subsets, replay through the engine's detectors, metrics, and traced output
+  src/test/java/dev/draftwatch/   JUnit tests, one package per main package, plus scoring/
   src/test/resources/fixtures/    report and Slurm fixtures (synthetic_* invented, real_* recorded)
   python/          the reference vLLM harness (measure_acceptance.py) and its unit tests
+  evaluation/      the evaluation's tooling: probe and training-data builders, training, pilot
+                   checks, cluster job scripts, and its run guide (evaluation/README.md)
+  evaluation/results/full-run/
+    state/         the full runs' exported state: 196 results, raw reports, logs, sacct times
+    score/         the scoring output: score.json, alarm_rates.csv, and manifest.json
   scripts/         demo.sh, the fake harness for tests, and test helpers
   docs/            SPEC (features, CLI, config), ARCHITECTURE (design and patterns),
-                   MEASUREMENT_CONTRACT (engine/harness boundary), EVALUATION (evaluation plan),
-                   uml/class-diagram.md (Mermaid class diagram)
+                   MEASUREMENT_CONTRACT (engine/harness boundary), EVALUATION (evaluation design),
+                   uml/class-diagram.md (Mermaid class diagrams)
 ```
 
 ## Setup and Run
@@ -69,7 +80,8 @@ draftwatch/
 - A locally installed JDK 11 or later. The build compiles and tests with a Java 11 toolchain and
   does not download one.
 - Python 3.10 or later, `/bin/sh`, and `env`, on Linux or macOS.
-- No GPU, network access, or API keys are needed for the build, the tests, or the demo.
+- No GPU, network access beyond the first build, or API keys are needed for the build, the tests,
+  the demo, or the scoring tool.
 
 Real measurements need a GPU and a Python environment with vLLM 0.31.0 (see "Real measurements"
 below).
@@ -85,28 +97,32 @@ cd draftwatch
 # Build and run all tests (Java and Python)
 ./gradlew build
 
-# Run the core use case end to end, with the fake harness, in a new temporary directory
+# Run the primary use case end to end, with the fake harness, in a new temporary directory
 scripts/demo.sh
 
 # Install the command-line launcher and use it
 ./gradlew installDist                       # build/install/draftwatch/bin/draftwatch
 build/install/draftwatch/bin/draftwatch --help
-
-# Run tests only
-./gradlew test                              # Java tests (JUnit)
-python3 -m unittest discover -s python/tests  # Python harness tests
 ```
+
+`scripts/demo.sh` takes about 20 seconds and prints each command it runs. At the end it prints the
+demo directory, which holds the configuration, the checkpoints, the state directory, and
+`report.html`.
 
 The application is configured by one file, `draftwatch.yaml`. `draftwatch init` writes a commented
 template, and `draftwatch validate` checks it and prints the resolved probes and trigger rules.
 `docs/SPEC.md` describes every field. No secrets or environment variables are required.
 
 ```
-draftwatch init                        # draftwatch.yaml with placeholders, and the state directory
-draftwatch validate                    # resolve probes, fingerprint the draft, show trigger chains
-draftwatch watch --once                # one pass; or 'watch --interval 60s' (local executor only)
-draftwatch history <target> --probe <id>
-draftwatch report --out report.html
+draftwatch init                               # draftwatch.yaml with placeholders, and the state directory
+draftwatch validate                           # resolve probes, fingerprint the draft, show trigger chains
+draftwatch watch --once                       # one pass; or 'watch --interval 60s' (local executor only)
+draftwatch submit <target> <ckpt>             # queue measurements of one checkpoint now
+draftwatch status                             # non-terminal and recently failed jobs
+draftwatch history <target> --probe <id>      # results in step order
+draftwatch diff <ckptA> <ckptB> --probe <id>  # two results field by field, with provenance
+draftwatch report --out report.html           # static HTML report
+draftwatch baseline <target> [<ckpt>]         # set or show the baseline checkpoint
 ```
 
 **Real measurements:** set `harness.command` to `python/measure_acceptance.py`, run in a Python
@@ -122,81 +138,149 @@ environment with vLLM 0.31.0 (`docs/MEASUREMENT_CONTRACT.md`, "Reference backend
   is Java 8), run one-off commands in a job (`sbatch --wrap '<command>'`), use vLLM's `+cu129`
   wheel, and keep environments and models in `/scratch`.
 
-## Progress So Far
+**Re-scoring the evaluation** from the committed results (about 90 seconds, no GPU):
 
-The core engine is complete: every functional requirement in the Phase 1 proposal is implemented
-and tested. The work in progress is the evaluation on real fine-tuning runs.
+```bash
+S=evaluation/results/full-run/state
+./gradlew score --args="score --state $S --out /tmp/score \
+    --sacct $S/sacct-elapsed.txt --pilot $S/pilot-p2"
+```
 
-| Functional Requirement (from Phase 1) | Status | Notes |
+The tool refuses to run on a working tree with uncommitted changes, so the commit it records is
+the code that ran. Its output is byte-identical to `evaluation/results/full-run/score/` when run
+at the commit that manifest names. Running the evaluation itself (training and measurement on a
+cluster) is described in `evaluation/README.md`.
+
+## Feature Status
+
+Every functional requirement in the Phase 1 proposal (Section 6) is implemented and tested.
+
+| Functional Requirement (from Phase 1) | Status | Where to Find It |
 |---|---|---|
-| FR-1: Load and validate the YAML configuration | Complete | Every listed invalid configuration is rejected with an error naming the field |
-| FR-2: Detect complete checkpoints, extract steps, recognize final ones | Complete | Marker-file and settle-time completion policies |
-| FR-3: Fingerprint checkpoints by their weights | Complete | Sampled-block (default) and full-file SHA-256; adapters also cover their base model |
-| FR-4: Ordered trigger rules; never measure twice | Complete | not_already_measured, max_pending, always_final, every_n_steps |
-| FR-5: Local and Slurm execution with a job state machine and retries | Complete | Illegal transitions throw; only transient failures are retried |
-| FR-6: Self-resubmitting scheduled watch on Slurm | Complete | `schedule` and `unschedule`; used for the evaluation runs |
-| FR-7: Invoke the harness and validate every report | Complete | All 29 contract rules, each with its own negative test |
-| FR-8: Append-only results with full provenance | Complete | Atomic writes |
-| FR-9: Detectors with a comparability guard | Complete | Incomparable results are recorded as an error and alerted, never compared |
-| FR-10: Baseline pinning | Complete | First measured checkpoint by default; `draftwatch baseline` sets or shows it |
-| FR-11: Detection log, alerts, optional draft retraining | Complete | Retraining is submitted once per draft version |
-| FR-12: Static HTML report and diff | Complete | Every displayed number links to the stored value it shows |
-| FR-13: The eleven commands | Complete | init, validate, watch, submit, schedule, unschedule, status, history, diff, report, baseline |
-| FR-14: One writer per state directory | Complete | State lock that is safe on network filesystems |
+| FR-1: Load one YAML configuration; reject invalid ones naming the field | Complete | `config/ConfigLoader`, `config/ConfigValidator`; `ConfigValidatorTest` |
+| FR-2: Detect complete checkpoints, extract steps, recognize final ones | Complete | `discovery/MarkerCompletionPolicy`, `SettleCompletionPolicy`, `StepExtractor` |
+| FR-3: Fingerprint checkpoints by their weights (adapters cover their base model) | Complete | `fingerprint/SampledBlockFingerprinter`, `FullFileFingerprinter`, `CachingFingerprinter` |
+| FR-4: Ordered trigger rules; never submit a checkpoint twice per probe | Complete | `trigger/TriggerChain` and its four rules |
+| FR-5: Local and Slurm execution, job state machine, retry only transient failures | Complete | `exec/JobState`, `RetryPolicy`, `LocalExecutor`, `exec/slurm/SlurmExecutor` |
+| FR-6: Self-resubmitting scheduled watch on Slurm; `unschedule` | Complete | `app/ScheduleCommand`, `UnscheduleCommand`, `Schedule` |
+| FR-7: Invoke the harness and validate every report against the 29 contract rules | Complete | `harness/HarnessInvocation`, `ReportParser`, `ReportRule` |
+| FR-8: Append-only results with full provenance | Complete | `store/FileResultRepository`, `AtomicFiles`, `domain/Provenance` |
+| FR-9: Detectors with a comparability guard | Complete | `detect/Comparability`, `BaselineDetector`, the four detectors |
+| FR-10: Baseline pinning (automatic, or set and shown with `baseline`) | Complete | `app/BaselineCommand`, `DetectionService`, `store/FileBaselineRepository` |
+| FR-11: Detection log, alerts, optional draft retraining once per draft | Complete | `store/FileDetectionLog`, `notify/`, `action/RetrainDraftAction` |
+| FR-12: Static HTML report with traceable numbers, and a diff of two results | Complete | `report/HtmlReportRenderer`, `ReportModel`, `MeasurementDiff` |
+| FR-13: The eleven commands | Complete | `app/` (one `CliCommand` per command) |
+| FR-14: One writer per state directory; take over only a provably stale lock | Complete | `store/StateLock` |
 
-**Working end to end:** catching an acceptance regression during a training run, the proposal's
-primary use case. `scripts/demo.sh` runs it on any machine without a GPU:
-1. It writes a `draftwatch.yaml` with one target and one probe, and runs `draftwatch validate`.
-2. It creates checkpoints 100 and 200 and runs `draftwatch watch --once` until no job is active.
-   Each pass discovers the complete checkpoints, applies the trigger rules, runs a measurement job
-   with the fake harness, and validates and stores the report.
-3. Step 100 becomes the baseline automatically, and step 200 is compared with it: OK.
-4. It points the fake harness at lower counts and creates checkpoint 300. Both detectors report a
-   regression, and an alert is printed and written to `alerts.log`.
-5. It runs `draftwatch history` and `draftwatch report`, which writes `report.html`.
+The proposal's objective 7 (validation on real runs, Section 11's timeline) is tracked separately:
 
-Every number in the demo comes from synthetic fixtures in `src/test/resources/fixtures/`, not from
-a measurement. The same pipeline has also run on Explorer: a scheduled CPU job sent measurements of
-new checkpoints to H200 GPUs with the reference vLLM harness, then ran detection, `report`, and
-`diff`.
+| Evaluation milestone (from Phase 1) | Status | Where to Find It |
+|---|---|---|
+| Evaluation design: two model families, chat and code probes, two recipes, metrics | Complete | `docs/EVALUATION.md` |
+| Real runs 1 and 2, watched end to end on Explorer | Complete | `evaluation/`; results in `evaluation/results/full-run/state/` |
+| A planted regression flagged at the right checkpoint | Complete for Qwen2.5; not for SmolLM2 (see Known Issues) | `evaluation/results/full-run/score/score.json` |
+| Detector scoring at probe sizes 25 to 200 | Complete | `src/scoring/`; `evaluation/results/full-run/score/` |
+| Adapter (LoRA) checkpoints measured on GPUs | Not started | Adapter path is implemented and unit-tested; no GPU run |
+| Noise study for the noise-floor detector's sigma | Not started | |
+| Detector calibration (tuned defaults) | Not started | Scoring output is its input |
+| Retraining loop with a real draft-training script | Partial | `action/RetrainDraftAction`, tested end to end with a fake script |
+| Multi-day scheduled run with injected failures | Partial | The full runs' scheduled watch ran for about 26 hours |
+| Performance of fingerprinting large checkpoints | Not started | |
 
-**In progress:**
-- **Evaluation on real fine-tuning runs** (`docs/EVALUATION.md`). Two model families
-  (Qwen2.5-1.5B with a 0.5B draft, and SmolLM2-1.7B with a 360M draft) have been fine-tuned on
-  Explorer and watched by draftwatch, with checkpoints measured on chat and code probes. The
-  analysis of those results is under way. The evaluation tooling is in pull request #1.
+## Scope and Design Changes Since Phase 1
 
-## Testing So Far
-
-- **Java:** JUnit 4.13.2, with one test package per main package. The tests cover every detector,
-  trigger rule, job state transition, configuration rule, estimator, and report rule.
-  - Statistical tests use seeded random number generators and assert exact values. The paired
-    bootstrap is cross-checked against an independent Python implementation.
-  - Slurm tests replay `squeue` and `sacct` output recorded on the cluster.
-  - End-to-end tests run the real command line with the fake harness.
-- **Python:** `unittest` tests for the reference harness, using the standard library only (no vLLM
-  or GPU).
-- **Totals:** 564 Java tests and 25 Python tests, all passing. `./gradlew build` runs both suites.
-  GitHub Actions builds, tests, and runs the demo on every push to `main` and on every pull request.
-
-## Next Steps (Phase 3)
-
-- Finish the real-run evaluation: score the detectors against the measured series, re-measure
-  checkpoints whose jobs failed, and merge the evaluation tooling.
-- Adapter (LoRA) checkpoints: verify the adapter-merge path and base-model fingerprints on GPUs.
-- Noise study: repeated measurements across seeds and GPUs, to set the noise-floor detector's
-  sigma.
-- Detector calibration: tuned defaults and guidance for choosing thresholds.
-- Retraining loop: connect the retrain action to a real draft-training script.
-- Robustness and performance: a multi-day scheduled run with injected failures, and the cost of
-  fingerprinting large checkpoints.
-- Documentation, final UML diagrams, the final report, and the demo.
-
-## Team Contributions
-
-| Member | Contributions This Phase |
+| Change | Reason |
 |---|---|
-| Ritik Pankaj Mahyavanshi | Sole team member, author of every commit. Built the Java engine, every package listed under Repository Structure, including the job state machine, the Slurm executor, the detectors and comparability guard, the result store and state lock, and the HTML report. Wrote the measurement contract and the reference vLLM harness (`python/`), the fake harness and `scripts/demo.sh`, and all 564 Java and 25 Python tests. Set up continuous integration, ran the end-to-end runs on Explorer, and built and ran the evaluation tooling (pull request #1). |
+| Added a pilot (P1–P4) before the full runs | To measure throughput, check that a prompt's counts do not depend on the other prompts, and choose the fine-tuning recipe, before spending about 47 GPU-hours on the full runs. |
+| The measurement harness moved to version 0.2.0, with vLLM prefix caching turned off and checked after loading | The pilot found that with prefix caching on, 3 to 4 of 200 code prompts gave different counts depending on which prompts ran before them. The new version keeps old and new reports from being compared. |
+| Training uses eager attention and stops when the weights stop being finite | PyTorch's SDPA backward pass gave NaN gradients on one padded micro-batch in the pilot. |
+| The second model family is SmolLM2 (1.7B target, 360M draft) | Llama 3.2 and Gemma 3 are gated on the Hugging Face Hub behind manual license approval; SmolLM2 is not. |
+| Adapter checkpoints became a separate study | Both targets are small enough to fine-tune fully on one GPU, so the runs use full checkpoints. |
+| Detectors are scored offline, by a separate scoring tool | Probes of 25 to 200 prompts are built as subsets of each stored 1,000-prompt measurement and replayed through the same detector classes `watch` uses. This scores 500 probes per size from one measurement, with no extra GPU time. It lives in its own Gradle source set so the engine does not depend on it. |
+| The evaluation's results and scoring output are committed to the repository, with cluster paths replaced by `/scratch/user` | So every reported number traces to a committed file and its SHA-256. |
+| The schedule slipped by about two weeks | The full runs were due by November 1 and ran on November 5 and 6. The noise study, calibration, retraining-loop, robustness, and performance milestones have not started. |
+
+## Design Patterns and Principles Applied
+
+Each pattern is justified in its class's Javadoc; `docs/ARCHITECTURE.md` has the full table and
+`docs/uml/class-diagram.md` the class diagrams.
+
+| Pattern / Principle | Where | Why |
+|---|---|---|
+| Strategy | `Executor`, `Fingerprinter`, `EstimatorStrategy`, `CompletionPolicy`, `CheckpointSource`, `RegressionDetector`, `Notifier`, `CommandRunner` | Behavior varies by environment or policy and is chosen by the configuration; `CommandRunner` lets tests replay recorded Slurm output. |
+| Chain of Responsibility | `TriggerChain` over `TriggerRule`s | Rules are ordered; the first that does not abstain decides, and gives its reason. |
+| State | `JobState` and its transition table | A job's lifecycle has legal and illegal transitions; illegal ones throw. |
+| Observer | `EventBus` and its subscribers | Logs, notifiers, and actions subscribe to outcomes without the producers knowing about them; a failing subscriber never stops the others. |
+| Command | `CliCommand`; `RegressionAction` | Subcommands are looked up by name, so adding one never changes the dispatcher; actions are configured data, run later, and logged. |
+| Template Method | `BaselineDetector`; `WeightFileFingerprinter` | The comparability guard runs before every baseline comparison, so no detector can skip it; both fingerprinters share one file walk. |
+| Decorator | `CachingFingerprinter` | Adds caching by file signature to any fingerprinter. |
+| Adapter | `SlurmCli` | Isolates `sbatch`, `squeue`, `sacct`, and `scancel` arguments and parsing behind `Executor`. |
+| Builder | `JobSpec`, `HarnessInvocation`, `Checkpoint`, `Provenance`, `AcceptanceReport` | Many fields; invalid combinations are rejected at `build()`. |
+| Repository | `ResultRepository`, `JobRepository`, `BaselineRepository`, `RetrainRequestRepository` | Storage stays swappable and is tested with in-memory fakes. |
+| Factory | `Bootstrap` | The one place where configuration type names become objects. |
+| Dependency injection, single composition root | Constructors everywhere; wiring only in `Bootstrap` | Every collaborator can be replaced by a test double. |
+| Immutability | Domain objects: final classes, private final fields, builders, no setters | Results and provenance cannot change after they are stored. |
+| Fail loudly | Typed exceptions that name the field or file (`ConfigException`, `ReportViolationException`, `DataException`) | An invalid input stops the run with a message that says what to fix. |
+| Reuse over reimplementation | The scoring tool's `Replayer` and `GroundTruth` call the engine's own detectors and bootstrap | The evaluation scores the code that users run, not a second implementation of it. |
+
+## Testing
+
+- **Unit tests:** JUnit 4.13.2, 674 Java tests in 83 classes, one test package per main package.
+  They cover every detector, trigger rule, job state transition, configuration rule, estimator,
+  and report rule, and every scoring metric. Statistical code uses seeded random number
+  generators and the tests assert exact values. The paired bootstrap is cross-checked against an
+  independent Python implementation.
+- **Integration tests:** each of the 29 report rules has a negative test in which a fake harness
+  breaks exactly that rule. The Slurm executor is tested against `squeue` and `sacct` output
+  recorded on Explorer. `StateLockTest` checks that racing processes see exactly one lock holder,
+  and that a lock is taken over only when its holder is provably gone.
+- **End-to-end tests:** 34 tests run the real command line or the scoring tool in temporary
+  directories:
+  - `WatchEndToEndTest`: checkpoints appearing over time are measured exactly as the trigger rules
+    allow, and two concurrent watch processes never both submit;
+  - `DetectionEndToEndTest`, `DiffEndToEndTest`, `RetrainEndToEndTest`, `SlurmEndToEndTest`;
+  - `ScorerTest`: a synthetic state directory written by the real store classes, scored twice,
+    with byte-identical output.
+- **Python:** 28 `unittest` tests for the reference harness and 62 for the evaluation tooling,
+  standard library only (no vLLM or GPU).
+- **Coverage:** 89.5% of lines and 74.5% of branches of the engine and the scoring tool, measured
+  with JaCoCo 0.8.12 (run separately; it is not a build dependency).
+- **Continuous integration:** GitHub Actions builds, runs every test, and runs the demo on every
+  push to `main` and every pull request.
+- **System test on a cluster:** the full evaluation runs on Explorer, with draftwatch watching four
+  targets for about 26 hours. The scoring tool's cross-check reproduces all 188 compared B0 and A
+  verdicts of the live `detections.log` exactly.
+
+```bash
+./gradlew build                                          # everything: Java and Python
+./gradlew test                                           # Java tests only
+./gradlew test --tests 'dev.draftwatch.scoring.*'        # the scoring tool's tests
+python3 -m unittest discover -s python/tests             # reference harness tests
+python3 -m unittest discover -s evaluation/tests         # evaluation tooling tests
+scripts/demo.sh                                          # the primary use case end to end
+```
+
+## Known Issues
+
+- **SmolLM2's planted regression did not happen,** and its control run regressed on code from
+  step 200. On SmolLM2 the detectors can be scored for false alarms and, on code, for detection
+  on the trunk's checkpoints, but not for detection delay.
+- **Four measurements were never taken.** Slurm refused four submissions ("Unexpected message
+  received"); they were alerted but not resubmitted. The scoring tool lists them and scores
+  without them.
+- **B0's intervals are too narrow at small probe sizes:** they cover the reference value 92.0% to
+  93.2% of the time at 25 prompts, against an expected 95.3%.
+- **Not yet tested on GPUs or over long periods:** adapter checkpoints, repeated measurements of
+  one checkpoint (the noise study), and a scheduled run of three days or more.
+- **Detector defaults are not yet calibrated** on the real runs.
+- **The cost estimates for probes of 25 and 50 prompts include a pilot measurement** taken with
+  harness version 0.1.0; the output labels each row with its harness versions.
+
+## Team Contributions (Phase 3)
+
+| Member | Contributions This Phase | Commits (total) |
+|---|---|---|
+| Ritik Pankaj Mahyavanshi | Ran the pilot and the full evaluation runs on Explorer (training, measurement, and the scheduled watch over four targets), and archived their state. Built the scoring tool (`src/scoring/`, 43 classes, and its 109 tests): archive export with placeholder paths, validation, ground truth, probe subsets, replay through the engine's detectors, the cross-check against the live log, every metric, cost, and the traced output. Exported and scored the full runs (`evaluation/results/full-run/`), merged the evaluation tooling (pull request #1), and updated this README. | 21 (145) |
 
 ## License
 
