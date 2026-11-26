@@ -184,7 +184,7 @@ The proposal's objective 7 (validation on real runs, Section 11's timeline) is t
 | Noise study for the noise-floor detector's sigma | Not started | |
 | Detector calibration (tuned defaults) | Not started | Scoring output is its input |
 | Retraining loop with a real draft-training script | Partial | `action/RetrainDraftAction`, tested end to end with a fake script |
-| Multi-day scheduled run with injected failures | Partial | The full runs' scheduled watch ran for about 26 hours |
+| Multi-day scheduled run with injected failures | Partial | The full runs' scheduled watch ran for about five days, but needed restarting (see Known Issues); no failures were injected |
 | Performance of fingerprinting large checkpoints | Not started | |
 
 ## Scope and Design Changes Since Phase 1
@@ -248,7 +248,7 @@ Each pattern is justified in its class's Javadoc; `docs/ARCHITECTURE.md` has the
 - **Continuous integration:** GitHub Actions builds, runs every test, and runs the demo on every
   push to `main` and every pull request.
 - **System test on a cluster:** the full evaluation runs on Explorer, with draftwatch watching four
-  targets for about 26 hours. The scoring tool's cross-check reproduces all 188 compared B0 and A
+  targets for about five days (453 passes). The scoring tool's cross-check reproduces all 188 compared B0 and A
   verdicts of the live `detections.log` exactly.
 
 ```bash
@@ -265,6 +265,10 @@ scripts/demo.sh                                          # the primary use case 
 - **SmolLM2's planted regression did not happen,** and its control run regressed on code from
   step 200. On SmolLM2 the detectors can be scored for false alarms and, on code, for detection
   on the trunk's checkpoints, but not for detection delay.
+- **A refused resubmission stops the scheduled watch.** During the full runs, Slurm refused the
+  schedule's own resubmission 13 times ("Unexpected message received"), and each time the
+  schedule had to be started again. The fix is to retry the resubmission with a backoff before
+  stopping, and to alert when it stops.
 - **Four measurements were never taken.** Slurm refused four submissions ("Unexpected message
   received"); they were alerted but not resubmitted. The scoring tool lists them and scores
   without them.
