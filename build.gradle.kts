@@ -30,6 +30,18 @@ application {
   applicationName = "draftwatch"
 }
 
+// The evaluation's scoring tool (docs/EVALUATION.md, "Scoring the detectors"): its own source set,
+// which depends on main and never the other way round. Its tests run in the main test task.
+val scoring: SourceSet by sourceSets.creating {
+  compileClasspath += sourceSets.main.get().output + sourceSets.main.get().compileClasspath
+  runtimeClasspath += sourceSets.main.get().output + sourceSets.main.get().runtimeClasspath
+}
+
+sourceSets.test {
+  compileClasspath += scoring.output
+  runtimeClasspath += scoring.output
+}
+
 tasks.withType<JavaCompile>().configureEach {
   options.encoding = "UTF-8"
   options.compilerArgs.addAll(listOf("-Xlint:all", "-Werror"))
@@ -60,4 +72,14 @@ val evaluationTest by tasks.registering(Exec::class) {
 
 tasks.named("check") {
   dependsOn(pythonTest, evaluationTest)
+}
+
+// Runs the scoring tool. The tool records the commit it ran at, so the task passes it in.
+tasks.register<JavaExec>("score") {
+  description = "Runs the evaluation scoring tool (export, score)."
+  group = "evaluation"
+  mainClass.set("dev.draftwatch.scoring.ScoreMain")
+  classpath = scoring.runtimeClasspath
+  workingDir = projectDir
+  javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
 }
