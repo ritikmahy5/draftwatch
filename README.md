@@ -24,7 +24,8 @@ draftwatch is a command-line tool; there is no hosted application.
 
 | Member | GitHub Username | Role |
 |---|---|---|
-| Ritik Pankaj Mahyavanshi | [@ritikmahy5](https://github.com/ritikmahy5) | Sole team member: design, implementation, tests, cluster runs, and evaluation |
+| Ritik Pankaj Mahyavanshi | [@ritikmahy5](https://github.com/ritikmahy5) | Design, implementation, tests, cluster runs, and evaluation |
+| Yanzhe Xi | [@v1Lt](https://github.com/v1Lt) | Team member |
 
 ## Repository Structure
 
@@ -284,7 +285,8 @@ scripts/demo.sh                                          # the primary use case 
 
 | Member | Contributions This Phase | Commits (total) |
 |---|---|---|
-| Ritik Pankaj Mahyavanshi | Deliverables this phase: the pilot and full evaluation runs on Explorer (training, measurement, and a scheduled watch over four targets); the scoring tool (`src/scoring/`, 43 classes, 109 tests); the exported results and scoring output (`evaluation/results/full-run/`); the merged evaluation tooling (pull request #1); a test-coverage measurement; the QA documentation, the final slides, and this README. | 24 (148) |
+| Ritik Pankaj Mahyavanshi | Deliverables this phase: the pilot and full evaluation runs on Explorer (training, measurement, and a scheduled watch over four targets); the scoring tool (`src/scoring/`, 43 classes, 109 tests); the exported results and scoring output (`evaluation/results/full-run/`); the merged evaluation tooling (pull request #1); a test-coverage measurement; the QA documentation, the final slides, and this README. | 25 (149) |
+| Yanzhe Xi | None this phase | 0 (0) |
 
 ## License
 
