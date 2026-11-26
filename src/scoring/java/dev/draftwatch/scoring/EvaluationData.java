@@ -23,7 +23,7 @@ import java.util.TreeSet;
  * 1's checkpoint 0.
  */
 public final class EvaluationData {
-  private final Set<String> families;
+  private final List<String> families;
   private final Map<String, Series> series;
   private final Map<String, Measurement> baselines;
   private final List<MissingMeasurement> missing;
@@ -33,7 +33,8 @@ public final class EvaluationData {
       Map<String, Series> series,
       Map<String, Measurement> baselines,
       List<MissingMeasurement> missing) {
-    this.families = Set.copyOf(families);
+    // A sorted List: Set.copyOf would iterate in an order that changes from one JVM to the next.
+    this.families = List.copyOf(new TreeSet<>(families));
     this.series = Map.copyOf(series);
     this.baselines = Map.copyOf(baselines);
     this.missing = List.copyOf(missing);
@@ -164,8 +165,8 @@ public final class EvaluationData {
     return family + "/" + kind + "/" + run;
   }
 
-  /** The families with results, such as {@code qwen} and {@code smol}. */
-  public Set<String> families() {
+  /** The families with results, such as {@code qwen} and {@code smol}, in name order. */
+  public List<String> families() {
     return families;
   }
 

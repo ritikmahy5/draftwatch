@@ -103,7 +103,7 @@ public class EvaluationDataTest {
   public void loadsSeriesInStepOrder() {
     fullFamily(Set.of());
     EvaluationData data = load();
-    assertEquals(Set.of("qwen"), data.families());
+    assertEquals(List.of("qwen"), data.families());
     List<Long> run1 = steps(data.series("qwen", ProbeKind.CHAT, Run.RUN1));
     assertEquals(ExpectedSteps.RUN1, run1);
     assertEquals(0L, (long) run1.get(0));
@@ -267,5 +267,13 @@ public class EvaluationDataTest {
             "qwen-code-live", "sampled-" + "9".repeat(64), "j-other-zero", 0, T0, PROMPTS));
     DataException e = assertThrows(DataException.class, this::load);
     assertTrue(e.getMessage(), e.getMessage().contains("j-other-zero"));
+  }
+
+  @Test
+  public void familiesAreInNameOrderWhateverTheInsertionOrder() {
+    ScoringFixtures.family(results, baselines, "smol", 4, (r, k, s) -> 0, Set.of());
+    ScoringFixtures.family(results, baselines, "qwen", 4, (r, k, s) -> 0, Set.of());
+    // A List, so iteration order is what is compared.
+    assertEquals(List.of("qwen", "smol"), load().families());
   }
 }
