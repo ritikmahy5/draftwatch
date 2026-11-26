@@ -252,24 +252,44 @@ public final class DetectionMetrics {
    * U, over every compared checkpoint whatever its label.
    */
   public Rate coverage() {
+    List<Rate> each = coverageByCheckpoint();
+    if (each.isEmpty() && !rows.isEmpty()) {
+      return Rate.of(0, 0, NO_INTERVALS);
+    }
     int contained = 0;
     int total = 0;
+    for (Rate r : each) {
+      contained += r.flagged();
+      total += r.total();
+    }
+    return Rate.of(contained, total, "no compared checkpoints");
+  }
+
+  private static final String NO_INTERVALS = "no intervals: not a paired-bootstrap configuration";
+
+  /**
+   * For each row, in order: the fraction of subsets whose interval contains Δ_ref. Empty if the
+   * flags carry no intervals.
+   */
+  public List<Rate> coverageByCheckpoint() {
+    List<Rate> out = new ArrayList<>();
     for (CheckpointRow r : rows) {
       FlagMatrix m = matrix(r);
       int c = column(r);
       double delta = r.reference().delta();
+      int contained = 0;
       for (int s = 0; s < subsets; s++) {
         OptionalDouble lo = m.lower(s, c);
         OptionalDouble hi = m.upper(s, c);
         if (lo.isEmpty() || hi.isEmpty()) {
-          return Rate.of(0, 0, "no intervals: not a paired-bootstrap configuration");
+          return List.of();
         }
-        total++;
         if (lo.getAsDouble() <= delta && delta <= hi.getAsDouble()) {
           contained++;
         }
       }
+      out.add(Rate.of(contained, subsets, "no subsets"));
     }
-    return Rate.of(contained, total, "no compared checkpoints");
+    return out;
   }
 }

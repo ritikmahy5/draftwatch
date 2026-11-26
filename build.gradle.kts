@@ -82,4 +82,12 @@ tasks.register<JavaExec>("score") {
   classpath = scoring.runtimeClasspath
   workingDir = projectDir
   javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
+  val commit = providers.exec { commandLine("git", "rev-parse", "HEAD") }
+      .standardOutput.asText.map { it.trim() }
+  val dirty = providers.exec { commandLine("git", "status", "--porcelain", "--untracked-files=no") }
+      .standardOutput.asText.map { it.isNotBlank().toString() }
+  doFirst {
+    systemProperty("draftwatch.commit", commit.get())
+    systemProperty("draftwatch.dirty", dirty.get())
+  }
 }

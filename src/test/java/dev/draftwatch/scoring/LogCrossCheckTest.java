@@ -32,26 +32,8 @@ public class LogCrossCheckTest {
     ScoringFixtures.family(
         results, baselines, "qwen", 20, (r, k, s) -> (int) (s / 300), Set.of());
     data = EvaluationData.load(results, baselines);
-    log = new ArrayList<>();
-    // What watch logged: B0, A, and T on every stored result. Checkpoint 0 is the baseline itself.
-    for (ProbeKind kind : ProbeKind.values()) {
-      for (Run run : Run.values()) {
-        List<Measurement> history = data.series("qwen", kind, run).inStepOrder();
-        for (Measurement m : history) {
-          long step = m.provenance().checkpoint().step();
-          Optional<Measurement> base =
-              step == 0 ? Optional.empty() : Optional.of(data.baseline("qwen", kind));
-          for (DetectorConfig c : configs) {
-            if (!c.id().equals("B1")) {
-              log.add(ScoringFixtures.record(m, c.detector().evaluate(m, base, history)));
-            }
-          }
-          if (step != 0) {
-            compared++;
-          }
-        }
-      }
-    }
+    log = new ArrayList<>(ScoringFixtures.watchLog(data, configs));
+    compared = 4 * (12 + 12);
   }
 
   @Test

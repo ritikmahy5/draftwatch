@@ -27,6 +27,14 @@ public class ScoreMainTest {
         new PrintStream(err, true, StandardCharsets.UTF_8));
   }
 
+  private int runWith(java.util.Map<String, String> build, String... args) {
+    return ScoreMain.run(
+        List.of(args),
+        new PrintStream(out, true, StandardCharsets.UTF_8),
+        new PrintStream(err, true, StandardCharsets.UTF_8),
+        build);
+  }
+
   private String err() {
     return new String(err.toByteArray(), StandardCharsets.UTF_8);
   }
@@ -58,5 +66,29 @@ public class ScoreMainTest {
             "--cluster-prefix", "/scratch/someone"));
     assertTrue(err(), err().contains("results"));
     assertTrue(Files.notExists(tmp.getRoot().toPath().resolve("out")));
+  }
+
+  @Test
+  public void scoreRefusesADirtyTree() {
+    assertEquals(
+        1,
+        runWith(java.util.Map.of("draftwatch.commit", "abc", "draftwatch.dirty", "true"),
+            "score", "--state", "a", "--out", "b"));
+    assertTrue(err(), err().contains("uncommitted"));
+  }
+
+  @Test
+  public void scoreNeedsTheCommit() {
+    assertEquals(1, runWith(java.util.Map.of(), "score", "--state", "a", "--out", "b"));
+    assertTrue(err(), err().contains("./gradlew score"));
+  }
+
+  @Test
+  public void scoreRejectsABadSize() {
+    assertEquals(
+        2,
+        runWith(java.util.Map.of("draftwatch.commit", "abc", "draftwatch.dirty", "false"),
+            "score", "--state", "a", "--out", "b", "--sizes", "25,x"));
+    assertTrue(err(), err().contains("--sizes"));
   }
 }

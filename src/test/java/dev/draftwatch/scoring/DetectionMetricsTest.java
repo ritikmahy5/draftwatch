@@ -207,10 +207,14 @@ public class DetectionMetricsTest {
     // Contained: [0, 0.01] ∋ 0 (lower bound equal), [-0.02, -0.005] ∋ -0.005 (upper equal).
     // Not: [-0.01, -0.001] ∌ 0, [-0.004, 0] ∌ -0.005.
     assertRate(0.5, 2, 4, m.coverage());
+    List<Rate> byCheckpoint = m.coverageByCheckpoint();
+    assertRate(0.5, 1, 2, byCheckpoint.get(0));
+    assertRate(0.5, 1, 2, byCheckpoint.get(1));
   }
 
   @Test
   public void coverageWithoutIntervalsIsUndefined() {
+    assertTrue(metrics().coverageByCheckpoint().isEmpty());
     Rate c = metrics().coverage();
     assertFalse(c.value().isPresent());
     assertTrue(c.undefinedReason().isPresent());

@@ -106,6 +106,34 @@ final class ScoringFixtures {
             Baseline.Source.MANUAL));
   }
 
+  /**
+   * What {@code watch} logged: B0, A, and T on every stored result, with the repository's history
+   * of the target and probe; checkpoint 0 is the baseline itself, compared with nothing.
+   */
+  static List<DetectionRecord> watchLog(EvaluationData data, List<DetectorConfig> configs) {
+    List<DetectionRecord> log = new ArrayList<>();
+    for (String family : data.families()) {
+      for (ProbeKind kind : ProbeKind.values()) {
+        for (Run run : Run.values()) {
+          List<Measurement> history = data.series(family, kind, run).inStepOrder();
+          for (Measurement m : history) {
+            long step = m.provenance().checkpoint().step();
+            java.util.Optional<Measurement> base =
+                step == 0
+                    ? java.util.Optional.empty()
+                    : java.util.Optional.of(data.baseline(family, kind));
+            for (DetectorConfig c : configs) {
+              if (!c.id().equals("B1")) {
+                log.add(record(m, c.detector().evaluate(m, base, history)));
+              }
+            }
+          }
+        }
+      }
+    }
+    return log;
+  }
+
   /** The record {@code watch} would have logged for {@code verdict} on {@code m}. */
   static DetectionRecord record(Measurement m, DetectorVerdict verdict) {
     DetectionSubject subject =
