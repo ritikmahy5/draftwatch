@@ -166,7 +166,8 @@ public class ArchiveExporterTest {
     Path extra = tmp.newFile("sacct-elapsed.txt").toPath();
     Files.write(extra, "JobName|Elapsed|State\n".getBytes(StandardCharsets.UTF_8));
     exporter.export(state, out, List.of(extra));
-    assertArrayEquals(Files.readAllBytes(extra), Files.readAllBytes(out.resolve("sacct-elapsed.txt")));
+    assertArrayEquals(
+        Files.readAllBytes(extra), Files.readAllBytes(out.resolve("sacct-elapsed.txt")));
   }
 
   @Test

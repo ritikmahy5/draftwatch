@@ -12,7 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Entry point of the scoring tool: {@code export} copies the run archive, {@code score} scores it. */
+/**
+ * Entry point of the scoring tool: {@code export} copies the run archive, {@code score} scores
+ * it.
+ */
 public final class ScoreMain {
   /** What the cluster prefix becomes in committed files (the existing fixtures' placeholder). */
   static final String PLACEHOLDER = "/scratch/user";
@@ -21,7 +24,8 @@ public final class ScoreMain {
   static final String DIRTY = "draftwatch.dirty";
 
   static final String USAGE =
-      "usage: score export --state <dir> --out <dir> --cluster-prefix <prefix> [--extra <file>]...\n"
+      "usage: score export --state <dir> --out <dir> --cluster-prefix <prefix>\n"
+          + "             [--extra <file>]...\n"
           + "             [--extra-dir <name>=<dir>]...\n"
           + "       score score --state <dir> --out <dir> [--sacct <file>] [--pilot <dir>]\n"
           + "             [--sizes 25,50,100,200] [--subsets 500] [--allow-dirty]";

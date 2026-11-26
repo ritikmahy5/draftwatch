@@ -271,12 +271,16 @@ public final class Scorer {
     ObjectNode scores = ScoreOutput.F.objectNode();
     for (int i = 0; i < keys.size(); i++) {
       String[] k = keys.get(i).split("\n");
-      ObjectNode byConfig = scores.has(k[0]) ? (ObjectNode) scores.get(k[0]) : scores.putObject(k[0]);
-      ObjectNode bySize = byConfig.has(k[1]) ? (ObjectNode) byConfig.get(k[1]) : byConfig.putObject(k[1]);
+      ObjectNode byConfig = child(scores, k[0]);
+      ObjectNode bySize = child(byConfig, k[1]);
       bySize.set(k[2], done.get(i).node);
       csv.addAll(done.get(i).csv);
     }
     return scores;
+  }
+
+  private static ObjectNode child(ObjectNode parent, String key) {
+    return parent.has(key) ? (ObjectNode) parent.get(key) : parent.putObject(key);
   }
 
   private static List<JobResult> runAll(List<Callable<JobResult>> jobs, int threads) {

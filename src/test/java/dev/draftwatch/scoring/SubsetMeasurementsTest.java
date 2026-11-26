@@ -35,7 +35,8 @@ public class SubsetMeasurementsTest {
     List<PromptCounts> out = new ArrayList<>();
     for (int i = 0; i < n; i++) {
       long steps = 5 + i % 7;
-      out.add(PromptCounts.of(i, steps, steps * 4, (steps * 4 * (40 + (i * 13) % 45)) / 100 - shift));
+      long accepted = (steps * 4 * (40 + (i * 13) % 45)) / 100 - shift;
+      out.add(PromptCounts.of(i, steps, steps * 4, accepted));
     }
     return out;
   }
@@ -107,7 +108,9 @@ public class SubsetMeasurementsTest {
     List<Subset> s = SubsetDraw.draw(40, 10, 2, 10);
     Measurement a = full("j-a", 100, 0);
     Measurement b = full("j-b", 200, 1);
-    assertEquals(Optional.empty(), Comparability.mismatch(subsets.of(a, s.get(0)), subsets.of(b, s.get(0))));
+    assertEquals(
+        Optional.empty(),
+        Comparability.mismatch(subsets.of(a, s.get(0)), subsets.of(b, s.get(0))));
     assertEquals(
         Optional.of("probe_hash"),
         Comparability.mismatch(subsets.of(a, s.get(0)), subsets.of(b, s.get(1))));

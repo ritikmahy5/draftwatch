@@ -68,7 +68,8 @@ public class EvaluationDataTest {
   }
 
   static String fingerprint(String family, Run run, long step) {
-    long salt = (family.equals("qwen") ? 1L : 2L) << 40 | (run == Run.RUN2 && step != 0 ? 1L << 32 : 0);
+    long salt =
+        (family.equals("qwen") ? 1L : 2L) << 40 | (run == Run.RUN2 && step != 0 ? 1L << 32 : 0);
     return "sampled-" + String.format("%064x", salt | step);
   }
 

@@ -19,7 +19,8 @@ public final class DetectorConfigs {
     return List.of(
         DetectorConfig.of(
             "B0",
-            new PairedBootstrapDetector(PairedBootstrapSpec.withDefaults(Metric.ALPHA), calculator)),
+            new PairedBootstrapDetector(
+                PairedBootstrapSpec.withDefaults(Metric.ALPHA), calculator)),
         DetectorConfig.of(
             "B1",
             new PairedBootstrapDetector(
