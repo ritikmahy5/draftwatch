@@ -22,6 +22,7 @@ public final class ScoreMain {
 
   static final String USAGE =
       "usage: score export --state <dir> --out <dir> --cluster-prefix <prefix> [--extra <file>]...\n"
+          + "             [--extra-dir <name>=<dir>]...\n"
           + "       score score --state <dir> --out <dir> [--sacct <file>] [--pilot <dir>]\n"
           + "             [--sizes 25,50,100,200] [--subsets 500] [--allow-dirty]";
 
@@ -66,7 +67,10 @@ public final class ScoreMain {
     String dest;
     String prefix;
     try {
-      flags = Flags.parse(args, Set.of("--state", "--out", "--cluster-prefix", "--extra"), Set.of());
+      flags =
+          Flags.parse(
+              args, Set.of("--state", "--out", "--cluster-prefix", "--extra", "--extra-dir"),
+              Set.of());
       state = flags.required("--state");
       dest = flags.required("--out");
       prefix = flags.required("--cluster-prefix");
@@ -77,10 +81,18 @@ public final class ScoreMain {
     for (String extra : flags.all("--extra")) {
       extras.add(Paths.get(extra));
     }
+    Map<String, Path> extraDirs = new HashMap<>();
+    for (String spec : flags.all("--extra-dir")) {
+      int eq = spec.indexOf('=');
+      if (eq < 1 || eq == spec.length() - 1 || spec.substring(0, eq).contains("/")) {
+        return usage(err, "--extra-dir must be <name>=<dir>, was " + spec);
+      }
+      extraDirs.put(spec.substring(0, eq), Paths.get(spec.substring(eq + 1)));
+    }
     try {
       ExportSummary summary =
           new ArchiveExporter(prefix, PLACEHOLDER, new ObjectMapper())
-              .export(Paths.get(state), Paths.get(dest), extras);
+              .export(Paths.get(state), Paths.get(dest), extras, extraDirs);
       out.println("wrote " + summary.written().size() + " files to " + dest + "; skipped "
           + summary.skippedDuplicates().size() + " identical Finder duplicates");
       return 0;

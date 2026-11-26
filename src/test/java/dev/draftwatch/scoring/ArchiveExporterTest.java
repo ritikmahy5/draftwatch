@@ -170,6 +170,18 @@ public class ArchiveExporterTest {
   }
 
   @Test
+  public void copiesAnExtraDirectoryUnderTheGivenName() throws IOException {
+    Path dir = tmp.newFolder("p2").toPath();
+    Files.write(dir.resolve("qwen-chat-d1.json"), "{\"n\":1}".getBytes(StandardCharsets.UTF_8));
+    Files.write(dir.resolve("qwen-chat-d1 2.json"), "{\"n\":1}".getBytes(StandardCharsets.UTF_8));
+    ExportSummary summary =
+        exporter.export(state, out, List.of(), java.util.Map.of("pilot-p2", dir));
+    assertEquals("{\"n\":1}", read("pilot-p2/qwen-chat-d1.json"));
+    assertFalse(Files.exists(out.resolve("pilot-p2/qwen-chat-d1 2.json")));
+    assertTrue(summary.skippedDuplicates().contains(dir.resolve("qwen-chat-d1 2.json")));
+  }
+
+  @Test
   public void refusesNonEmptyDestination() throws IOException {
     Files.createDirectories(out);
     Files.write(out.resolve("old.txt"), new byte[] {1});

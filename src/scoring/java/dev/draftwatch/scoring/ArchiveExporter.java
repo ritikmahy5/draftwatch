@@ -75,6 +75,16 @@ public final class ArchiveExporter {
    * @throws ExportException naming the file, if any check fails; nothing is written then
    */
   public ExportSummary export(Path stateDir, Path destination, List<Path> extras) {
+    return export(stateDir, destination, extras, Map.of());
+  }
+
+  /**
+   * As {@link #export(Path, Path, List)}, also copying the regular files of each directory in
+   * {@code extraDirs} (not recursively; Finder duplicates verified and skipped) into {@code
+   * <destination>/<name>/}.
+   */
+  public ExportSummary export(
+      Path stateDir, Path destination, List<Path> extras, Map<String, Path> extraDirs) {
     requireEmpty(destination);
     Map<Path, Path> sources = new LinkedHashMap<>(); // destination-relative -> source
     List<Path> skipped = new ArrayList<>();
@@ -92,6 +102,13 @@ public final class ArchiveExporter {
     }
     for (Path extra : extras) {
       sources.put(extra.getFileName(), extra);
+    }
+    for (Map.Entry<String, Path> dir : new java.util.TreeMap<>(extraDirs).entrySet()) {
+      for (Path file : regularFiles(dir.getValue())) {
+        if (!DUPLICATE.matcher(file.getFileName().toString()).matches()) {
+          sources.put(Paths.get(dir.getKey()).resolve(file.getFileName().toString()), file);
+        }
+      }
     }
     for (Path source : sources.values()) {
       duplicateOf(source).ifPresent(skipped::add);
@@ -124,6 +141,14 @@ public final class ArchiveExporter {
       }
     } catch (IOException e) {
       throw new ExportException(destination, "cannot list: " + e.getMessage(), e);
+    }
+  }
+
+  private static List<Path> regularFiles(Path dir) {
+    try (Stream<Path> list = Files.list(dir)) {
+      return list.filter(Files::isRegularFile).sorted().collect(Collectors.toList());
+    } catch (IOException e) {
+      throw new ExportException(dir, "cannot list: " + e.getMessage(), e);
     }
   }
 
