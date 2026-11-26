@@ -284,7 +284,7 @@ scripts/demo.sh                                          # the primary use case 
 
 | Member | Contributions This Phase | Commits (total) |
 |---|---|---|
-| Ritik Pankaj Mahyavanshi | Ran the pilot and the full evaluation runs on Explorer (training, measurement, and the scheduled watch over four targets), and archived their state. Built the scoring tool (`src/scoring/`, 43 classes, and its 109 tests): archive export with placeholder paths, validation, ground truth, probe subsets, replay through the engine's detectors, the cross-check against the live log, every metric, cost, and the traced output. Exported and scored the full runs (`evaluation/results/full-run/`), merged the evaluation tooling (pull request #1), and updated this README. | 21 (145) |
+| Ritik Pankaj Mahyavanshi | Ran the pilot and the full evaluation runs on Explorer (training, measurement, and the scheduled watch over four targets), and archived their state. Built the scoring tool (`src/scoring/`, 43 classes, and its 109 tests): archive export with placeholder paths, validation, ground truth, probe subsets, replay through the engine's detectors, the cross-check against the live log, every metric, cost, and the traced output. Exported and scored the full runs (`evaluation/results/full-run/`), merged the evaluation tooling (pull request #1), measured test coverage, and wrote the QA documentation, the final slides, and this README. | 23 (147) |
 
 ## License
 
