@@ -30,6 +30,18 @@ application {
   applicationName = "draftwatch"
 }
 
+// The evaluation's scoring tool (docs/EVALUATION.md, "Scoring the detectors"): its own source set,
+// which depends on main and never the other way round. Its tests run in the main test task.
+val scoring: SourceSet by sourceSets.creating {
+  compileClasspath += sourceSets.main.get().output + sourceSets.main.get().compileClasspath
+  runtimeClasspath += sourceSets.main.get().output + sourceSets.main.get().runtimeClasspath
+}
+
+sourceSets.test {
+  compileClasspath += scoring.output
+  runtimeClasspath += scoring.output
+}
+
 tasks.withType<JavaCompile>().configureEach {
   options.encoding = "UTF-8"
   options.compilerArgs.addAll(listOf("-Xlint:all", "-Werror"))
@@ -50,6 +62,40 @@ val pythonTest by tasks.registering(Exec::class) {
   commandLine("python3", "-m", "unittest", "discover", "-s", "python/tests", "-q")
 }
 
+// The evaluation tooling's unit tests: standard library only (docs/EVALUATION.md).
+val evaluationTest by tasks.registering(Exec::class) {
+  description = "Runs the evaluation tooling's Python unit tests."
+  group = "verification"
+  workingDir = projectDir
+  commandLine("python3", "-m", "unittest", "discover", "-s", "evaluation/tests", "-q")
+}
+
 tasks.named("check") {
-  dependsOn(pythonTest)
+  dependsOn(pythonTest, evaluationTest)
+}
+
+// Runs the scoring tool. The tool records the commit it ran at, so the task passes it in.
+tasks.register<JavaExec>("score") {
+  description = "Runs the evaluation scoring tool (export, score)."
+  group = "evaluation"
+  mainClass.set("dev.draftwatch.scoring.ScoreMain")
+  classpath = scoring.runtimeClasspath
+  workingDir = projectDir
+  javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
+  val commit = providers.exec { commandLine("git", "rev-parse", "HEAD") }
+      .standardOutput.asText.map { it.trim() }
+  // Dirty: any change to a tracked file, or an untracked file that could be compiled in. The
+  // repository root also holds unrelated untracked files, which do not count.
+  val codePaths = listOf("src/", "gradle/", "build.gradle.kts", "settings.gradle.kts",
+      "gradle.properties")
+  val dirty = providers.exec { commandLine("git", "status", "--porcelain", "--untracked-files=all") }
+      .standardOutput.asText.map { status ->
+        status.lines().filter { it.isNotBlank() }.any { line ->
+          !line.startsWith("?? ") || codePaths.any { line.removePrefix("?? ").startsWith(it) }
+        }.toString()
+      }
+  doFirst {
+    systemProperty("draftwatch.commit", commit.get())
+    systemProperty("draftwatch.dirty", dirty.get())
+  }
 }

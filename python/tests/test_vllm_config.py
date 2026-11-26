@@ -3,7 +3,7 @@ import unittest
 
 import _paths  # noqa: F401
 from draftwatch_harness.errors import EXIT_BACKEND_COUNTERS, HarnessError
-from draftwatch_harness.vllm_backend import check_speculative_config
+from draftwatch_harness.vllm_backend import check_cache_config, check_speculative_config
 
 
 def config(**changes):
@@ -40,6 +40,25 @@ class SpeculativeConfigTest(unittest.TestCase):
         cfg = config()
         del cfg.enable_adaptive_verification
         self.assertRefused(cfg, "has no 'enable_adaptive_verification'")
+
+
+class CacheConfigTest(unittest.TestCase):
+    def assertRefused(self, cfg, contains):
+        with self.assertRaises(HarnessError) as c:
+            check_cache_config(cfg)
+        self.assertEqual(EXIT_BACKEND_COUNTERS, c.exception.code)
+        self.assertIn(contains, str(c.exception))
+
+    def test_prefix_caching_off_passes(self):
+        check_cache_config(types.SimpleNamespace(enable_prefix_caching=False))
+
+    def test_prefix_caching_on_is_refused(self):
+        # With it on, a prompt's counts depend on which prompts ran before it.
+        self.assertRefused(types.SimpleNamespace(enable_prefix_caching=True),
+                           "cache_config.enable_prefix_caching")
+
+    def test_an_unknown_vllm_version_without_the_field_is_refused(self):
+        self.assertRefused(types.SimpleNamespace(), "has no 'enable_prefix_caching'")
 
 
 if __name__ == "__main__":

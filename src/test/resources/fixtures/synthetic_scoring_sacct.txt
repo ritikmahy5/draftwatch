@@ -1,0 +1,6 @@
+JobName|Elapsed|State
+draftwatch-j-a-a1|00:02:30|COMPLETED
+draftwatch-j-b-a1|00:06:10|COMPLETED
+draftwatch-j-c-a1|00:01:00|FAILED
+draftwatch-j-d-a1|00:00:50|COMPLETED
+draftwatch-j-x-a1|1-00:00:10|COMPLETED

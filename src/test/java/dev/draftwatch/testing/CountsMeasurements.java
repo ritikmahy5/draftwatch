@@ -36,6 +36,10 @@ public final class CountsMeasurements {
   private String backend = "fake";
   private String probeHash = PROBE_HASH;
   private Hardware hardware = Hardware.of("none", 0);
+  private Integer numPromptsOverride;
+  private int seedCount = 1;
+  private int excludedPrompts;
+  private double wallClockSeconds = 1.0;
 
   public CountsMeasurements(int numSpeculativeTokens) {
     this.k = numSpeculativeTokens;
@@ -61,6 +65,28 @@ public final class CountsMeasurements {
     return this;
   }
 
+  /** Reports {@code n} as {@code num_prompts} regardless of the per-prompt list. */
+  public CountsMeasurements numPrompts(int n) {
+    this.numPromptsOverride = n;
+    return this;
+  }
+
+  /** Repeats the one seed report as seeds 0 … count−1. */
+  public CountsMeasurements seeds(int count) {
+    this.seedCount = count;
+    return this;
+  }
+
+  public CountsMeasurements excludedPrompts(int n) {
+    this.excludedPrompts = n;
+    return this;
+  }
+
+  public CountsMeasurements wallClockSeconds(double seconds) {
+    this.wallClockSeconds = seconds;
+    return this;
+  }
+
   /** Prompts with the same steps and proposed counts and the given accepted counts. */
   public static List<PromptCounts> prompts(long steps, long proposed, List<Integer> accepted) {
     List<PromptCounts> out = new ArrayList<>();
@@ -73,6 +99,19 @@ public final class CountsMeasurements {
   /** A single-seed, token-weighted measurement of checkpoint {@code step}, job {@code jobId}. */
   public Measurement measurement(
       String jobId, long step, Instant end, List<PromptCounts> prompts) {
+    return measurement(
+        "run", "probe", "sampled-" + String.format("%064x", step), jobId, step, end, prompts);
+  }
+
+  /** As {@link #measurement(String, long, Instant, List)}, for a named target and probe. */
+  public Measurement measurement(
+      String target,
+      String probeId,
+      String fingerprint,
+      String jobId,
+      long step,
+      Instant end,
+      List<PromptCounts> prompts) {
     long steps = 0;
     long proposed = 0;
     long accepted = 0;
@@ -86,20 +125,12 @@ public final class CountsMeasurements {
     List<PositionCount> positions = positions(steps, accepted);
     double alpha = CALC.alpha(Estimator.TOKEN_WEIGHTED, prompts).getAsDouble();
     double tau = CALC.tau(Estimator.TOKEN_WEIGHTED, prompts).getAsDouble();
-    SeedReport seed =
-        SeedReport.builder()
-            .seed(0)
-            .alpha(alpha)
-            .tau(tau)
-            .alphaByPosition(CALC.alphaByPosition(positions))
-            .totalSteps(steps)
-            .totalProposed(proposed)
-            .totalAccepted(accepted)
-            .excludedPrompts(0)
-            .positionCountsExact(exact)
-            .perPrompt(prompts)
-            .positionCounts(positions)
-            .build();
+    List<SeedReport> seeds = new ArrayList<>();
+    List<Integer> seedIds = new ArrayList<>();
+    for (int id = 0; id < seedCount; id++) {
+      seeds.add(seed(id, alpha, tau, steps, proposed, accepted, exact, positions, prompts));
+      seedIds.add(id);
+    }
     AcceptanceReport report =
         AcceptanceReport.builder()
             .schemaVersion(1)
@@ -110,26 +141,26 @@ public final class CountsMeasurements {
             .estimator(Estimator.TOKEN_WEIGHTED)
             .draftId("draft")
             .promptSetSha256("f".repeat(64))
-            .numPrompts(prompts.size())
+            .numPrompts(numPromptsOverride == null ? prompts.size() : numPromptsOverride)
             .decoding(Decoding.of(BigDecimal.ZERO, 64, k, "bfloat16"))
-            .seeds(List.of(seed))
+            .seeds(seeds)
             .aggregate(
                 AggregateMetrics.of(alpha, OptionalDouble.empty(), tau, OptionalDouble.empty()))
             .hardware(hardware)
-            .wallClockSeconds(1.0)
+            .wallClockSeconds(wallClockSeconds)
             .build();
     Checkpoint checkpoint =
         Checkpoint.builder()
-            .targetName("run")
+            .targetName(target)
             .path(Paths.get("/runs/checkpoint-" + step))
             .step(step)
-            .fingerprint("sampled-" + String.format("%064x", step))
+            .fingerprint(fingerprint)
             .type(CheckpointType.FULL)
             .build();
     Provenance provenance =
         Provenance.builder()
             .checkpoint(checkpoint)
-            .probeId("probe")
+            .probeId(probeId)
             .probeHash(probeHash)
             .draftId("draft")
             .draftFingerprint("sampled-" + "d".repeat(64))
@@ -137,7 +168,7 @@ public final class CountsMeasurements {
             .backend(backend)
             .dtype("bfloat16")
             .estimator(Estimator.TOKEN_WEIGHTED)
-            .seeds(List.of(0))
+            .seeds(seedIds)
             .promptSetSha256("f".repeat(64))
             .executor("fake")
             .jobId(jobId)
@@ -147,6 +178,31 @@ public final class CountsMeasurements {
             .rawReportPath(Paths.get("/state/raw/" + jobId + "/attempt-1/report.json"))
             .build();
     return Measurement.of(provenance, report);
+  }
+
+  private SeedReport seed(
+      int id,
+      double alpha,
+      double tau,
+      long steps,
+      long proposed,
+      long accepted,
+      boolean exact,
+      List<PositionCount> positions,
+      List<PromptCounts> prompts) {
+    return SeedReport.builder()
+        .seed(id)
+        .alpha(alpha)
+        .tau(tau)
+        .alphaByPosition(CALC.alphaByPosition(positions))
+        .totalSteps(steps)
+        .totalProposed(proposed)
+        .totalAccepted(accepted)
+        .excludedPrompts(excludedPrompts)
+        .positionCountsExact(exact)
+        .perPrompt(prompts)
+        .positionCounts(positions)
+        .build();
   }
 
   /** Prefix-consistent pooled positional counts: fill positions greedily, front to back. */

@@ -105,7 +105,8 @@ using `per_prompt` counts — the harness does not compute confidence intervals.
 
 The reference harness (`python/measure_acceptance.py`) uses vLLM's offline `LLM` API with
 `speculative_config = {"method": "draft_model", "model": <--draft-path>,
-"num_speculative_tokens": k}` and `disable_log_stats=False`. It reads these engine counters via
+"num_speculative_tokens": k}`, `disable_log_stats=False`, and `enable_prefix_caching=False`. It
+reads these engine counters via
 `LLM.get_metrics()`, as vLLM's own offline example does
 (`examples/features/speculative_decoding/spec_decode_offline.py` in v0.31.0):
 
@@ -134,8 +135,11 @@ that the draft counters (`num_drafts`, `num_draft_tokens`) advanced. The accepte
 stay at zero for a draft that is always rejected. If not, it exits with code 5 and names the
 metric. It never substitutes estimated values. After loading, it also exits with code 5 if vLLM
 resolved any setting that changes what the counters count: a method other than `draft_model`,
-non-standard rejection sampling, synthetic acceptance, adaptive verification, or a
-per-batch-size k.
+non-standard rejection sampling, synthetic acceptance, adaptive verification, a
+per-batch-size k, or prefix caching. Prefix caching is on by default in vLLM 0.31.0
+(`vllm/config/cache.py`); with it on, a prompt reuses KV blocks cached by earlier prompts, and
+harness 0.1.0 measured different counts for 3–4 of 200 code prompts when they ran in a
+different order (the evaluation pilot's P2). Harness 0.2.0 turns it off.
 
 Each prompt line holds exactly one of `prompt` (a string, passed to `LLM.generate`) or `messages` (a
 list of chat messages, passed to `LLM.chat`), and nothing else. Each call uses

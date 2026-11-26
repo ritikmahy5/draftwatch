@@ -44,6 +44,22 @@ def check_speculative_config(config, k):
                 % (name, have, want, why))
 
 
+def check_cache_config(config):
+    """Exits 5 unless prefix caching is off. With it on (vLLM v0.31.0's default,
+    vllm/config/cache.py), a prompt reuses KV blocks cached by earlier prompts, and its counts
+    then depend on which prompts ran before it."""
+    if not hasattr(config, "enable_prefix_caching"):
+        raise HarnessError(
+            EXIT_BACKEND_COUNTERS,
+            "vLLM's CacheConfig has no 'enable_prefix_caching'; this harness was checked against"
+            " vLLM v0.31.0")
+    if config.enable_prefix_caching is not False:
+        raise HarnessError(
+            EXIT_BACKEND_COUNTERS,
+            "vLLM resolved cache_config.enable_prefix_caching to %r, but it must be False: a"
+            " prompt's counts would depend on the prompts before it" % config.enable_prefix_caching)
+
+
 class VllmBackend:
     """One vLLM engine with the draft model, used for every call of one run."""
 
@@ -76,12 +92,15 @@ class VllmBackend:
                     "num_speculative_tokens": self.k,
                 },
                 disable_log_stats=False,  # LLM defaults to True, and then no counters exist
+                enable_prefix_caching=False,
             )
         except Exception as e:
             if is_out_of_memory(e):
                 raise
             raise HarnessError(EXIT_MODEL_LOAD, "vLLM cannot load the models: %s" % e)
-        check_speculative_config(self.llm.llm_engine.vllm_config.speculative_config, self.k)
+        config = self.llm.llm_engine.vllm_config
+        check_speculative_config(config.speculative_config, self.k)
+        check_cache_config(config.cache_config)
 
     @property
     def adapter_handling(self):

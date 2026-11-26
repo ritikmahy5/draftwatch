@@ -111,7 +111,8 @@ Settings shared by every run:
 | Setting | Value |
 |---|---|
 | Method | Full fine-tuning. Weights and optimizer state in fp32, forward and backward passes in bfloat16 autocast. (With bfloat16 weights, updates of this size are mostly rounded away.) |
-| Optimizer | AdamW, weight decay 0, gradient clipping 1.0 |
+| Attention | Eager (transformers' own implementation). In the pilot, PyTorch's SDPA kernel, the default, gave NaN gradients on a padded Qwen2.5 batch at step 23; eager attention on the same batch, and either kernel on each of its examples alone, did not. |
+| Optimizer | AdamW, weight decay 0, gradient clipping 1.0. The script stops at the first step after which any weight is not finite, so a diverged run never saves a checkpoint. |
 | Learning rate | 1e-5, constant after a 30-step linear warm-up; the pilot may change it, for both runs together |
 | Batch | 32 sequences per step, no packing |
 | Examples | Single-turn (prompt, response) pairs in the target's own chat template. The response is at most 768 tokens and the whole example at most 1,024; longer ones are dropped, not truncated. Every example is used exactly once, and the script logs example ids to prove it. |
@@ -287,7 +288,7 @@ These checks run before the training runs, on H200s, and both families do every 
 | P1 Baseline and rate | Set up the configuration, then `draftwatch submit` checkpoint 0 for all four probes. These are the real baseline measurements. | Each measurement fits in a 1-hour job | Raise the job time (gpu-short allows 2 hours) and re-budget |
 | P2 Order independence | Run the harness directly on a 200-prompt subset of each reference pool in shuffled order, on checkpoint 0. P1's warm-up prompt (pool prompt 0) is placed after the first line. | Every prompt's (steps, proposed, accepted) equals its counts in P1 | Subsets are invalid. vLLM's prefix caching, on by default in 0.31.0 (`vllm/config/cache.py`), is the first suspect. The fix is a harness change, verified on a GPU, followed by a new P1; it is not a change to scoring. |
 | P3 Nodes | Repeat P2 on each of the other three H200 nodes (`--nodelist`) | Every report equals P2's in every count | Measurements on different nodes are not interchangeable; the comparability key must include the node before the runs |
-| P4 Recipe | Train 100 trunk steps from checkpoint 0, then branch for 300 steps from that checkpoint, resuming as run 2 does. Save branch steps 25, 50, 100, 200, and 300. Measure the trunk checkpoint and the five branch checkpoints on P2's subsets. | **Control:** the trunk checkpoint's Δ ≥ −δ/2. **Strong enough:** at branch step 300, U < −δ/2 on at least one probe. **Gradual enough:** at branch step 25, U ≥ −δ on both probes. | Control or gradual fails: learning rate 5e-6 for both runs, then repeat P4. Strong enough fails: learning rate 2e-5 for both runs, then repeat P4. If that fails too, the runs go ahead, and the result that this shift did not regress acceptance is reported; detection is then scored only on whatever REGRESSED checkpoints exist. |
+| P4 Recipe | Train 100 trunk steps from checkpoint 0, then branch for 300 steps from that checkpoint, resuming as run 2 does. Save branch steps 25, 50, 100, 200, and 300. Measure the trunk checkpoint and the five branch checkpoints on P2's subsets. | **Control:** the trunk checkpoint's Δ ≥ −δ/2. **Strong enough:** at branch step 300, U < −δ/2 on at least one probe. **Gradual enough:** at branch step 25, U ≥ −δ on both probes. | Control or gradual fails: learning rate 5e-6 for both runs, then repeat P4. Strong enough fails: learning rate 2e-5 for both runs, then repeat P4. If it still fails, the branch trains on the other family's greedy responses to its UltraChat prompts instead (Qwen2.5 on SmolLM2's, SmolLM2 on Qwen2.5's), generated and filtered exactly as run 1's responses are, then P4 is repeated. If that fails too, the runs go ahead, and the success criterion that a planted regression is flagged is reported as not met; detection is then scored only on whatever REGRESSED checkpoints exist. |
 
 P4 also checks the branch's resume (the first-batch check), measures training throughput, and
 confirms that a 1,200-step run fits in the `gpu` partition's 8 hours. From the pair of 200-prompt
@@ -353,5 +354,5 @@ measurements take at least about a day of wall time.
 | 1,000-prompt reference pools | Most branch checkpoints come out AMBIGUOUS |
 | δ = 0.02 in `alpha` | Users report a different size of drop that matters to them; the per-checkpoint results allow re-scoring without new runs |
 | Subsets instead of separate small-probe measurements | P2 or P3 fails |
-| UltraChat responses as the shift, learning rate 1e-5 | P4 fails; its fallbacks are listed above |
+| UltraChat responses as the shift, learning rate 1e-5 | P4 fails; its fallbacks (a higher learning rate, then another family's responses) are listed above |
 | Dense branch saves through step 800 | P4 shows that the drop develops over hundreds of steps, not tens |

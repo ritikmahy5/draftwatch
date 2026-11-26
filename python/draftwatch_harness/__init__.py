@@ -5,5 +5,5 @@ standard library, so they are tested without vLLM or a GPU. Only
 ``vllm_backend`` imports vLLM, and only when it runs.
 """
 
-HARNESS_VERSION = "0.1.0"
+HARNESS_VERSION = "0.2.0"
 SCHEMA_VERSION = 1

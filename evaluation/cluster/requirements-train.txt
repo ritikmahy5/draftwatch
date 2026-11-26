@@ -1,0 +1,7 @@
+# The training environment (evaluation/train.py, build_probes.py, build_training_data.py select).
+# torch comes from PyTorch's CUDA 12.9 index: Explorer's GPU driver supports CUDA 12.8, and CUDA
+# 12.x builds run on drivers from 525 up to 580. Versions read from PyPI on 2026-11-01.
+torch==2.13.0
+transformers==5.20.0
+datasets==5.1.0
+accelerate==1.15.0

@@ -1,0 +1,30 @@
+{
+  "qwen-run1" : {
+    "fingerprint" : "sampled-23db11f12178616cef478994386ab1c9f7da8b8791c3d569bdfc3b8c1ce39f65",
+    "path" : "/scratch/user/draftwatch-eval/runs/qwen-trunk/checkpoint-0",
+    "step" : 0,
+    "set_at" : "2026-11-05T19:10:02.571581788Z",
+    "source" : "manual"
+  },
+  "qwen-run2" : {
+    "fingerprint" : "sampled-23db11f12178616cef478994386ab1c9f7da8b8791c3d569bdfc3b8c1ce39f65",
+    "path" : "/scratch/user/draftwatch-eval/runs/qwen-trunk/checkpoint-0",
+    "step" : 0,
+    "set_at" : "2026-11-05T20:18:31.592434900Z",
+    "source" : "manual"
+  },
+  "smol-run1" : {
+    "fingerprint" : "sampled-a13f0fa1ce2deb1a70eadb632a3d9a8fe2196d0b4c9666c34a58402077ba3b2e",
+    "path" : "/scratch/user/draftwatch-eval/runs/smol-trunk/checkpoint-0",
+    "step" : 0,
+    "set_at" : "2026-11-05T19:10:08.691546952Z",
+    "source" : "manual"
+  },
+  "smol-run2" : {
+    "fingerprint" : "sampled-a13f0fa1ce2deb1a70eadb632a3d9a8fe2196d0b4c9666c34a58402077ba3b2e",
+    "path" : "/scratch/user/draftwatch-eval/runs/smol-trunk/checkpoint-0",
+    "step" : 0,
+    "set_at" : "2026-11-05T20:51:34.239279927Z",
+    "source" : "manual"
+  }
+}

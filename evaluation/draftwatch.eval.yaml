@@ -1,0 +1,131 @@
+# The evaluation's draftwatch configuration (docs/EVALUATION.md, "How draftwatch watches the
+# runs"). Paths use the placeholder user name of the repository's recorded fixtures: replace
+# /scratch/user with your own scratch directory. evaluation/README.md gives the order of
+# operations, including when to pin each target's baseline.
+state_dir: /scratch/user/draftwatch-eval/state
+
+executor:
+  type: slurm
+  slurm:
+    partition: gpu-short
+    gres: "gpu:h200:1"          # one GPU model, so a series never switches hardware
+    time: "01:00:00"            # set from P1's measured rate
+    requeue_on_preempt: true
+    schedule_sbatch_args: ["--partition=short", "--time=00:30:00"]
+  max_retries: 2
+
+harness:
+  # The reference harness in the vLLM environment (evaluation/cluster/harness.sh sets its caches).
+  command: ["/scratch/user/draftwatch/evaluation/cluster/harness.sh"]
+
+probes:
+  - id: qwen-chat
+    draft: { id: qwen2.5-0.5b-instruct, path: /scratch/user/draftwatch-eval/models/Qwen2.5-0.5B-Instruct, structure: chain }
+    prompts: { path: /scratch/user/draftwatch-eval/probes/chat.jsonl }
+    decoding: { temperature: 0, max_new_tokens: 128, num_speculative_tokens: 4, dtype: bfloat16 }
+    estimator: token_weighted
+    seeds: [0]
+  - id: qwen-chat-live
+    draft: { id: qwen2.5-0.5b-instruct, path: /scratch/user/draftwatch-eval/models/Qwen2.5-0.5B-Instruct, structure: chain }
+    prompts: { path: /scratch/user/draftwatch-eval/probes/chat-live.jsonl }
+    decoding: { temperature: 0, max_new_tokens: 128, num_speculative_tokens: 4, dtype: bfloat16 }
+    estimator: token_weighted
+    seeds: [0]
+  - id: qwen-code
+    draft: { id: qwen2.5-0.5b-instruct, path: /scratch/user/draftwatch-eval/models/Qwen2.5-0.5B-Instruct, structure: chain }
+    prompts: { path: /scratch/user/draftwatch-eval/probes/code.jsonl }
+    decoding: { temperature: 0, max_new_tokens: 128, num_speculative_tokens: 4, dtype: bfloat16 }
+    estimator: token_weighted
+    seeds: [0]
+  - id: qwen-code-live
+    draft: { id: qwen2.5-0.5b-instruct, path: /scratch/user/draftwatch-eval/models/Qwen2.5-0.5B-Instruct, structure: chain }
+    prompts: { path: /scratch/user/draftwatch-eval/probes/code-live.jsonl }
+    decoding: { temperature: 0, max_new_tokens: 128, num_speculative_tokens: 4, dtype: bfloat16 }
+    estimator: token_weighted
+    seeds: [0]
+  - id: smol-chat
+    draft: { id: smollm2-360m-instruct, path: /scratch/user/draftwatch-eval/models/SmolLM2-360M-Instruct, structure: chain }
+    prompts: { path: /scratch/user/draftwatch-eval/probes/chat.jsonl }
+    decoding: { temperature: 0, max_new_tokens: 128, num_speculative_tokens: 4, dtype: bfloat16 }
+    estimator: token_weighted
+    seeds: [0]
+  - id: smol-chat-live
+    draft: { id: smollm2-360m-instruct, path: /scratch/user/draftwatch-eval/models/SmolLM2-360M-Instruct, structure: chain }
+    prompts: { path: /scratch/user/draftwatch-eval/probes/chat-live.jsonl }
+    decoding: { temperature: 0, max_new_tokens: 128, num_speculative_tokens: 4, dtype: bfloat16 }
+    estimator: token_weighted
+    seeds: [0]
+  - id: smol-code
+    draft: { id: smollm2-360m-instruct, path: /scratch/user/draftwatch-eval/models/SmolLM2-360M-Instruct, structure: chain }
+    prompts: { path: /scratch/user/draftwatch-eval/probes/code.jsonl }
+    decoding: { temperature: 0, max_new_tokens: 128, num_speculative_tokens: 4, dtype: bfloat16 }
+    estimator: token_weighted
+    seeds: [0]
+  - id: smol-code-live
+    draft: { id: smollm2-360m-instruct, path: /scratch/user/draftwatch-eval/models/SmolLM2-360M-Instruct, structure: chain }
+    prompts: { path: /scratch/user/draftwatch-eval/probes/code-live.jsonl }
+    decoding: { temperature: 0, max_new_tokens: 128, num_speculative_tokens: 4, dtype: bfloat16 }
+    estimator: token_weighted
+    seeds: [0]
+
+targets:
+  - name: qwen-run1
+    checkpoint_dirs: [/scratch/user/draftwatch-eval/runs/qwen-trunk]
+    checkpoint_type: full
+    completion: { marker: COMPLETE }
+    probes: [qwen-chat, qwen-chat-live, qwen-code, qwen-code-live]
+    triggers:
+      - not_already_measured: {}
+      - max_pending: 2           # 4 targets x 2 = gpu-short's 8 submitted jobs per user
+      - always_final: {}
+      - every_n_steps: 1
+    detectors:
+      - paired_bootstrap: { metric: alpha, confidence: 0.95, min_effect: 0.0 }   # B0
+      - absolute_drop: { metric: alpha, max_drop: 0.02 }                       # A
+      - trend: { metric: alpha, window: 4, max_slope: -0.005 }                 # T
+    on_regression: [notify]
+  - name: smol-run1
+    checkpoint_dirs: [/scratch/user/draftwatch-eval/runs/smol-trunk]
+    checkpoint_type: full
+    completion: { marker: COMPLETE }
+    probes: [smol-chat, smol-chat-live, smol-code, smol-code-live]
+    triggers:
+      - not_already_measured: {}
+      - max_pending: 2           # 4 targets x 2 = gpu-short's 8 submitted jobs per user
+      - always_final: {}
+      - every_n_steps: 1
+    detectors:
+      - paired_bootstrap: { metric: alpha, confidence: 0.95, min_effect: 0.0 }   # B0
+      - absolute_drop: { metric: alpha, max_drop: 0.02 }                       # A
+      - trend: { metric: alpha, window: 4, max_slope: -0.005 }                 # T
+    on_regression: [notify]
+  - name: qwen-run2
+    checkpoint_dirs: [/scratch/user/draftwatch-eval/runs/qwen-branch]
+    checkpoint_type: full
+    completion: { marker: COMPLETE }
+    probes: [qwen-chat, qwen-chat-live, qwen-code, qwen-code-live]
+    triggers:
+      - not_already_measured: {}
+      - max_pending: 2           # 4 targets x 2 = gpu-short's 8 submitted jobs per user
+      - always_final: {}
+      - every_n_steps: 1
+    detectors:
+      - paired_bootstrap: { metric: alpha, confidence: 0.95, min_effect: 0.0 }   # B0
+      - absolute_drop: { metric: alpha, max_drop: 0.02 }                       # A
+      - trend: { metric: alpha, window: 4, max_slope: -0.005 }                 # T
+    on_regression: [notify]
+  - name: smol-run2
+    checkpoint_dirs: [/scratch/user/draftwatch-eval/runs/smol-branch]
+    checkpoint_type: full
+    completion: { marker: COMPLETE }
+    probes: [smol-chat, smol-chat-live, smol-code, smol-code-live]
+    triggers:
+      - not_already_measured: {}
+      - max_pending: 2           # 4 targets x 2 = gpu-short's 8 submitted jobs per user
+      - always_final: {}
+      - every_n_steps: 1
+    detectors:
+      - paired_bootstrap: { metric: alpha, confidence: 0.95, min_effect: 0.0 }   # B0
+      - absolute_drop: { metric: alpha, max_drop: 0.02 }                       # A
+      - trend: { metric: alpha, window: 4, max_slope: -0.005 }                 # T
+    on_regression: [notify]
