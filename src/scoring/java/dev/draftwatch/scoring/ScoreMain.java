@@ -132,8 +132,9 @@ public final class ScoreMain {
       return 1;
     }
     if (dirty && !allowDirty) {
-      err.println("score failed: the working tree has uncommitted changes to tracked files;"
-          + " commit them first, so the manifest's tool commit is the code that ran");
+      err.println("score failed: the working tree has uncommitted changes (to tracked files,"
+          + " or untracked files under src/ or the build files); commit them first, so the"
+          + " manifest's tool commit is the code that ran");
       return 1;
     }
     String recorded = commit == null ? "unknown" : commit + (dirty ? "-dirty" : "");

@@ -84,8 +84,16 @@ tasks.register<JavaExec>("score") {
   javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
   val commit = providers.exec { commandLine("git", "rev-parse", "HEAD") }
       .standardOutput.asText.map { it.trim() }
-  val dirty = providers.exec { commandLine("git", "status", "--porcelain", "--untracked-files=no") }
-      .standardOutput.asText.map { it.isNotBlank().toString() }
+  // Dirty: any change to a tracked file, or an untracked file that could be compiled in. The
+  // repository root also holds unrelated untracked files, which do not count.
+  val codePaths = listOf("src/", "gradle/", "build.gradle.kts", "settings.gradle.kts",
+      "gradle.properties")
+  val dirty = providers.exec { commandLine("git", "status", "--porcelain", "--untracked-files=all") }
+      .standardOutput.asText.map { status ->
+        status.lines().filter { it.isNotBlank() }.any { line ->
+          !line.startsWith("?? ") || codePaths.any { line.removePrefix("?? ").startsWith(it) }
+        }.toString()
+      }
   doFirst {
     systemProperty("draftwatch.commit", commit.get())
     systemProperty("draftwatch.dirty", dirty.get())
