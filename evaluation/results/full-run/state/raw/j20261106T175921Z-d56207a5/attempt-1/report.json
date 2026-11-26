@@ -1,0 +1,670 @@
+{
+  "schema_version": 1,
+  "harness_version": "0.2.0",
+  "backend": "vllm==0.31.0",
+  "adapter_handling": "none",
+  "draft_structure": "chain",
+  "estimator": "token_weighted",
+  "draft_id": "qwen2.5-0.5b-instruct",
+  "prompt_set_sha256": "d160a345421054c516a15373dc9d96cf3c5862c4ea0ead125025a570fd525daf",
+  "num_prompts": 100,
+  "decoding": {
+    "dtype": "bfloat16",
+    "max_new_tokens": 128,
+    "num_speculative_tokens": 4,
+    "temperature": 0
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "alpha": 0.5483916478555305,
+      "tau": 3.193566591422122,
+      "alpha_by_position": [
+        0.7607223476297968,
+        0.7700296735905044,
+        0.8044315992292871,
+        0.7976047904191617
+      ],
+      "total_steps": 3544,
+      "total_proposed": 14176,
+      "total_accepted": 7774,
+      "excluded_prompts": 0,
+      "position_counts_exact": true,
+      "per_prompt": [
+        {
+          "prompt_index": 0,
+          "steps": 35,
+          "proposed": 140,
+          "accepted": 70
+        },
+        {
+          "prompt_index": 1,
+          "steps": 50,
+          "proposed": 200,
+          "accepted": 77
+        },
+        {
+          "prompt_index": 2,
+          "steps": 41,
+          "proposed": 164,
+          "accepted": 89
+        },
+        {
+          "prompt_index": 3,
+          "steps": 46,
+          "proposed": 184,
+          "accepted": 84
+        },
+        {
+          "prompt_index": 4,
+          "steps": 37,
+          "proposed": 148,
+          "accepted": 93
+        },
+        {
+          "prompt_index": 5,
+          "steps": 3,
+          "proposed": 12,
+          "accepted": 12
+        },
+        {
+          "prompt_index": 6,
+          "steps": 48,
+          "proposed": 192,
+          "accepted": 81
+        },
+        {
+          "prompt_index": 7,
+          "steps": 38,
+          "proposed": 152,
+          "accepted": 89
+        },
+        {
+          "prompt_index": 8,
+          "steps": 26,
+          "proposed": 104,
+          "accepted": 55
+        },
+        {
+          "prompt_index": 9,
+          "steps": 29,
+          "proposed": 116,
+          "accepted": 98
+        },
+        {
+          "prompt_index": 10,
+          "steps": 41,
+          "proposed": 164,
+          "accepted": 90
+        },
+        {
+          "prompt_index": 11,
+          "steps": 46,
+          "proposed": 184,
+          "accepted": 81
+        },
+        {
+          "prompt_index": 12,
+          "steps": 46,
+          "proposed": 184,
+          "accepted": 83
+        },
+        {
+          "prompt_index": 13,
+          "steps": 44,
+          "proposed": 176,
+          "accepted": 83
+        },
+        {
+          "prompt_index": 14,
+          "steps": 45,
+          "proposed": 180,
+          "accepted": 82
+        },
+        {
+          "prompt_index": 15,
+          "steps": 37,
+          "proposed": 148,
+          "accepted": 94
+        },
+        {
+          "prompt_index": 16,
+          "steps": 37,
+          "proposed": 148,
+          "accepted": 94
+        },
+        {
+          "prompt_index": 17,
+          "steps": 50,
+          "proposed": 200,
+          "accepted": 77
+        },
+        {
+          "prompt_index": 18,
+          "steps": 38,
+          "proposed": 152,
+          "accepted": 90
+        },
+        {
+          "prompt_index": 19,
+          "steps": 46,
+          "proposed": 184,
+          "accepted": 83
+        },
+        {
+          "prompt_index": 20,
+          "steps": 40,
+          "proposed": 160,
+          "accepted": 87
+        },
+        {
+          "prompt_index": 21,
+          "steps": 43,
+          "proposed": 172,
+          "accepted": 84
+        },
+        {
+          "prompt_index": 22,
+          "steps": 48,
+          "proposed": 192,
+          "accepted": 80
+        },
+        {
+          "prompt_index": 23,
+          "steps": 34,
+          "proposed": 136,
+          "accepted": 61
+        },
+        {
+          "prompt_index": 24,
+          "steps": 25,
+          "proposed": 100,
+          "accepted": 42
+        },
+        {
+          "prompt_index": 25,
+          "steps": 43,
+          "proposed": 172,
+          "accepted": 84
+        },
+        {
+          "prompt_index": 26,
+          "steps": 39,
+          "proposed": 156,
+          "accepted": 90
+        },
+        {
+          "prompt_index": 27,
+          "steps": 28,
+          "proposed": 112,
+          "accepted": 100
+        },
+        {
+          "prompt_index": 28,
+          "steps": 11,
+          "proposed": 44,
+          "accepted": 42
+        },
+        {
+          "prompt_index": 29,
+          "steps": 9,
+          "proposed": 36,
+          "accepted": 28
+        },
+        {
+          "prompt_index": 30,
+          "steps": 38,
+          "proposed": 152,
+          "accepted": 92
+        },
+        {
+          "prompt_index": 31,
+          "steps": 43,
+          "proposed": 172,
+          "accepted": 86
+        },
+        {
+          "prompt_index": 32,
+          "steps": 39,
+          "proposed": 156,
+          "accepted": 89
+        },
+        {
+          "prompt_index": 33,
+          "steps": 3,
+          "proposed": 12,
+          "accepted": 12
+        },
+        {
+          "prompt_index": 34,
+          "steps": 41,
+          "proposed": 164,
+          "accepted": 87
+        },
+        {
+          "prompt_index": 35,
+          "steps": 14,
+          "proposed": 56,
+          "accepted": 38
+        },
+        {
+          "prompt_index": 36,
+          "steps": 12,
+          "proposed": 48,
+          "accepted": 40
+        },
+        {
+          "prompt_index": 37,
+          "steps": 40,
+          "proposed": 160,
+          "accepted": 88
+        },
+        {
+          "prompt_index": 38,
+          "steps": 42,
+          "proposed": 168,
+          "accepted": 86
+        },
+        {
+          "prompt_index": 39,
+          "steps": 38,
+          "proposed": 152,
+          "accepted": 54
+        },
+        {
+          "prompt_index": 40,
+          "steps": 47,
+          "proposed": 188,
+          "accepted": 81
+        },
+        {
+          "prompt_index": 41,
+          "steps": 42,
+          "proposed": 168,
+          "accepted": 85
+        },
+        {
+          "prompt_index": 42,
+          "steps": 36,
+          "proposed": 144,
+          "accepted": 91
+        },
+        {
+          "prompt_index": 43,
+          "steps": 42,
+          "proposed": 168,
+          "accepted": 88
+        },
+        {
+          "prompt_index": 44,
+          "steps": 48,
+          "proposed": 192,
+          "accepted": 80
+        },
+        {
+          "prompt_index": 45,
+          "steps": 35,
+          "proposed": 140,
+          "accepted": 96
+        },
+        {
+          "prompt_index": 46,
+          "steps": 35,
+          "proposed": 140,
+          "accepted": 85
+        },
+        {
+          "prompt_index": 47,
+          "steps": 46,
+          "proposed": 184,
+          "accepted": 85
+        },
+        {
+          "prompt_index": 48,
+          "steps": 35,
+          "proposed": 140,
+          "accepted": 55
+        },
+        {
+          "prompt_index": 49,
+          "steps": 42,
+          "proposed": 168,
+          "accepted": 87
+        },
+        {
+          "prompt_index": 50,
+          "steps": 44,
+          "proposed": 176,
+          "accepted": 84
+        },
+        {
+          "prompt_index": 51,
+          "steps": 36,
+          "proposed": 144,
+          "accepted": 93
+        },
+        {
+          "prompt_index": 52,
+          "steps": 39,
+          "proposed": 156,
+          "accepted": 91
+        },
+        {
+          "prompt_index": 53,
+          "steps": 45,
+          "proposed": 180,
+          "accepted": 83
+        },
+        {
+          "prompt_index": 54,
+          "steps": 37,
+          "proposed": 148,
+          "accepted": 90
+        },
+        {
+          "prompt_index": 55,
+          "steps": 34,
+          "proposed": 136,
+          "accepted": 97
+        },
+        {
+          "prompt_index": 56,
+          "steps": 37,
+          "proposed": 148,
+          "accepted": 90
+        },
+        {
+          "prompt_index": 57,
+          "steps": 11,
+          "proposed": 44,
+          "accepted": 32
+        },
+        {
+          "prompt_index": 58,
+          "steps": 38,
+          "proposed": 152,
+          "accepted": 89
+        },
+        {
+          "prompt_index": 59,
+          "steps": 27,
+          "proposed": 108,
+          "accepted": 101
+        },
+        {
+          "prompt_index": 60,
+          "steps": 31,
+          "proposed": 124,
+          "accepted": 96
+        },
+        {
+          "prompt_index": 61,
+          "steps": 25,
+          "proposed": 100,
+          "accepted": 56
+        },
+        {
+          "prompt_index": 62,
+          "steps": 42,
+          "proposed": 168,
+          "accepted": 86
+        },
+        {
+          "prompt_index": 63,
+          "steps": 40,
+          "proposed": 160,
+          "accepted": 91
+        },
+        {
+          "prompt_index": 64,
+          "steps": 37,
+          "proposed": 148,
+          "accepted": 94
+        },
+        {
+          "prompt_index": 65,
+          "steps": 31,
+          "proposed": 124,
+          "accepted": 99
+        },
+        {
+          "prompt_index": 66,
+          "steps": 33,
+          "proposed": 132,
+          "accepted": 97
+        },
+        {
+          "prompt_index": 67,
+          "steps": 3,
+          "proposed": 12,
+          "accepted": 9
+        },
+        {
+          "prompt_index": 68,
+          "steps": 39,
+          "proposed": 156,
+          "accepted": 89
+        },
+        {
+          "prompt_index": 69,
+          "steps": 40,
+          "proposed": 160,
+          "accepted": 90
+        },
+        {
+          "prompt_index": 70,
+          "steps": 42,
+          "proposed": 168,
+          "accepted": 85
+        },
+        {
+          "prompt_index": 71,
+          "steps": 43,
+          "proposed": 172,
+          "accepted": 87
+        },
+        {
+          "prompt_index": 72,
+          "steps": 38,
+          "proposed": 152,
+          "accepted": 93
+        },
+        {
+          "prompt_index": 73,
+          "steps": 45,
+          "proposed": 180,
+          "accepted": 83
+        },
+        {
+          "prompt_index": 74,
+          "steps": 44,
+          "proposed": 176,
+          "accepted": 86
+        },
+        {
+          "prompt_index": 75,
+          "steps": 5,
+          "proposed": 20,
+          "accepted": 9
+        },
+        {
+          "prompt_index": 76,
+          "steps": 38,
+          "proposed": 152,
+          "accepted": 93
+        },
+        {
+          "prompt_index": 77,
+          "steps": 42,
+          "proposed": 168,
+          "accepted": 87
+        },
+        {
+          "prompt_index": 78,
+          "steps": 38,
+          "proposed": 152,
+          "accepted": 93
+        },
+        {
+          "prompt_index": 79,
+          "steps": 44,
+          "proposed": 176,
+          "accepted": 86
+        },
+        {
+          "prompt_index": 80,
+          "steps": 32,
+          "proposed": 128,
+          "accepted": 97
+        },
+        {
+          "prompt_index": 81,
+          "steps": 39,
+          "proposed": 156,
+          "accepted": 90
+        },
+        {
+          "prompt_index": 82,
+          "steps": 28,
+          "proposed": 112,
+          "accepted": 50
+        },
+        {
+          "prompt_index": 83,
+          "steps": 41,
+          "proposed": 164,
+          "accepted": 89
+        },
+        {
+          "prompt_index": 84,
+          "steps": 11,
+          "proposed": 44,
+          "accepted": 42
+        },
+        {
+          "prompt_index": 85,
+          "steps": 46,
+          "proposed": 184,
+          "accepted": 84
+        },
+        {
+          "prompt_index": 86,
+          "steps": 41,
+          "proposed": 164,
+          "accepted": 88
+        },
+        {
+          "prompt_index": 87,
+          "steps": 39,
+          "proposed": 156,
+          "accepted": 66
+        },
+        {
+          "prompt_index": 88,
+          "steps": 38,
+          "proposed": 152,
+          "accepted": 89
+        },
+        {
+          "prompt_index": 89,
+          "steps": 30,
+          "proposed": 120,
+          "accepted": 97
+        },
+        {
+          "prompt_index": 90,
+          "steps": 39,
+          "proposed": 156,
+          "accepted": 75
+        },
+        {
+          "prompt_index": 91,
+          "steps": 40,
+          "proposed": 160,
+          "accepted": 88
+        },
+        {
+          "prompt_index": 92,
+          "steps": 42,
+          "proposed": 168,
+          "accepted": 88
+        },
+        {
+          "prompt_index": 93,
+          "steps": 19,
+          "proposed": 76,
+          "accepted": 33
+        },
+        {
+          "prompt_index": 94,
+          "steps": 3,
+          "proposed": 12,
+          "accepted": 12
+        },
+        {
+          "prompt_index": 95,
+          "steps": 42,
+          "proposed": 168,
+          "accepted": 85
+        },
+        {
+          "prompt_index": 96,
+          "steps": 35,
+          "proposed": 140,
+          "accepted": 61
+        },
+        {
+          "prompt_index": 97,
+          "steps": 40,
+          "proposed": 160,
+          "accepted": 89
+        },
+        {
+          "prompt_index": 98,
+          "steps": 34,
+          "proposed": 136,
+          "accepted": 93
+        },
+        {
+          "prompt_index": 99,
+          "steps": 36,
+          "proposed": 144,
+          "accepted": 91
+        }
+      ],
+      "position_counts": [
+        {
+          "position": 1,
+          "eligible": 3544,
+          "accepted": 2696
+        },
+        {
+          "position": 2,
+          "eligible": 2696,
+          "accepted": 2076
+        },
+        {
+          "position": 3,
+          "eligible": 2076,
+          "accepted": 1670
+        },
+        {
+          "position": 4,
+          "eligible": 1670,
+          "accepted": 1332
+        }
+      ]
+    }
+  ],
+  "aggregate": {
+    "alpha_mean": 0.5483916478555305,
+    "alpha_std": null,
+    "tau_mean": 3.193566591422122,
+    "tau_std": null
+  },
+  "hardware": {
+    "gpu": "NVIDIA H200",
+    "count": 1
+  },
+  "wall_clock_seconds": 110.0233181079966
+}
