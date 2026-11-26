@@ -439,10 +439,16 @@ public final class Scorer {
       elapsed = SacctDump.parse(o.sacct().get());
     }
     List<AcceptanceReport> pilot = new ArrayList<>();
+    Map<String, List<AcceptanceReport>> pilotByProbe = new TreeMap<>();
     if (o.pilotDir().isPresent()) {
       for (Path file : jsonFiles(o.pilotDir().get())) {
         manifest.input(file);
-        pilot.add(readReport(file));
+        AcceptanceReport report = readReport(file);
+        pilot.add(report);
+        pilotByProbe
+            .computeIfAbsent(CostTable.pilotProbeId(file.getFileName().toString()),
+                k -> new ArrayList<>())
+            .add(report);
       }
     }
     CostTable table = CostTable.of(all, elapsed, pilot);
@@ -461,17 +467,25 @@ public final class Scorer {
     }
     ArrayNode rows = n.putArray("rows");
     for (CostRow r : table.rows()) {
-      ObjectNode row = rows.addObject();
-      row.put("n", r.n());
-      row.put("extrapolated", r.extrapolated());
-      ScoreOutput.put(row, "mean_wall_clock_seconds", r.meanWallClockSeconds());
-      ScoreOutput.put(row, "mean_elapsed_seconds", r.meanElapsedSeconds());
-      row.put("measurements", r.measurements());
-      ArrayNode versions = row.putArray("harness_versions");
-      r.harnessVersions().stream().sorted().forEach(versions::add);
+      costRow(rows.addObject(), r);
+    }
+    ArrayNode byProbe = n.putArray("by_probe");
+    for (ProbeCost p : CostTable.perProbe(all, elapsed, pilotByProbe)) {
+      costRow(byProbe.addObject().put("probe_id", p.probeId()), p.cost());
     }
     return n;
   }
+
+  private static void costRow(ObjectNode row, CostRow r) {
+    row.put("n", r.n());
+    row.put("extrapolated", r.extrapolated());
+    ScoreOutput.put(row, "mean_wall_clock_seconds", r.meanWallClockSeconds());
+    ScoreOutput.put(row, "mean_elapsed_seconds", r.meanElapsedSeconds());
+    row.put("measurements", r.measurements());
+    ArrayNode versions = row.putArray("harness_versions");
+    r.harnessVersions().stream().sorted().forEach(versions::add);
+  }
+
 
   private static List<Path> jsonFiles(Path dir) {
     try (Stream<Path> list = Files.list(dir)) {

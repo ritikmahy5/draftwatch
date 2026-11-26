@@ -127,4 +127,43 @@ public class CostTableTest {
   public void listsJobsMissingFromDump() {
     assertEquals(List.of("draftwatch-j-e-a1"), table().missingElapsed());
   }
+
+  private static Measurement probe(String job, String probeId, int numPrompts, double wallClock) {
+    return new CountsMeasurements(4)
+        .numPrompts(numPrompts)
+        .wallClockSeconds(wallClock)
+        .measurement("qwen-run1", probeId, "sampled-" + "a".repeat(64), job, 100,
+            ScoringFixtures.T0, ScoringFixtures.prompts(4, 0));
+  }
+
+  @Test
+  public void perProbeRows() {
+    List<Measurement> all =
+        List.of(
+            probe("j-a", "qwen-chat", 1000, 300),
+            probe("j-b", "qwen-chat", 1000, 340),
+            probe("j-d", "smol-chat-live", 100, 40));
+    Map<String, List<AcceptanceReport>> pilot =
+        Map.of("qwen-chat", List.of(m("p-1", 200, 100).report()));
+    List<ProbeCost> rows = CostTable.perProbe(all, dump(), pilot);
+    assertEquals(3, rows.size());
+    assertEquals("qwen-chat", rows.get(0).probeId());
+    assertEquals(200, rows.get(0).cost().n());
+    assertEquals(OptionalDouble.of(100.0), rows.get(0).cost().meanWallClockSeconds());
+    assertEquals("qwen-chat", rows.get(1).probeId());
+    assertEquals(1000, rows.get(1).cost().n());
+    assertEquals(OptionalDouble.of(320.0), rows.get(1).cost().meanWallClockSeconds());
+    assertEquals(OptionalDouble.of(260.0), rows.get(1).cost().meanElapsedSeconds());
+    assertEquals("smol-chat-live", rows.get(2).probeId());
+    assertEquals(OptionalDouble.of(50.0), rows.get(2).cost().meanElapsedSeconds());
+  }
+
+  @Test
+  public void pilotProbeIdComesFromTheFileName() {
+    assertEquals("qwen-chat", CostTable.pilotProbeId("qwen-chat-d4052.json"));
+    assertEquals("smol-code", CostTable.pilotProbeId("smol-code-d4055.json"));
+    DataException e =
+        assertThrows(DataException.class, () -> CostTable.pilotProbeId("report.json"));
+    assertTrue(e.getMessage(), e.getMessage().contains("report.json"));
+  }
 }

@@ -117,6 +117,50 @@ public final class CostTable {
     return OptionalDouble.of(intercept + slope * n);
   }
 
+  /**
+   * Measured cost per probe (and so per family) and size: the pooled rows of {@link #of}, split
+   * by probe id, without extrapolation. Sorted by probe id, then N.
+   */
+  public static List<ProbeCost> perProbe(
+      List<Measurement> all,
+      Map<String, Duration> elapsed,
+      Map<String, List<AcceptanceReport>> pilotByProbe) {
+    Map<String, List<Measurement>> byProbe = new TreeMap<>();
+    for (Measurement m : all) {
+      byProbe.computeIfAbsent(m.provenance().probeId(), k -> new ArrayList<>()).add(m);
+    }
+    for (String probe : pilotByProbe.keySet()) {
+      byProbe.computeIfAbsent(probe, k -> new ArrayList<>());
+    }
+    List<ProbeCost> out = new ArrayList<>();
+    for (Map.Entry<String, List<Measurement>> e : byProbe.entrySet()) {
+      CostTable t =
+          of(e.getValue(), elapsed, pilotByProbe.getOrDefault(e.getKey(), List.of()));
+      for (CostRow r : t.rows()) {
+        if (!r.extrapolated()) {
+          out.add(new ProbeCost(e.getKey(), r));
+        }
+      }
+    }
+    return out;
+  }
+
+  private static final java.util.regex.Pattern PILOT_FILE =
+      java.util.regex.Pattern.compile("^(.+)-d\\d+\\.json$");
+
+  /**
+   * The probe of a pilot report, from its file name {@code <probe>-d<draft job>.json}.
+   *
+   * @throws DataException naming the file if the name has another form
+   */
+  static String pilotProbeId(String fileName) {
+    java.util.regex.Matcher m = PILOT_FILE.matcher(fileName);
+    if (!m.matches()) {
+      throw new DataException(fileName + ": a pilot report must be named <probe>-d<job>.json");
+    }
+    return m.group(1);
+  }
+
   /** One row per size, ascending by N. */
   public List<CostRow> rows() {
     return rows;
